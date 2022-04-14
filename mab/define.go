@@ -62,7 +62,7 @@ type SingleModel struct {
 	PutResponseFunc       func(ctx iris.Context, mid string) iris.Map                                                         // 在修改之前还可以变更一下数据
 	PutMustFilters        map[string]string                                                                                   //
 	DeleteValidator       interface{}                                                                                         // 删除验证器
-	DeleteResponseFunc    func(ctx iris.Context, mid string, item map[string]interface{}, result iris.Map) iris.Map           //
+	DeleteResponseFunc    func(ctx iris.Context, mid string, item bson.M, result iris.Map) iris.Map                           //
 	SensitiveFields       []string                                                                                            // 使用struct name 或者mapname 均可(map对象为bson:)
 	sensitiveField        []string                                                                                            // post传入的key
 	CacheTime             time.Duration                                                                                       // full cache time

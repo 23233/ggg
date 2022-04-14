@@ -666,7 +666,7 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 		}
 	}
 
-	data := make(bson.M)
+	data := bson.M{}
 
 	// 先获取一下数据
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(&data)

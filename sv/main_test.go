@@ -2,7 +2,6 @@ package sv
 
 import (
 	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/httptest"
 	"testing"
 )
@@ -16,11 +15,11 @@ func TestRun(t *testing.T) {
 	}
 
 	app := iris.New()
-	app.Get("/", Run(new(req)), func(ctx context.Context) {
+	app.Get("/", Run(new(req)), func(ctx iris.Context) {
 		req := ctx.Values().Get("sv").(*req)
 		_, _ = ctx.JSON(iris.Map{"name": req.Name})
 	})
-	app.Get("/111", Run(new(req2)), func(ctx context.Context) {
+	app.Get("/111", Run(new(req2)), func(ctx iris.Context) {
 		req := ctx.Values().Get("sv").(*req2)
 		_, _ = ctx.JSON(iris.Map{"name": req.Desc})
 	})

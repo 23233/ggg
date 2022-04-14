@@ -4,3 +4,4 @@
 * sv 修改validator支持中文和 `comment` 标签
 * ut 日常使用的快速工具
 * mab mongodb api build 
+* smab simple manage api build 属于struct映射管理后台

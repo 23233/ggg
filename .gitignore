@@ -1,3 +1,5 @@
 .idea
 logs
 test.txt
+.env
+admin_init_password.txt

@@ -46,10 +46,10 @@ type SingleModel struct {
 	AllowSearchFields     []string                                                                                            // 搜索的字段 struct名称
 	searchFields          []StructInfo                                                                                        // allow search col names
 	InjectParams          func(ctx iris.Context) map[string]string                                                            // 注入params 用于get请求参数的自定义
-	GetAllResponseFunc    func(ctx iris.Context, result iris.Map, dataList any) iris.Map                                      // 返回内容替换的方法
+	GetAllResponseFunc    func(ctx iris.Context, result iris.Map, dataList []bson.M) iris.Map                                 // 返回内容替换的方法
 	GetAllExtraFilters    func(ctx iris.Context) map[string]interface{}                                                       // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
 	GetAllMustFilters     map[string]string                                                                                   // 获取全部必须拥有筛选
-	GetSingleResponseFunc func(ctx iris.Context, item any) any                                                                // 获取单个返回内容替换的方法
+	GetSingleResponseFunc func(ctx iris.Context, item bson.M) bson.M                                                          // 获取单个返回内容替换的方法
 	GetSingleExtraFilters func(ctx iris.Context) map[string]interface{}                                                       // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
 	GetSingleMustFilters  map[string]string                                                                                   // 获取单个必须拥有筛选
 	PostValidator         interface{}                                                                                         // 新增自定义验证器
@@ -62,7 +62,7 @@ type SingleModel struct {
 	PutResponseFunc       func(ctx iris.Context, mid string) iris.Map                                                         // 在修改之前还可以变更一下数据
 	PutMustFilters        map[string]string                                                                                   //
 	DeleteValidator       interface{}                                                                                         // 删除验证器
-	DeleteResponseFunc    func(ctx iris.Context, mid string, item any, result iris.Map) iris.Map                              //
+	DeleteResponseFunc    func(ctx iris.Context, mid string, item map[string]interface{}, result iris.Map) iris.Map           //
 	SensitiveFields       []string                                                                                            // 使用struct name 或者mapname 均可(map对象为bson:)
 	sensitiveField        []string                                                                                            // post传入的key
 	CacheTime             time.Duration                                                                                       // full cache time

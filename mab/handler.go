@@ -377,7 +377,7 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 	})
 
 	// 一样必须为bson.M 如果为struct 则无法映射外键数据
-	var newData any = new(bson.M)
+	var newData = bson.M{}
 
 	var err error
 	//判断是否附加外键

@@ -1,13 +1,16 @@
 package logger
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/getsentry/sentry-go"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"html/template"
 	"io"
+	"net/http"
 	"os"
 	"time"
 )
@@ -20,6 +23,9 @@ const (
 	_defaultDivision = "size"
 	_defaultUnit     = Hour
 )
+
+//go:embed online.html
+var onlineHtmlFs []byte
 
 var (
 	Logger                    *Log
@@ -34,7 +40,8 @@ var (
 )
 
 type Log struct {
-	L *zap.Logger
+	L  *zap.Logger
+	Op *LogOptions
 }
 
 type LogOptions struct {
@@ -56,6 +63,10 @@ type LogOptions struct {
 	closeDisplay  int
 	caller        bool
 	callerSkip    int
+	enableQueue   bool
+	queueSize     uint // default 100
+	infoQueue     *circularFifoQueue
+	errorQueue    *circularFifoQueue
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -113,6 +124,30 @@ func (c *LogOptions) SetEncoding(encoding string) {
 	c.Encoding = encoding
 }
 
+func (c *LogOptions) SetEnableQueue(enableQueue bool) {
+	c.enableQueue = enableQueue
+}
+
+func (c *LogOptions) SetQueueSize(queueSize uint) {
+	c.queueSize = queueSize
+	NewCircularFifoQueue(queueSize)
+}
+
+func (c *LogOptions) QueueSize() uint {
+	if c.queueSize < 1 {
+		return uint(100)
+	}
+	return c.queueSize
+}
+
+func (c *LogOptions) ErrorQueue() *circularFifoQueue {
+	return c.errorQueue
+}
+
+func (c *LogOptions) InfoQueue() *circularFifoQueue {
+	return c.infoQueue
+}
+
 // isOutput whether set output file
 func (c *LogOptions) isOutput() bool {
 	return c.InfoFilename != ""
@@ -165,6 +200,13 @@ func (c *LogOptions) InitLogger() *Log {
 			}
 		}
 		wsInfo = append(wsInfo, zapcore.AddSync(infoHook))
+	}
+
+	c.infoQueue = NewCircularFifoQueue(c.QueueSize())
+	c.errorQueue = NewCircularFifoQueue(c.QueueSize())
+	if c.enableQueue {
+		wsInfo = append(wsInfo, zapcore.AddSync(c.infoQueue))
+		wsWarn = append(wsWarn, zapcore.AddSync(c.errorQueue))
 	}
 
 	if c.ErrorFilename != "" {
@@ -226,7 +268,7 @@ func (c *LogOptions) InitLogger() *Log {
 		}))
 	}
 
-	Logger = &Log{logger}
+	Logger = &Log{L: logger, Op: c}
 	return Logger
 }
 
@@ -305,4 +347,42 @@ func With(k string, v interface{}) zap.Field {
 
 func WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
+}
+
+type htmlData struct {
+	Label string
+	Data  []string
+}
+
+func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
+	t, err := template.New("online").Parse(string(onlineHtmlFs))
+	if err != nil {
+		panic(err.Error())
+	}
+	var tempData []htmlData
+
+	tempData = append(tempData, htmlData{
+		Label: "info log list view",
+		Data:  reverse(Logger.Op.InfoQueue().ItemsStr()),
+	})
+	tempData = append(tempData, htmlData{
+		Label: "error log list view",
+		Data:  reverse(Logger.Op.ErrorQueue().ItemsStr()),
+	})
+
+	if err := t.Execute(w, tempData); err != nil {
+		panic(err.Error())
+	}
+}
+
+func reverse[T any](original []T) (reversed []T) {
+	reversed = make([]T, len(original))
+	copy(reversed, original)
+
+	for i := len(reversed)/2 - 1; i >= 0; i-- {
+		tmp := len(reversed) - 1 - i
+		reversed[i], reversed[tmp] = reversed[tmp], reversed[i]
+	}
+
+	return
 }

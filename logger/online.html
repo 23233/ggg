@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <style>
+        .container {
+            overflow: hidden;
+        }
+
+        @media screen and (min-width: 960px) {
+            .container {
+                display: flex;
+            }
+
+            .warp {
+                width: 50%;
+            }
+        }
+    </style>
+    <script>
+        window.onload = function () {
+            setTimeout(function () {
+                location.reload()
+            }, 10000)
+        }
+    </script>
+    <title>log online view ui</title>
+</head>
+<body>
+
+<div class="container">
+
+    {{ range . }}
+    <div class="warp">
+        <h2>{{ .Label }}</h2>
+        {{ range .Data }}
+        <p>{{ . }}</p>
+        {{ end }}
+    </div>
+    {{ end }}
+
+</div>
+
+</body>
+</html>

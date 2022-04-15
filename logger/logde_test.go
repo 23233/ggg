@@ -2,6 +2,9 @@ package logger
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -17,6 +20,8 @@ func TestNew(t *testing.T) {
 
 	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
 	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
+
+	c.SetEnableQueue(true)
 
 	//c.SentryConfig = SentryLoggerConfig{
 	//	DSN:              "sentry dsn",
@@ -40,6 +45,53 @@ func TestNew(t *testing.T) {
 
 	Info("this is a log", With("trace", "12345677"))
 	Info("this is a log", WithError(errors.New("this is a new error")))
+
+	t.Logf("info queue size : %d", c.InfoQueue().Size())
+	t.Logf("error queue size : %d", c.ErrorQueue().Size())
+	t.Logf("info quque list :%v", c.InfoQueue().ItemsMap())
+	t.Logf("error quque list :%v", c.ErrorQueue().ItemsMap())
+
+}
+
+func TestViewQueueFunc(t *testing.T) {
+	c := New()
+	c.SetEnableQueue(true)
+	//c.Stacktrace = true
+
+	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
+	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
+
+	c.InitLogger()
+
+	Info("info level test")
+	Error("dsdadadad level test", WithError(errors.New("sabhksasas")))
+	Error("121212121212 error")
+	Warn("warn level test")
+	Debug("debug level test")
+
+	t.Logf("info queue size : %d", c.InfoQueue().Size())
+	t.Logf("error queue size : %d", c.ErrorQueue().Size())
+
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	ViewQueueFunc(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+
+	if !strings.Contains(rr.Body.String(), "info log list view") {
+		t.Error(errors.New("not get success data"))
+	}
+	//
+	//t.Log("open browser view is success http://127.0.0.1:8787 ")
+	//http.HandleFunc("/", ViewQueueFunc)
+	//http.ListenAndServe(":8787", nil)
+
 }
 
 func BenchmarkLogger(b *testing.B) {

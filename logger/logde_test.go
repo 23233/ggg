@@ -56,7 +56,7 @@ func TestNew(t *testing.T) {
 func TestViewQueueFunc(t *testing.T) {
 	c := New()
 	c.SetEnableQueue(true)
-	//c.Stacktrace = true
+	c.SetEncoding("json") // 输出格式 "json" 或者 "console"
 
 	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
 	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
@@ -87,7 +87,7 @@ func TestViewQueueFunc(t *testing.T) {
 	if !strings.Contains(rr.Body.String(), "info log list view") {
 		t.Error(errors.New("not get success data"))
 	}
-	//
+
 	//t.Log("open browser view is success http://127.0.0.1:8787 ")
 	//http.HandleFunc("/", ViewQueueFunc)
 	//http.ListenAndServe(":8787", nil)

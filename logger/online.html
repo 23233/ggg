@@ -7,16 +7,49 @@
             content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
     />
     <style>
+
+        h2 {
+            margin: 5px 0;
+        }
+
+        .json_line_warp {
+            border-bottom: 1px solid #f3f3f3;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+
         .container {
             overflow: hidden;
         }
 
+        .json_line {
+            display: flex;
+            flex-wrap: wrap;
+            word-break: break-all;
+        }
+
+        .msg-wrap {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .error-warp > div {
+            max-height: 60px;
+            overflow: auto;
+        }
+
+        .json_line > div {
+            margin-right: 5px;
+        }
+
         @media screen and (min-width: 960px) {
             .container {
-                display: flex;
+                overflow: hidden;
             }
 
             .warp {
+                float: left;
                 width: 50%;
             }
         }
@@ -28,22 +61,82 @@
             }, 10000)
         }
     </script>
+
     <title>log online view ui</title>
 </head>
 <body>
 
 <div class="container">
 
-    {{ range . }}
+    {{ range .Data }}
     <div class="warp">
         <h2>{{ .Label }}</h2>
-        {{ range .Data }}
-        <p>{{ . }}</p>
+        {{ range .Array }}
+        <div class="line">
+            <p>{{ . }}</p>
+        </div>
         {{ end }}
     </div>
     {{ end }}
 
 </div>
+<script>
+    window.onload = function () {
+        var is_json = "{{.IsJson}}"
+
+        var lineHtml = function (msg, cls = "") {
+            return '<div class="json_line ' + cls + '"><div>' + msg + '</div></div>'
+        }
+
+        if (is_json) {
+            var lineList = document.getElementsByClassName("line")
+            for (var i = 0; i < lineList.length; i++) {
+                const target = lineList[i]
+                const json = JSON.parse(target.getElementsByTagName("p")[0].textContent)
+                var html = "<div class='json_line_warp'>"
+
+                var filterKey = ["level", "time", "file", "error", "msg"]
+
+                var topHtml = "<div class='json_line'>"
+                if (json.hasOwnProperty("level")) {
+                    topHtml += '<div>' + json.level + '</div>'
+                }
+                if (json.hasOwnProperty("time")) {
+                    topHtml += '<div>' + json.time + '</div>'
+                }
+                topHtml += "</div>"
+
+
+                html += topHtml
+                if (json.hasOwnProperty("msg")) {
+                    html += lineHtml(json.msg, "msg-wrap")
+                }
+                if (json.hasOwnProperty("file")) {
+                    html += lineHtml(json.file)
+                }
+                if (json.hasOwnProperty("error")) {
+                    html += lineHtml(json.error, "error-warp")
+                }
+
+
+                for (var p in json) {//遍历json对象的每个key/value对,p为key
+                    if (filterKey.indexOf(p) < 0) {
+                        html += lineHtml(p + ":" + json[p])
+                    }
+                }
+
+                html += "</div>"
+
+                target.innerHTML = html
+
+
+            }
+
+
+        }
+    }
+</script>
+
 
 </body>
 </html>

@@ -71,6 +71,7 @@ func (c *circularFifoQueue) Add(bs []byte) {
 	c.mutex.Lock()
 	var buf strings.Builder
 	buf.Write(bs)
+
 	c.items = append(c.items, itemBase{
 		Raw:  bs,
 		Text: buf.String(),

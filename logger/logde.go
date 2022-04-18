@@ -350,8 +350,12 @@ func WithError(err error) zap.Field {
 }
 
 type htmlData struct {
-	Label string
-	Data  []string
+	Label string   `json:"label"`
+	Array []string `json:"array"`
+}
+type htmlResp struct {
+	Data   []htmlData `json:"data"`
+	IsJson bool       `json:"is_json"`
 }
 
 func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
@@ -363,14 +367,18 @@ func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
 
 	tempData = append(tempData, htmlData{
 		Label: "info log list view",
-		Data:  reverse(Logger.Op.InfoQueue().ItemsStr()),
+		Array: reverse(Logger.Op.InfoQueue().ItemsStr()),
 	})
 	tempData = append(tempData, htmlData{
 		Label: "error log list view",
-		Data:  reverse(Logger.Op.ErrorQueue().ItemsStr()),
+		Array: reverse(Logger.Op.ErrorQueue().ItemsStr()),
 	})
 
-	if err := t.Execute(w, tempData); err != nil {
+	var resp htmlResp
+	resp.Data = tempData
+	resp.IsJson = Logger.Op.Encoding != _defaultEncoding
+
+	if err := t.Execute(w, resp); err != nil {
 		panic(err.Error())
 	}
 }

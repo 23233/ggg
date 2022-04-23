@@ -17,10 +17,11 @@ const (
 	TimeDivision = "time"
 	SizeDivision = "size"
 
-	_defaultEncoding   = "console"
-	_defaultDivision   = "size"
-	_defaultUnit       = Hour
-	_defaultStatFormat = "2006-01-02 15:00:00"
+	_defaultEncoding             = "console"
+	_defaultDivision             = "size"
+	_defaultUnit                 = Hour
+	_defaultStatFormat           = "2006-01-02 15:00:00"
+	_defaultStatClearIntervalDay = 7
 )
 
 var (
@@ -44,28 +45,29 @@ type LogOptions struct {
 	// Encoding sets the logger's encoding. Valid values are "json" and
 	// "console", as well as any third-party encodings registered via
 	// RegisterEncoder.
-	Encoding      string             `json:"encoding" yaml:"encoding" toml:"encoding"`
-	InfoFilename  string             `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
-	ErrorFilename string             `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
-	MaxSize       int                `json:"max_size" yaml:"max_size" toml:"max_size"`
-	MaxBackups    int                `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
-	MaxAge        int                `json:"max_age" yaml:"max_age" toml:"max_age"`
-	Compress      bool               `json:"compress" yaml:"compress" toml:"compress"`
-	Division      string             `json:"division" yaml:"division" toml:"division"`
-	LevelSeparate bool               `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
-	TimeUnit      TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
-	Stacktrace    bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
-	SentryConfig  SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
-	closeDisplay  int
-	caller        bool
-	callerSkip    int
-	enableQueue   bool
-	enableStats   bool
-	queueSize     uint // default 100
-	infoQueue     *circularFifoQueue
-	errorQueue    *circularFifoQueue
-	stats         *stats // 暂时只记录warning以上日志
-	statsFormat   string
+	Encoding              string             `json:"encoding" yaml:"encoding" toml:"encoding"`
+	InfoFilename          string             `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
+	ErrorFilename         string             `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
+	MaxSize               int                `json:"max_size" yaml:"max_size" toml:"max_size"`
+	MaxBackups            int                `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
+	MaxAge                int                `json:"max_age" yaml:"max_age" toml:"max_age"`
+	Compress              bool               `json:"compress" yaml:"compress" toml:"compress"`
+	Division              string             `json:"division" yaml:"division" toml:"division"`
+	LevelSeparate         bool               `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
+	TimeUnit              TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
+	Stacktrace            bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
+	SentryConfig          SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
+	closeDisplay          int
+	caller                bool
+	callerSkip            int
+	enableQueue           bool
+	enableStats           bool
+	queueSize             uint // default 100
+	infoQueue             *circularFifoQueue
+	errorQueue            *circularFifoQueue
+	stats                 *stats // 暂时只记录warning以上日志
+	statsFormat           string
+	statsClearIntervalDay uint8
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -82,12 +84,13 @@ func warnLevel() zap.LevelEnablerFunc {
 
 func New() *LogOptions {
 	return &LogOptions{
-		Division:      _defaultDivision,
-		LevelSeparate: false,
-		TimeUnit:      _defaultUnit,
-		Encoding:      _defaultEncoding,
-		caller:        false,
-		statsFormat:   _defaultStatFormat,
+		Division:              _defaultDivision,
+		LevelSeparate:         false,
+		TimeUnit:              _defaultUnit,
+		Encoding:              _defaultEncoding,
+		caller:                false,
+		statsFormat:           _defaultStatFormat,
+		statsClearIntervalDay: _defaultStatClearIntervalDay,
 	}
 }
 
@@ -160,6 +163,13 @@ func (c *LogOptions) InfoQueue() *circularFifoQueue {
 
 func (c *LogOptions) GetStats() *stats {
 	return c.stats
+}
+
+func (c *LogOptions) SetStatsClearIntervalDay(statsClearIntervalDay uint8) {
+	c.statsClearIntervalDay = statsClearIntervalDay
+	if c.stats != nil {
+		c.stats.DayClearInterval = statsClearIntervalDay
+	}
 }
 
 // isOutput whether set output file
@@ -249,6 +259,7 @@ func (c *LogOptions) InitLogger() *Log {
 
 	c.stats = NewStats()
 	c.stats.Format = c.statsFormat
+	c.stats.DayClearInterval = c.statsClearIntervalDay
 	if c.enableStats {
 		wsWarn = append(wsWarn, zapcore.AddSync(c.stats))
 	}

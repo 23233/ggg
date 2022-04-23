@@ -82,8 +82,8 @@ func NewStats() *stats {
 	c := &stats{
 		Items:            make(map[string]map[string]*statsItem, 0),
 		mutex:            new(sync.RWMutex),
-		Format:           _defaultStatFormat, // 默认按照小时计数
-		DayClearInterval: 7,                  // 7天清理一次数据
+		Format:           _defaultStatFormat,           // 默认按照小时计数
+		DayClearInterval: _defaultStatClearIntervalDay, // 7天清理一次数据
 	}
 	time.AfterFunc(c.GetClearTime(), c.ClearOld)
 	return c

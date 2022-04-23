@@ -98,7 +98,7 @@
             return dayjs(b).valueOf() - dayjs(a).valueOf()
         })
 
-        if (dayKeys && dayKeys.length){
+        if (dayKeys && dayKeys.length) {
 
             var daySum = {}
             dayKeys.map(function (k) {
@@ -116,7 +116,11 @@
             dayKeys.map(function (k) {
                 dayCharRender(k, injectData.items[k], "HH:mm:ss")
             })
-
+        } else {
+            var text = document.createElement("p")
+            text.textContent = "not have any data"
+            text.style.textAlign = 'center'
+            document.body.appendChild(text)
         }
 
         console.log("injectData", injectData)

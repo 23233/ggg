@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.2/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.1/dayjs.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .renders {
+            margin-top: 10px;
+            width: 100%;
+            height: 400px;
+        }
+
+    </style>
+    <title>Stats</title>
+</head>
+<body>
+
+
+<script type="text/javascript">
+
+    function sum(arr) {
+        return arr.reduce(function (prev, curr, idx, arr) {
+            return prev + curr;
+        });
+    }
+
+    var chartInstance = []
+
+    var dayCharRender = function (k, v, format) {
+        var elem = document.createElement("div")
+        elem.id = k
+        elem.className = "renders"
+        document.body.appendChild(elem)
+        var chart = echarts.init(elem);
+
+        var dataKeys = Object.keys(v).map(function (v) {
+            return dayjs(v).format(format)
+        })
+        var dataList = Object.values(v).map(function (k) {
+            return k.count
+        })
+
+        // 指定图表的配置项和数据
+        var option = {
+            title: {
+                text: k,
+                subtext: sum(dataList),
+                x: 'center',
+                y: 'top',
+                textAlign: "center",
+                textStyle: {
+                    fontSize: 22
+                },
+            },
+            tooltip: {},
+            legend: {
+                data: ['count']
+            },
+            xAxis: {
+                type: 'category',
+                data: dataKeys
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    type: 'line',
+                    data: dataList,
+                    smooth: true
+                }
+            ]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        chart.setOption(option);
+
+        chartInstance.push(chart)
+
+    }
+
+    window.onload = function () {
+        var injectData = JSON.parse("{{.}}")
+
+        var dayKeys = Object.keys(injectData.items).sort(function (a, b) {
+            return dayjs(b).valueOf() - dayjs(a).valueOf()
+        })
+
+        var daySum = {}
+        dayKeys.map(function (k) {
+            var v = injectData.items[k]
+            daySum[k] = {
+                count: sum(Object.values(v).map(function (k) {
+                    return k.count
+                }))
+            }
+        })
+
+        dayCharRender("all day stats", daySum, "YYYY-MM-DD")
+
+
+        dayKeys.map(function (k) {
+            dayCharRender(k, injectData.items[k], "HH:mm:ss")
+        })
+
+        console.log("injectData", injectData)
+
+
+    }
+
+    window.addEventListener("resize", function () {
+        chartInstance.map(function (value) {
+            value.resize()
+        })
+    })
+
+</script>
+
+</body>
+</html>

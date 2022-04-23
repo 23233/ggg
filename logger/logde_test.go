@@ -94,6 +94,42 @@ func TestViewQueueFunc(t *testing.T) {
 
 }
 
+func TestViewStatsFunc(t *testing.T) {
+	c := New()
+	c.SetEncoding("json") // 输出格式 "json" 或者 "console"
+	c.SetEnableStats(true)
+	c.SetStatsFormat("2006-01-02 15:04:05")
+
+	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
+	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
+
+	c.InitLogger()
+
+	for i := 1; i < 10; i++ {
+		for ii := 0; ii < 100-(i*10); ii++ {
+			Warn("warn level test")
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	ViewStatsFunc(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+	//
+	//t.Log("open browser view is success http://127.0.0.1:8787 ")
+	//http.HandleFunc("/", ViewStatsFunc)
+	//http.ListenAndServe(":8787", nil)
+
+}
+
 func BenchmarkLogger(b *testing.B) {
 	b.Logf("Logging at a disabled level with some accumulated context.")
 	b.Run("logde logger without fields", func(b *testing.B) {

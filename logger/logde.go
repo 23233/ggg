@@ -8,9 +8,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"html/template"
 	"io"
-	"net/http"
 	"os"
 	"time"
 )
@@ -19,13 +17,11 @@ const (
 	TimeDivision = "time"
 	SizeDivision = "size"
 
-	_defaultEncoding = "console"
-	_defaultDivision = "size"
-	_defaultUnit     = Hour
+	_defaultEncoding   = "console"
+	_defaultDivision   = "size"
+	_defaultUnit       = Hour
+	_defaultStatFormat = "2006-01-02 15:00:00"
 )
-
-//go:embed online.html
-var onlineHtmlFs []byte
 
 var (
 	Logger                    *Log
@@ -64,9 +60,12 @@ type LogOptions struct {
 	caller        bool
 	callerSkip    int
 	enableQueue   bool
+	enableStats   bool
 	queueSize     uint // default 100
 	infoQueue     *circularFifoQueue
 	errorQueue    *circularFifoQueue
+	stats         *stats // 暂时只记录warning以上日志
+	statsFormat   string
 }
 
 func infoLevel() zap.LevelEnablerFunc {
@@ -88,6 +87,7 @@ func New() *LogOptions {
 		TimeUnit:      _defaultUnit,
 		Encoding:      _defaultEncoding,
 		caller:        false,
+		statsFormat:   _defaultStatFormat,
 	}
 }
 
@@ -133,6 +133,16 @@ func (c *LogOptions) SetQueueSize(queueSize uint) {
 	NewCircularFifoQueue(queueSize)
 }
 
+func (c *LogOptions) SetEnableStats(enable bool) {
+	c.enableStats = enable
+}
+func (c *LogOptions) SetStatsFormat(format string) {
+	c.statsFormat = format
+	if c.stats != nil {
+		c.stats.Format = format
+	}
+}
+
 func (c *LogOptions) QueueSize() uint {
 	if c.queueSize < 1 {
 		return uint(100)
@@ -148,9 +158,37 @@ func (c *LogOptions) InfoQueue() *circularFifoQueue {
 	return c.infoQueue
 }
 
+func (c *LogOptions) GetStats() *stats {
+	return c.stats
+}
+
 // isOutput whether set output file
 func (c *LogOptions) isOutput() bool {
 	return c.InfoFilename != ""
+}
+
+func (c *LogOptions) sizeDivisionWriter(filename string) io.Writer {
+	hook := &lumberjack.Logger{
+		Filename:   filename,
+		MaxSize:    c.MaxSize,
+		MaxBackups: c.MaxBackups,
+		MaxAge:     c.MaxSize,
+		Compress:   c.Compress,
+	}
+	return hook
+}
+
+func (c *LogOptions) timeDivisionWriter(filename string) io.Writer {
+	hook, err := rotatelogs.New(
+		filename+c.TimeUnit.Format(),
+		rotatelogs.WithMaxAge(time.Duration(int64(24*time.Hour)*int64(c.MaxAge))),
+		rotatelogs.WithRotationTime(c.TimeUnit.RotationGap()),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+	return hook
 }
 
 func (c *LogOptions) InitLogger() *Log {
@@ -207,6 +245,12 @@ func (c *LogOptions) InitLogger() *Log {
 	if c.enableQueue {
 		wsInfo = append(wsInfo, zapcore.AddSync(c.infoQueue))
 		wsWarn = append(wsWarn, zapcore.AddSync(c.errorQueue))
+	}
+
+	c.stats = NewStats()
+	c.stats.Format = c.statsFormat
+	if c.enableStats {
+		wsWarn = append(wsWarn, zapcore.AddSync(c.stats))
 	}
 
 	if c.ErrorFilename != "" {
@@ -272,30 +316,6 @@ func (c *LogOptions) InitLogger() *Log {
 	return Logger
 }
 
-func (c *LogOptions) sizeDivisionWriter(filename string) io.Writer {
-	hook := &lumberjack.Logger{
-		Filename:   filename,
-		MaxSize:    c.MaxSize,
-		MaxBackups: c.MaxBackups,
-		MaxAge:     c.MaxSize,
-		Compress:   c.Compress,
-	}
-	return hook
-}
-
-func (c *LogOptions) timeDivisionWriter(filename string) io.Writer {
-	hook, err := rotatelogs.New(
-		filename+c.TimeUnit.Format(),
-		rotatelogs.WithMaxAge(time.Duration(int64(24*time.Hour)*int64(c.MaxAge))),
-		rotatelogs.WithRotationTime(c.TimeUnit.RotationGap()),
-	)
-
-	if err != nil {
-		panic(err)
-	}
-	return hook
-}
-
 func Info(msg string, args ...zap.Field) {
 	Logger.L.Info(msg, args...)
 }
@@ -347,50 +367,4 @@ func With(k string, v interface{}) zap.Field {
 
 func WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
-}
-
-type htmlData struct {
-	Label string   `json:"label"`
-	Array []string `json:"array"`
-}
-type htmlResp struct {
-	Data   []htmlData `json:"data"`
-	IsJson bool       `json:"is_json"`
-}
-
-func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("online").Parse(string(onlineHtmlFs))
-	if err != nil {
-		panic(err.Error())
-	}
-	var tempData []htmlData
-
-	tempData = append(tempData, htmlData{
-		Label: "info log list view",
-		Array: reverse(Logger.Op.InfoQueue().ItemsStr()),
-	})
-	tempData = append(tempData, htmlData{
-		Label: "error log list view",
-		Array: reverse(Logger.Op.ErrorQueue().ItemsStr()),
-	})
-
-	var resp htmlResp
-	resp.Data = tempData
-	resp.IsJson = Logger.Op.Encoding != _defaultEncoding
-
-	if err := t.Execute(w, resp); err != nil {
-		panic(err.Error())
-	}
-}
-
-func reverse[T any](original []T) (reversed []T) {
-	reversed = make([]T, len(original))
-	copy(reversed, original)
-
-	for i := len(reversed)/2 - 1; i >= 0; i-- {
-		tmp := len(reversed) - 1 - i
-		reversed[i], reversed[tmp] = reversed[tmp], reversed[i]
-	}
-
-	return
 }

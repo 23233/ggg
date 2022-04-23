@@ -98,22 +98,26 @@
             return dayjs(b).valueOf() - dayjs(a).valueOf()
         })
 
-        var daySum = {}
-        dayKeys.map(function (k) {
-            var v = injectData.items[k]
-            daySum[k] = {
-                count: sum(Object.values(v).map(function (k) {
-                    return k.count
-                }))
-            }
-        })
+        if (dayKeys && dayKeys.length){
 
-        dayCharRender("all day stats", daySum, "YYYY-MM-DD")
+            var daySum = {}
+            dayKeys.map(function (k) {
+                var v = injectData.items[k]
+                daySum[k] = {
+                    count: sum(Object.values(v).map(function (k) {
+                        return k.count
+                    }))
+                }
+            })
+
+            dayCharRender("all day stats", daySum, "YYYY-MM-DD")
 
 
-        dayKeys.map(function (k) {
-            dayCharRender(k, injectData.items[k], "HH:mm:ss")
-        })
+            dayKeys.map(function (k) {
+                dayCharRender(k, injectData.items[k], "HH:mm:ss")
+            })
+
+        }
 
         console.log("injectData", injectData)
 

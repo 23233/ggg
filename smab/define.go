@@ -2,6 +2,8 @@ package smab
 
 import (
 	"github.com/kataras/iris/v12"
+	"path/filepath"
+	"runtime/debug"
 )
 
 type CasbinConfigDefine struct {
@@ -52,7 +54,15 @@ func (c *Configs) valid() error {
 		return msgLog("权限mongouri是必须设置的")
 	}
 	if len(c.CasbinConfig.Database) < 1 {
-		c.CasbinConfig.Database = "casbin"
+		// get module info
+		bi, ok := debug.ReadBuildInfo()
+		if !ok {
+			c.CasbinConfig.Database = "casbin"
+		} else {
+			// if you go.mod module is example.com/foo --> foo_casbin
+			// if you go.mod module is zoo --> zoo_casbin
+			c.CasbinConfig.Database = filepath.Base(bi.Main.Path) + "_casbin"
+		}
 	}
 	if len(c.CasbinConfig.collectionName) < 1 {
 		c.CasbinConfig.collectionName = "casbin_rule"

@@ -21,7 +21,6 @@ func getEnv(key, fallback string) string {
 
 // RandomStr 随机N位字符串(英文)
 func RandomStr(n int) string {
-	rand.Seed(time.Now().UnixNano())
 	randBytes := make([]byte, n/2)
 	rand.Read(randBytes)
 	return fmt.Sprintf("%x", randBytes)
@@ -141,4 +140,8 @@ func TestGetWorkRank(t *testing.T) {
 
 	t.Logf("获取作品排名 今日:%f 城市:%f 所有:%f", today, city, all)
 
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }

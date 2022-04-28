@@ -10,7 +10,6 @@ import (
 
 // RandomStr 随机N位字符串(英文)
 func RandomStr(n int) string {
-	rand.Seed(time.Now().UnixNano())
 	randBytes := make([]byte, n/2)
 	rand.Read(randBytes)
 	return fmt.Sprintf("%x", randBytes)
@@ -18,7 +17,6 @@ func RandomStr(n int) string {
 
 // RandomInt 区间整数随机
 func RandomInt(start, end int) int {
-	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(end-start) + start
 }
 
@@ -117,4 +115,8 @@ func StructCopy(origin, newData interface{}) error {
 		}
 	}
 	return nil
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }

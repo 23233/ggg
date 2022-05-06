@@ -247,10 +247,10 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 		"page_size": pageSize,
 		"page":      page,
 		"data":      batch,
+		"has_more":  (int64(len(batch)) - pageSize) >= 0,
 	}
 
 	if sm.ShowCount {
-
 		count, err := rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).Count()
 		if err != nil {
 			fastError(err, ctx, "获取数量失败")

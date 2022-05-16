@@ -30,6 +30,8 @@ type Article struct {
 	PublishTime string `json:"publish_time,omitempty"`
 	// Content 正文
 	Content string `json:"content,omitempty"`
+	// ContentLine 内容段落 以\n为切分标准
+	ContentLine []string `json:"content_line,omitempty"`
 	// ContentHTML 正文源码
 	ContentHTML string `json:"content_html,omitempty"`
 	// AllLinks 所有链接 内外链
@@ -69,6 +71,7 @@ func Extract(source string) (*Article, error) {
 		content := contentExtract(body)
 		result.Title = titleExtract(headText, dom.Selection, content.node)
 		result.Content = content.density.tiText
+		result.ContentLine = strings.Split(result.Content, "\n")
 		result.ContentHTML, _ = content.node.Html()
 		var imgs []string
 		content.node.Find("img").Each(func(i int, s *goquery.Selection) {

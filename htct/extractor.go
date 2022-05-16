@@ -30,7 +30,7 @@ type Article struct {
 	PublishTime string `json:"publish_time,omitempty"`
 	// Content 正文
 	Content string `json:"content,omitempty"`
-	// ContentLine 内容段落 以\n为切分标准
+	// ContentLine 内容段落 以`\n`为切分标准
 	ContentLine []string `json:"content_line,omitempty"`
 	// ContentHTML 正文源码
 	ContentHTML string `json:"content_html,omitempty"`

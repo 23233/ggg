@@ -32,9 +32,11 @@ type Article struct {
 	Content string `json:"content,omitempty"`
 	// ContentHTML 正文源码
 	ContentHTML string `json:"content_html,omitempty"`
+	// AllLinks 所有链接 内外链
+	AllLinks []kvMap `json:"all_links,omitempty"`
 }
 
-type headEntry struct {
+type kvMap struct {
 	key string
 	val string
 }
@@ -50,9 +52,13 @@ func Extract(source string) (*Article, error) {
 	result := &Article{}
 	headText := headTextExtract(dom)
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 	go func() {
 		result.PublishTime = timeExtract(headText, body)
+		wg.Done()
+	}()
+	go func() {
+		result.AllLinks = linkExtract(body)
 		wg.Done()
 	}()
 	go func() {
@@ -73,13 +79,15 @@ func Extract(source string) (*Article, error) {
 		result.Images = imgs
 		wg.Done()
 	}()
+	// 抽取内链外链
+
 	wg.Wait()
 	return result, nil
 }
 
-func headTextExtract(dom *goquery.Document) []*headEntry {
+func headTextExtract(dom *goquery.Document) []*kvMap {
 	var (
-		rs       []*headEntry
+		rs       []*kvMap
 		head     = dom.Find("head")
 		metaSkip = map[string]bool{
 			"charset":    true,
@@ -107,7 +115,7 @@ func headTextExtract(dom *goquery.Document) []*headEntry {
 			if key != "" && val != "" {
 				length := utf8.RuneCountInString(strings.TrimSpace(val))
 				if length >= 2 && length <= 50 {
-					rs = append(rs, &headEntry{
+					rs = append(rs, &kvMap{
 						key: key,
 						val: val,
 					})

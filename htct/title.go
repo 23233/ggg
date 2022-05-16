@@ -20,7 +20,7 @@ var (
 // source 网页源码
 // content 正文
 // 依次 从header中找 `meta` title 标签 -> 直接搜索`title` 标签 -> 找 `H1` 标签
-func titleExtract(headText []*headEntry, source *goquery.Selection, content *goquery.Selection) string {
+func titleExtract(headText []*kvMap, source *goquery.Selection, content *goquery.Selection) string {
 	var title string
 	for _, v := range headText {
 		for _, px := range titlePx {

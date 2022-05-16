@@ -735,6 +735,7 @@ func Test_extract(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(result.Title)
+	t.Log(result.AllLinks)
 }
 
 func BenchmarkExtract(b *testing.B) {

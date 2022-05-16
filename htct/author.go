@@ -53,7 +53,7 @@ func init() {
 }
 
 // authorExtract 提取文章作者
-func authorExtract(headText []*headEntry, body *goquery.Selection) string {
+func authorExtract(headText []*kvMap, body *goquery.Selection) string {
 	for _, v := range headText {
 		for _, px := range headAuthorPattern {
 			if strings.Contains(v.key, px) {

@@ -68,12 +68,12 @@ func init() {
 }
 
 // Extract 提取发布时间
-func timeExtract(headText []*kvMap, body *goquery.Selection) string {
+func timeExtract(headText []*KvMap, body *goquery.Selection) string {
 
 	var mats []string
 
 	for _, v := range headText {
-		if timeVal, ok := matchTime(v.val); ok {
+		if timeVal, ok := matchTime(v.Val); ok {
 			mats = append(mats, timeVal)
 		}
 	}

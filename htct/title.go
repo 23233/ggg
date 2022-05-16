@@ -20,12 +20,12 @@ var (
 // source 网页源码
 // content 正文
 // 依次 从header中找 `meta` title 标签 -> 直接搜索`title` 标签 -> 找 `H1` 标签
-func titleExtract(headText []*kvMap, source *goquery.Selection, content *goquery.Selection) string {
+func titleExtract(headText []*KvMap, source *goquery.Selection, content *goquery.Selection) string {
 	var title string
 	for _, v := range headText {
 		for _, px := range titlePx {
-			if strings.Contains(v.key, px) {
-				if title = strings.TrimSpace(titleRx.Split(v.val, -1)[0]); title != "" {
+			if strings.Contains(v.Key, px) {
+				if title = strings.TrimSpace(titleRx.Split(v.Val, -1)[0]); title != "" {
 					return title
 				}
 			}

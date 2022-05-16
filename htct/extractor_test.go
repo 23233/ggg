@@ -703,13 +703,13 @@ $(function(){
 </html><script>
 $(function(){
 	$(".search-btn").click(function(){
-		var str = $(this).parent().find(".search-text").val();
+		var str = $(this).parent().find(".search-text").Val();
 		toSearch(str);
 		return false;
 	});
 	$(".search-text").keyup(function(e){
 		if (e.keyCode == 13) {
-			var str = $(this).val();
+			var str = $(this).Val();
 			toSearch(str);
 		}
 		return false;

@@ -33,12 +33,12 @@ type Article struct {
 	// ContentHTML 正文源码
 	ContentHTML string `json:"content_html,omitempty"`
 	// AllLinks 所有链接 内外链
-	AllLinks []kvMap `json:"all_links,omitempty"`
+	AllLinks []KvMap `json:"all_links,omitempty"`
 }
 
-type kvMap struct {
-	key string
-	val string
+type KvMap struct {
+	Key string `json:"key"`
+	Val string `json:"val"`
 }
 
 // Extract 提取信息
@@ -85,9 +85,9 @@ func Extract(source string) (*Article, error) {
 	return result, nil
 }
 
-func headTextExtract(dom *goquery.Document) []*kvMap {
+func headTextExtract(dom *goquery.Document) []*KvMap {
 	var (
-		rs       []*kvMap
+		rs       []*KvMap
 		head     = dom.Find("head")
 		metaSkip = map[string]bool{
 			"charset":    true,
@@ -115,16 +115,16 @@ func headTextExtract(dom *goquery.Document) []*kvMap {
 			if key != "" && val != "" {
 				length := utf8.RuneCountInString(strings.TrimSpace(val))
 				if length >= 2 && length <= 50 {
-					rs = append(rs, &kvMap{
-						key: key,
-						val: val,
+					rs = append(rs, &KvMap{
+						Key: key,
+						Val: val,
 					})
 				}
 			}
 		}
 	}
 	sort.Slice(rs, func(i, j int) bool {
-		return len(rs[i].key) > len(rs[j].key)
+		return len(rs[i].Key) > len(rs[j].Key)
 	})
 	return rs
 }

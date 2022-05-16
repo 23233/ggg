@@ -11,6 +11,6 @@ func TestLinkExtract(t *testing.T) {
 	body := dom.Find("body")
 	allLink := linkExtract(body)
 	for _, k := range allLink {
-		t.Logf("%s:%s", k.key, k.val)
+		t.Logf("%s:%s", k.Key, k.Val)
 	}
 }

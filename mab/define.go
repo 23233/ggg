@@ -388,6 +388,7 @@ type StructInfo struct {
 	Level         string       `json:"level"` // parentIndex - .... - self index
 	Kind          string       `json:"kind"`
 	Bson          []string     `json:"bson"` // bson tag
+	Json          []string     `json:"json"` // json tag
 	Types         string       `json:"types"`
 	Index         int          `json:"index,omitempty"`
 	IsDefaultWrap bool         `json:"is_default_wrap,omitempty"`

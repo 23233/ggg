@@ -81,7 +81,7 @@ type ComplexModel struct {
 	Point           float64      `json:"point" bson:"point"`
 	SelectTime      time.Time    `json:"select_time" bson:"select_time"`
 	SliceBase       []string     `json:"slice_base" bson:"slice_base" mab:"t=img"`
-	TestInline      InlineTest   `json:"test_inline" bson:"inline" comment:"内链"`
+	TestInline      InlineTest   `json:"test_inline" bson:"test_inline,inline" comment:"内链"`
 	TestNotInline   InlineTest   `json:"test_not_inline" bson:"test_not_inline" comment:"非内链"`
 	TestSliceInline []InlineTest `json:"test_slice_inline" bson:"test_slice_inline" comment:"数组链接"`
 }
@@ -91,7 +91,7 @@ func (c *ComplexModel) Alias() string {
 }
 
 type WorkInfo struct {
-	TestInline InlineTest `json:"test_inline" bson:"test_inline,inline"`
+	TestInline InlineTest `json:"test_inline" bson:"inline"`
 	Name       string     `json:"name" bson:"name"`
 }
 

@@ -606,7 +606,12 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	// 判断是否有更新时
 	for _, field := range model.info.FlatFields {
 		if field.IsUpdated {
-			diff[field.MapName] = time.Now().Local()
+			// 判断参数中是否存在 存在则以参数中为准
+			if v, ok := pa[field.MapName]; !ok {
+				diff[field.MapName] = time.Now().Local()
+			} else {
+				diff[field.MapName] = v
+			}
 			break
 		}
 	}

@@ -79,11 +79,7 @@ func typeGetVal(v string, fieldType string) (any, error) {
 	case "time.Time":
 		// 最主要解决的是mongodb插入的时间是UTC时间
 		// 所以需要进行比较的时间一定要是UTC格式
-		t, err := time.Parse(time.RFC3339, val.(string))
-		if err != nil {
-			t, err = time.Parse("2006-01-02 15:04:05", val.(string))
-		}
-		val = primitive.NewDateTimeFromTime(t)
+		val, err = normalTimeParseBsonTime(val.(string))
 		break
 	case "primitive.ObjectID":
 		val, err = primitive.ObjectIDFromHex(v)
@@ -371,6 +367,7 @@ func TableNameGetNestedStructMaps(r reflect.Type, parentStructName, parentMapNam
 		d.CustomTag = field.Tag.Get("mab")
 		d.ValidateTag = field.Tag.Get("validate")
 		d.Bson = strings.Split(field.Tag.Get("bson"), ",")
+		d.Json = strings.Split(field.Tag.Get("json"), ",")
 		d.Index = i
 		if len(parentLevel) > 0 {
 			d.Level = strings.Join([]string{parentLevel, "-", strconv.Itoa(i)}, "")
@@ -470,4 +467,13 @@ func flatField(fields []StructInfo) []StructInfo {
 		result = append(result, field)
 	}
 	return result
+}
+
+// 时间解析
+func normalTimeParseBsonTime(s string) (primitive.DateTime, error) {
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		t, err = time.Parse("2006-01-02 15:04:05", s)
+	}
+	return primitive.NewDateTimeFromTime(t), err
 }

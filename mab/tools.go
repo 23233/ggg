@@ -3,7 +3,6 @@ package mab
 import (
 	"github.com/23233/ggg/ut"
 	"github.com/google/go-cmp/cmp"
-	"github.com/naamancurtis/mongo-go-struct-to-bson/mapper"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -314,11 +313,9 @@ func even(number int) bool {
 }
 
 // DiffBson 两个bson.m 对比 获取异同
-func DiffBson(origin interface{}, news interface{}, jsonData map[string]interface{}) (bson.M, bson.M) {
-	o := mapper.ConvertStructToBSONMap(origin, nil)
-	n := mapper.ConvertStructToBSONMap(news, nil)
-	var diff = make(bson.M)
-	var eq = make(bson.M)
+func DiffBson(o bson.M, n bson.M, jsonData bson.M) (diff bson.M, eq bson.M) {
+	diff = make(bson.M)
+	eq = make(bson.M)
 	for k, v := range o {
 		// 先判断拥有同样的key
 		val, ok := n[k]
@@ -335,7 +332,7 @@ func DiffBson(origin interface{}, news interface{}, jsonData map[string]interfac
 
 		}
 	}
-	return diff, eq
+	return
 }
 
 func UTCTrans(utcTime string) (time.Time, error) {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/23233/ggg/sv"
-	"github.com/devfeel/mapper"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -495,18 +494,25 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		model = model.CustomModel(ctx, model)
 	}
 
+	// pa 就是传入的 params对象 仅做各类验证使用 有传入才会变更
 	body, _ := ctx.GetBody()
-	var pa map[string]interface{}
-	_ = json.Unmarshal(body, &pa)
+	pa := make(bson.M)
+	err := json.Unmarshal(body, &pa)
+	if err != nil {
+		fastError(err, ctx)
+		return
+	}
 
-	req := ctx.Values().Get(sv.GlobalContextKey)
-	if req == nil {
+	// 这个是直接映射的模型 model 最后传入的关键
+	reqModel := ctx.Values().Get(sv.GlobalContextKey)
+	if reqModel == nil {
 		fastError(errors.New("参数错误"), ctx)
 		return
 	}
 
-	reqMap := make(map[string]interface{})
-	err := mapper.Mapper(req, &reqMap)
+	reqMap := make(bson.M)
+	b, _ := bson.Marshal(reqModel)
+	err = bson.Unmarshal(b, &reqMap)
 	if err != nil {
 		fastError(err, ctx)
 		return
@@ -542,7 +548,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		if !val {
 			privateVal := ctx.Values().Get(model.PrivateContextKey)
 			if _, ok := reqMap[model.PrivateColName]; ok {
-				reflect.Indirect(reflect.ValueOf(req)).Field(model.privateIndex).Set(reflect.ValueOf(privateVal))
+				reflect.Indirect(reflect.ValueOf(reqModel)).Field(model.privateIndex).Set(reflect.ValueOf(privateVal))
 			}
 		}
 	}
@@ -571,7 +577,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 
 	// 满足特殊需求的query
 	if model.PutQueryParse != nil {
-		query = model.PutQueryParse(ctx, mid, query, req, privateValue)
+		query = model.PutQueryParse(ctx, mid, query, reqModel, privateValue)
 	}
 
 	// 先获取这条数据
@@ -581,8 +587,12 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		return
 	}
 
+	dataBson := make(bson.M)
+	b, _ = bson.Marshal(data)
+	_ = bson.Unmarshal(b, &dataBson)
+
 	// 取不同 会存在嵌套struct整体更新的问题 逻辑上正常 暂不修改
-	diff, _ := DiffBson(data, req, pa)
+	diff, _ := DiffBson(dataBson, reqMap, pa)
 
 	// 如果没有什么不同 则直接返回
 	if len(diff) < 1 {

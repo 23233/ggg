@@ -81,7 +81,7 @@ func typeGetVal(v string, fieldType string) (any, error) {
 		// 所以需要进行比较的时间一定要是UTC格式
 		t, err := time.Parse(time.RFC3339, val.(string))
 		if err != nil {
-			t, _ = time.Parse("2006-01-02 15:04:05", val.(string))
+			t, err = time.Parse("2006-01-02 15:04:05", val.(string))
 		}
 		val = primitive.NewDateTimeFromTime(t)
 		break

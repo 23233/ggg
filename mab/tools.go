@@ -86,8 +86,7 @@ func typeGetVal(v string, fieldType string) (any, error) {
 		val = primitive.NewDateTimeFromTime(t)
 		break
 	case "primitive.ObjectID":
-		oid, _ := primitive.ObjectIDFromHex(v)
-		val = oid
+		val, err = primitive.ObjectIDFromHex(v)
 		break
 	}
 	return val, err

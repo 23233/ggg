@@ -518,9 +518,9 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		return
 	}
 
-	// 如果有新增必须存在的参数
-	if len(model.PostMustFilters) > 0 {
-		for k := range model.PostMustFilters {
+	// 如果有修改必须存在的参数
+	if len(model.PutMustFilters) > 0 {
+		for k := range model.PutMustFilters {
 			if _, ok := pa[k]; !ok {
 				fastError(nil, ctx, "必填参数缺失")
 				return
@@ -620,7 +620,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 			if v, ok := pa[field.MapName]; !ok {
 				diff[field.MapName] = time.Now().Local()
 			} else {
-				diff[field.MapName] = v
+				diff[field.MapName], err = normalTimeParseBsonTime(v.(string))
 			}
 			break
 		}

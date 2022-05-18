@@ -4,6 +4,7 @@
 
 * t 代表前端渲染的类型
     * img 作用于表格 会把值作为 img 的src 进行图片显示
+        * thumbnail 可描述为缩略图模式
     * textarea 作用于表单 会渲染为textarea输入框
     * markdown 作用于表单 会渲染为markdown编辑器
 * fk 外键

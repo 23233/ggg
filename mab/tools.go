@@ -58,26 +58,23 @@ func containOperators(k string) (bool, string, string) {
 	return false, k, ""
 }
 
-func typeGetVal(v string, fieldType string) interface{} {
-	var val interface{} = v
+func typeGetVal(v string, fieldType string) (any, error) {
+	var val any = v
+	var err error
 
 	// 检测value是否非string
 	switch fieldType {
 	case "int", "int8", "int16", "int32", "int64", "time.Duration":
-		d, _ := strconv.ParseInt(v, 10, 64)
-		val = d
+		val, err = strconv.ParseInt(v, 10, 64)
 		break
 	case "uint", "uint8", "uint16", "uint32", "uint64":
-		d, _ := strconv.ParseUint(v, 10, 64)
-		val = d
+		val, err = strconv.ParseUint(v, 10, 64)
 		break
 	case "float32", "float64":
-		d, _ := strconv.ParseFloat(v, 64)
-		val = d
+		val, err = strconv.ParseFloat(v, 64)
 		break
 	case "bool":
-		d, _ := parseBool(v)
-		val = d
+		val, err = parseBool(v)
 		break
 	case "time.Time":
 		// 最主要解决的是mongodb插入的时间是UTC时间
@@ -93,7 +90,7 @@ func typeGetVal(v string, fieldType string) interface{} {
 		val = oid
 		break
 	}
-	return val
+	return val, err
 }
 
 // 从字段信息中 匹配参数
@@ -116,7 +113,11 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 			}
 			var item bson.E
 
-			val := typeGetVal(v, field.Types)
+			// 赋值未过类型检测机制 则跳过
+			val, err := typeGetVal(v, field.Types)
+			if err != nil {
+				break
+			}
 
 			// 包含struct分隔符就是fullName 默认value是string
 			if strings.Contains(n, structDelimiter) {
@@ -140,7 +141,10 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 					if field.Kind == "slice" {
 						var result = make([]interface{}, 0, len(inList))
 						for _, s := range inList {
-							result = append(result, typeGetVal(s, strings.TrimPrefix(field.Types, "[]")))
+							v, err := typeGetVal(s, strings.TrimPrefix(field.Types, "[]"))
+							if err == nil {
+								result = append(result, v)
+							}
 						}
 						val = result
 					}

@@ -3,7 +3,7 @@ module github.com/23233/ggg/smab
 go 1.18
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220518071309-0b697d5754d2
+	github.com/23233/ggg/mab v0.0.0-20220518132118-00a6559a333e
 	github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2
 	github.com/casbin/casbin/v2 v2.44.0
 	github.com/casbin/mongodb-adapter/v3 v3.2.1
@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/23233/ggg/ut v0.0.0-20220518070044-fd8199ed5f85 // indirect
+	github.com/23233/ggg/ut v0.0.0-20220518132118-00a6559a333e // indirect
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.1.0 // indirect

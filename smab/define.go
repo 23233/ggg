@@ -26,6 +26,7 @@ type Configs struct {
 	Prefix           string                 // 前缀
 	AllowTokenLogin  bool                   // 是否允许root使用token登录
 	OnFileUpload     func(ctx iris.Context) // 图片上传事件 成功返回JSON{origin:"",thumbnail:""} origin必须存在 失败则JSON{detail:"失败理由"}
+	PublicKey        string                 // 公开密钥 如果有密钥则会对上传进行介入
 	CasbinConfig     CasbinConfigDefine
 	GlobalQianKun    []QianKunConfigExtra // 全局所有用户都能看到的前端信息
 	SuperUserQianKun []QianKunConfigExtra // 仅管理员可见

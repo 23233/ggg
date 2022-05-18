@@ -68,6 +68,7 @@ type WorkDetail struct {
 	Desc         string     `json:"desc" bson:"desc" mab:"t=markdown"`
 	Bll          []string   `json:"bll" bson:"bll"`
 	TestInline   InlineTest `json:"test_inline" bson:"test_inline"`
+	ImgTest      []string   `json:"img_test,omitempty" bson:"img_test,omitempty" mab:"t=img,thumbnail"`
 }
 
 func (c *WorkDetail) Alias() string {
@@ -154,7 +155,6 @@ func main() {
 			new(User),
 			new(TwoInline),
 		},
-
 		CasbinConfig: smab.CasbinConfigDefine{
 			Uri: getEnv("mongo_uri", ""),
 		},
@@ -171,6 +171,7 @@ func main() {
 			MainText: []string{"请不要作死", "都有记录", "违规直接封号"},
 			Desc:     []string{"好的", "我都懂", "发个什么通知也是可以的"},
 		},
+		PublicKey: getEnv("public_key", ""),
 	})
 	if err != nil {
 		panic(err)

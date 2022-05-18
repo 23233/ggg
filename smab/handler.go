@@ -15,6 +15,7 @@ func Index(ctx iris.Context) {
 	ctx.ViewData("prefix", NowSp.config.Prefix[1:])
 	ctx.ViewData("base", NowSp.config.Prefix)
 	ctx.ViewData("name", NowSp.config.Name)
+	ctx.ViewData("public_key", NowSp.config.PublicKey)
 	_ = ctx.View("smab")
 }
 
@@ -98,9 +99,10 @@ func GetUserInfo(ctx iris.Context) {
 		u.QianKun = append(u.QianKun, NowSp.config.SuperUserQianKun...)
 	}
 	_, _ = ctx.JSON(iris.Map{
-		"policy":  resp,
-		"qiankun": u.QianKun,
-		"welcome": NowSp.config.WelComeConfig,
+		"policy":     resp,
+		"qiankun":    u.QianKun,
+		"welcome":    NowSp.config.WelComeConfig,
+		"public_key": NowSp.config.PublicKey,
 	})
 }
 

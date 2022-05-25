@@ -13,3 +13,11 @@ type SmAction struct {
 	Scheme       string             `json:"scheme" bson:"scheme" comment:"表单定义" mab:"t=textarea"`
 	PostUrl      string             `json:"post_url" bson:"post_url" comment:"发送接口"`
 }
+
+// SmActionReq 动作请求基础
+type SmActionReq struct {
+	Record map[string]any `json:"record" form:"record"`
+	T      string         `json:"t" form:"t"`
+	Action string         `json:"action" form:"action"`
+	Table  string         `json:"table" form:"table"`
+}

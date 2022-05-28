@@ -3,7 +3,7 @@ module github.com/23233/ggg/smab
 go 1.18
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220518132118-00a6559a333e
+	github.com/23233/ggg/mab v0.0.0-20220528095325-a2c2941f018c
 	github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2
 	github.com/casbin/casbin/v2 v2.44.0
 	github.com/casbin/mongodb-adapter/v3 v3.2.1
@@ -39,6 +39,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.9.8-0.20220506185958-23bd66f4c0d5 // indirect
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
+	github.com/golang/mock v1.5.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -67,7 +68,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/naamancurtis/mongo-go-struct-to-bson v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
@@ -98,6 +98,7 @@ require (
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )

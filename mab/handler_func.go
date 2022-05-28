@@ -26,13 +26,51 @@ type CtxGetDataParse struct {
 	SortAsc     string   // 升序
 	SortList    []string // order by
 	LastMid     primitive.ObjectID
-	HasGeo      bool       // 是否包含geo信息
-	GeoInfo     CtxGeoInfo // geo信息
-	Search      string     // 搜索词
-	SearchBson  []bson.E   // 对应的搜索bson
-	Pk          []bson.D   // 外键
+	HasGeo      bool        // 是否包含geo信息
+	GeoInfo     *CtxGeoInfo // geo信息
+	Search      string      // 搜索词
+	SearchBson  []bson.E    // 对应的搜索bson
+	Pk          []bson.D    // 外键
 	Page        int64
 	PageSize    int64
+}
+
+func CtxGeoParse(ctx iris.Context) (bool, *CtxGeoInfo, error) {
+	var geo = new(CtxGeoInfo)
+	var err error
+	// 解析出有没有geo信息
+	geoStr := ctx.URLParam("_g")
+	geoMax, _ := ctx.URLParamInt64("_gmax")
+	geoMin, _ := ctx.URLParamInt64("_gmin")
+	var lng, lat float64
+	var hasGeo = len(geoStr) >= 1
+	if hasGeo {
+		if !strings.Contains(geoStr, ",") {
+			return false, nil, errors.New("_g 参数格式错误")
+		}
+		geoList := strings.Split(geoStr, ",")
+		if len(geoList) != 2 {
+			return false, nil, errors.New("_g 参数格式解析错误")
+		}
+		lng, err = strconv.ParseFloat(geoList[0], 64)
+		if err != nil {
+			return false, nil, err
+		}
+		lat, err = strconv.ParseFloat(geoList[1], 64)
+		if err != nil {
+			return false, nil, err
+
+		}
+		geo = &CtxGeoInfo{
+			Lng:    lng,
+			Lat:    lat,
+			GeoMax: geoMax,
+			GeoMin: geoMin,
+		}
+	}
+
+	return hasGeo, geo, nil
+
 }
 
 func CtxDataParse(ctx iris.Context, sm *SingleModel, delimiter string) (*CtxGetDataParse, error) {
@@ -75,38 +113,12 @@ func CtxDataParse(ctx iris.Context, sm *SingleModel, delimiter string) (*CtxGetD
 	r.FilterBson = filterList
 	r.OrBson = orList
 
-	// 解析出有没有geo信息
-	geoStr := ctx.URLParam("_g")
-	geoMax, _ := ctx.URLParamInt64("_gmax")
-	geoMin, _ := ctx.URLParamInt64("_gmin")
-	var lng, lat float64
-	var hasGeo = len(geoStr) >= 1
-	if hasGeo {
-		if !strings.Contains(geoStr, ",") {
-			return nil, errors.New("_g 参数格式错误")
-		}
-		geoList := strings.Split(geoStr, ",")
-		if len(geoList) != 2 {
-			return nil, errors.New("_g 参数格式解析错误")
-		}
-		lng, err = strconv.ParseFloat(geoList[0], 64)
-		if err != nil {
-			return nil, err
-		}
-		lat, err = strconv.ParseFloat(geoList[1], 64)
-		if err != nil {
-			return nil, err
-
-		}
-		r.GeoInfo = CtxGeoInfo{
-			Lng:    lng,
-			Lat:    lat,
-			GeoMax: geoMax,
-			GeoMin: geoMin,
-		}
+	hasGeo, geoInfo, err := CtxGeoParse(ctx)
+	if err != nil {
+		return nil, err
 	}
-
 	r.HasGeo = hasGeo
+	r.GeoInfo = geoInfo
 
 	// 最后的id
 	lastMid := ctx.URLParam("_last")

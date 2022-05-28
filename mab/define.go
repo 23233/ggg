@@ -80,7 +80,7 @@ type SingleModel struct {
 	DeleteRate            *limiter.Limiter                                                                                    //
 }
 
-func (sm *SingleModel) init(delimiter string, relPath string, privateContextKey string, PrivateColName string) {
+func (sm *SingleModel) Init(delimiter string, relPath string, privateContextKey string, PrivateColName string) {
 	model := sm.Model
 	ct := reflect.TypeOf(model)
 	if ct.Kind() == reflect.Ptr {

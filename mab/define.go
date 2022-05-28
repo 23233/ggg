@@ -80,7 +80,7 @@ type SingleModel struct {
 	DeleteRate            *limiter.Limiter                                                                                    //
 }
 
-func (sm *SingleModel) init(cfg *Config) {
+func (sm *SingleModel) init(delimiter string, relPath string, privateContextKey string, PrivateColName string) {
 	model := sm.Model
 	ct := reflect.TypeOf(model)
 	if ct.Kind() == reflect.Ptr {
@@ -105,9 +105,7 @@ func (sm *SingleModel) init(cfg *Config) {
 	// 拼接效率高
 	uriPath := strings.Join(uriList, "")
 	sm.uriPath = uriPath
-	fields := TableNameReflectFieldsAndTypes(model, cfg.StructDelimiter)
-
-	relPath := cfg.Party.GetRelPath()
+	fields := TableNameReflectFieldsAndTypes(model, delimiter)
 
 	fullPath := strings.Join([]string{relPath, uriPath}, "")
 	if relPath == "/" {
@@ -188,7 +186,7 @@ func (sm *SingleModel) init(cfg *Config) {
 		sm.searchFields = b
 	}
 	// 生成private信息
-	sm.genPrivate(cfg.PrivateContextKey, cfg.PrivateColName)
+	sm.genPrivate(privateContextKey, PrivateColName)
 }
 
 func (sm *SingleModel) reset(v any) {
@@ -384,6 +382,7 @@ type StructInfo struct {
 	ParamsKey     string       `json:"params_key"`             // post form key name
 	CustomTag     string       `json:"custom_tag"`             // 自定义标签信息 mab:
 	ValidateTag   string       `json:"validate_tag,omitempty"` // 验证器标签信息
+	DescTag       string       `json:"desc_tag,omitempty"`     // 描述标签信息
 	Comment       string       `json:"comment,omitempty"`
 	Level         string       `json:"level"` // parentIndex - .... - self index
 	Kind          string       `json:"kind"`

@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -45,243 +44,17 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 	if sm.CustomModel != nil {
 		sm = sm.CustomModel(ctx, sm)
 	}
-	page := ctx.URLParamInt64Default("page", 1)
-	maxCount, maxSize := sm.getPage()
-	if page > maxCount {
-		page = maxCount
-	}
-	pageSize := ctx.URLParamInt64Default("page_size", 10)
-	if pageSize > maxSize {
-		pageSize = maxSize
-	}
 
-	var urlParamsMap = ctx.URLParams()
-	if sm.InjectParams != nil {
-		urlParamsMap = sm.InjectParams(ctx)
-	}
-
-	// 从url中解析出filter
-	filterList, orList := filterMatch(urlParamsMap, sm.info.FlatFields, rest.Cfg.StructDelimiter)
-	// 判断必传参数是否存在
-	if len(sm.GetAllMustFilters) > 0 {
-		for k := range sm.GetAllMustFilters {
-			has := false
-			for _, f := range append(filterList, orList...) {
-				if k == f.Key {
-					has = true
-					break
-				}
-			}
-			if !has {
-				fastError(nil, ctx, "必填参数缺失")
-				return
-			}
-		}
-	}
-
-	// 解析出有没有geo信息
-	geoStr := ctx.URLParam("_g")
-	geoMax, _ := ctx.URLParamInt64("_gmax")
-	geoMin, _ := ctx.URLParamInt64("_gmin")
-	var lng, lat float64
-	var hasGeo = len(geoStr) >= 1
-	if hasGeo {
-		if !strings.Contains(geoStr, ",") {
-			fastError(errors.New("_g 参数格式错误"), ctx)
-			return
-		}
-		geoList := strings.Split(geoStr, ",")
-		if len(geoList) != 2 {
-			fastError(errors.New("_g 参数格式解析错误"), ctx)
-			return
-		}
-		lng, err = strconv.ParseFloat(geoList[0], 64)
-		if err != nil {
-			fastError(err, ctx)
-			return
-		}
-		lat, err = strconv.ParseFloat(geoList[1], 64)
-		if err != nil {
-			fastError(err, ctx)
-			return
-		}
-	}
-
-	// 最后的id
-	lastMid := ctx.URLParam("_last")
-	var lastObj primitive.ObjectID
-	if len(lastMid) > 0 {
-		lastObj, err = primitive.ObjectIDFromHex(lastMid)
-		if err != nil {
-			fastError(err, ctx, "last mid 解析失败")
-			return
-		}
-	}
-
-	// 解析出order by
-	descField := ctx.URLParam("_od")
-	orderBy := ctx.URLParam("_o")
-	sortList := make([]string, 0, 2)
-	if len(descField) > 0 {
-		sortList = append(sortList, "-"+descField)
-	}
-	if len(orderBy) > 0 {
-		sortList = append(sortList, orderBy)
-	}
-
-	// 如果有额外附加字段
-	extraBson := make([]bson.E, 0)
-	if sm.GetAllExtraFilters != nil {
-		extraMap := sm.GetAllExtraFilters(ctx)
-		for k, v := range extraMap {
-			extraBson = append(extraBson, bson.E{
-				Key:   k,
-				Value: v,
-			})
-		}
-	}
-
-	// 匹配出搜索
-	searchStr := ctx.URLParam("_s")
-	searchBson := make([]bson.E, 0)
-	if len(searchStr) >= 1 {
-		if len(sm.searchFields) < 1 {
-			fastError(errors.New("搜索功能未启用"), ctx)
-			return
-		}
-		v := strings.ReplaceAll(searchStr, "__", "")
-		objId, err := primitive.ObjectIDFromHex(v)
-		if err == nil {
-			if sm.MustSearch {
-				for _, info := range sm.info.FieldList {
-					if info.IsObjId {
-						orList = append(orList, bson.E{
-							Key:   info.MapName,
-							Value: objId,
-						})
-					}
-				}
-				orList = append(orList, bson.E{Key: "_id", Value: objId})
-			}
-		} else {
-			for _, field := range sm.searchFields {
-				if strings.HasPrefix(searchStr, "__") && strings.HasSuffix(searchStr, "__") {
-					searchBson = append(searchBson, bson.E{
-						Key: field.MapName,
-						Value: bson.D{
-							{"$regex", primitive.Regex{Pattern: v, Options: "i"}},
-						},
-					})
-					continue
-				}
-				// 如果是前匹配
-				if strings.HasPrefix(searchStr, "__") {
-					searchBson = append(searchBson, bson.E{
-						Key: field.MapName,
-						Value: bson.D{
-							{"$regex", primitive.Regex{Pattern: "^" + v, Options: "i"}},
-						},
-					})
-					continue
-				}
-				// 如果是后匹配
-				if strings.HasSuffix(searchStr, "__") {
-					searchBson = append(searchBson, bson.E{
-						Key: field.MapName,
-						Value: bson.D{
-							{"$regex", primitive.Regex{Pattern: v + "$", Options: "i"}},
-						},
-					})
-					continue
-				}
-			}
-		}
-	}
-
-	// 私密参数
-	privateBson := make([]bson.E, 0)
-	if sm.private {
-		val, _ := sm.DisablePrivateMap["get(all)"]
-		if !val {
-			privateValue := ctx.Values().Get(sm.PrivateContextKey)
-			privateBson = append(privateBson, bson.E{
-				Key:   sm.PrivateColName,
-				Value: privateValue,
-			})
-		}
-	}
-
-	//判断是否附加外键
-	lookup := make([]bson.D, 0)
-	if sm.Pk != nil {
-		lookup = sm.Pk()
-	}
-	// 批量查询 必须为map 因为如果有外键会新增字段 无法映射到struct上面去
-	// 如果判断外键存在切换的话 会存在返回数据不一致的问题
-	batch := make([]bson.M, 0)
-
-	// 组合出查询条件
-	query := cmpQuery(orList, filterList, searchBson, privateBson, extraBson, lastObj)
-
-	// 如果有geo 进入geo分支
-	if hasGeo {
-		pipeline := geoQuery(query, lookup, page, pageSize, lng, lat, geoMax, geoMin, descField, orderBy)
-		err = rest.Cfg.Mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).All(&batch)
-	} else {
-		// 如果是包含外键的
-		if len(lookup) > 0 {
-			pipeline := fkCmpQuery(query, lookup, page, pageSize, descField, orderBy)
-			err = rest.Cfg.Mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).All(&batch)
-		} else {
-			err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).Limit(pageSize).Skip((page - 1) * pageSize).Sort(sortList...).All(&batch)
-		}
-	}
-
+	parse, err := CtxDataParse(ctx, sm, rest.Cfg.StructDelimiter)
 	if err != nil {
-		fastError(err, ctx, "查询出现错误")
+		fastError(err, ctx)
 		return
 	}
 
-	result := iris.Map{
-		"page_size": pageSize,
-		"page":      page,
-		"data":      batch,
-		"has_more":  (int64(len(batch)) - pageSize) >= 0,
-	}
-
-	if sm.ShowCount {
-		count, err := rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).Count()
-		if err != nil {
-			fastError(err, ctx, "获取数量失败")
-			return
-		}
-		result["count"] = count
-	}
-
-	if sm.ShowDocCount {
-		mColl, _ := rest.Cfg.Mdb.Collection(sm.info.MapName).CloneCollection()
-		allCount, err := mColl.EstimatedDocumentCount(ctx)
-		if err != nil {
-			fastError(err, ctx, "获取文档总数量失败")
-			return
-		}
-		result["doc_count"] = allCount
-	}
-
-	if len(descField) >= 1 {
-		result["desc_field"] = descField
-	}
-	if len(orderBy) >= 1 {
-		result["order"] = orderBy
-	}
-	if len(filterList) >= 1 {
-		result["filter"] = filterList
-	}
-	if len(orList) >= 1 {
-		result["or"] = orList
-	}
-	if len(searchStr) >= 1 {
-		result["search"] = searchStr
+	batch, result, err := ModelGetData(ctx, sm, rest.Cfg.Mdb, parse)
+	if err != nil {
+		fastError(err, ctx, "查询数据出现错误")
+		return
 	}
 
 	// 如果需要自定义返回 把数据内容传过去
@@ -292,7 +65,7 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 	// 判断是否开启了缓存
 	if sm.getAllListCacheTime() >= 1 {
 		var extraStr strings.Builder
-		for _, v := range extraBson {
+		for _, v := range parse.ExtraBson {
 			extraStr.WriteString(fmt.Sprintf("%s=%s", v.Key, v.Value))
 		}
 
@@ -317,82 +90,14 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 	if rest.Cfg.Generator {
 		_, mid = rest.UriGetMid(ctx.Path())
 	}
-	privateBson := make([]bson.E, 0)
 
-	// 私密字段
-	if sm.private {
-		val, _ := sm.DisablePrivateMap["get(single)"]
-		if !val {
-			privateValue := ctx.Values().Get(sm.PrivateContextKey)
-			privateBson = append(privateBson, bson.E{
-				Key:   sm.PrivateColName,
-				Value: privateValue,
-			})
-		}
+	parse, err := CtxSingleDataParse(ctx, sm, mid, rest.Cfg.StructDelimiter)
+	if err != nil {
+		fastError(err, ctx)
+		return
 	}
 
-	// 如果有额外附加字段
-	extraBson := make([]bson.E, 0)
-	if sm.GetSingleExtraFilters != nil {
-		extraMap := sm.GetSingleExtraFilters(ctx)
-		for k, v := range extraMap {
-			extraBson = append(extraBson, bson.E{
-				Key:   k,
-				Value: v,
-			})
-		}
-	}
-	//
-	var urlParamsMap = ctx.URLParams()
-	if sm.InjectParams != nil {
-		urlParamsMap = sm.InjectParams(ctx)
-	}
-	// 从url中解析出filter 一般是不会传的
-	filterList, orList := filterMatch(urlParamsMap, sm.info.FlatFields, rest.Cfg.StructDelimiter)
-	// 判断必传参数是否存在
-	if len(sm.GetSingleMustFilters) > 0 {
-		for k := range sm.GetSingleMustFilters {
-			has := false
-			for i, f := range append(filterList, orList...) {
-				if even(i) {
-					if k == f.Key {
-						has = true
-						break
-					}
-				}
-			}
-			if !has {
-				fastError(nil, ctx, "参数错误")
-				return
-			}
-		}
-	}
-
-	objId, _ := primitive.ObjectIDFromHex(mid)
-
-	filterList = append(filterList, bson.E{
-		Key:   "_id",
-		Value: objId,
-	})
-
-	// 一样必须为bson.M 如果为struct 则无法映射外键数据
-	var newData = bson.M{}
-
-	var err error
-	//判断是否附加外键
-	lookup := make([]bson.D, 0)
-	if sm.Pk != nil {
-		lookup = sm.Pk()
-	}
-	query := cmpQuery(orList, filterList, nil, privateBson, extraBson, primitive.NilObjectID)
-
-	if len(lookup) > 0 {
-		pipeline := fkCmpQuery(query, lookup, 1, 1, "", "")
-		err = rest.Cfg.Mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).One(newData)
-	} else {
-		err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(newData)
-	}
-
+	newData, err := ModelGetSingle(ctx, sm, rest.Cfg.Mdb, parse)
 	if err != nil {
 		fastError(err, ctx, "查询数据失败")
 		return
@@ -405,7 +110,7 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 
 	if sm.getSingleCacheTime() >= 1 {
 		var extraStr strings.Builder
-		for _, v := range extraBson {
+		for _, v := range parse.ExtraBson {
 			extraStr.WriteString(fmt.Sprintf("%s=%s", v.Key, v.Value))
 		}
 		// 生成key

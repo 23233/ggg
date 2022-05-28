@@ -363,6 +363,7 @@ func TableNameGetNestedStructMaps(r reflect.Type, parentStructName, parentMapNam
 		d.Comment = field.Tag.Get("comment")
 		d.CustomTag = field.Tag.Get("mab")
 		d.ValidateTag = field.Tag.Get("validate")
+		d.DescTag = field.Tag.Get("desc")
 		d.Bson = strings.Split(field.Tag.Get("bson"), ",")
 		d.JsonTag = strings.Split(field.Tag.Get("json"), ",")
 		d.Index = i

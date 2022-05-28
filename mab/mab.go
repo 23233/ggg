@@ -122,7 +122,7 @@ func (rest *RestApi) run() {
 // initModel 初始化模型信息
 func (rest *RestApi) initModel() {
 	for _, item := range rest.Cfg.Models {
-		item.init(rest.Cfg)
+		item.init(rest.Cfg.StructDelimiter, rest.Cfg.Party.GetRelPath(), rest.Cfg.PrivateContextKey, rest.Cfg.PrivateColName)
 	}
 }
 

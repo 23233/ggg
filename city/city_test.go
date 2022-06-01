@@ -37,6 +37,14 @@ func TestProvinceGetCity(t *testing.T) {
 	t.Fatal("获取省份失败")
 }
 
+func TestMatch(t *testing.T) {
+	t.Log(Match("重庆"))
+}
+
+func TestSearch(t *testing.T) {
+	t.Log(Search("上海"))
+}
+
 func BenchmarkRandomGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		RandomGet(10, "自治州", "地区")

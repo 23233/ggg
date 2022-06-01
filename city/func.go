@@ -179,6 +179,29 @@ func AdCodeGet(code string) *TreeNode {
 	return nil
 }
 
+func Search(name string) []TreeNode {
+	var r = make([]TreeNode, 0)
+	for _, node := range FlatData {
+		var fullName = node.Name + node.Suffix
+		if node.Name == name || fullName == name {
+			r = append(r, *node)
+		}
+	}
+	return r
+}
+
+func Match(name string) (*TreeNode, bool) {
+	var r TreeNode
+	for _, node := range FlatData {
+		var fullName = node.Name + node.Suffix
+		if node.Name == name || fullName == name {
+			r = *node
+			return &r, true
+		}
+	}
+	return nil, false
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano()) // always seed random!
 }

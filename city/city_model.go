@@ -13,11 +13,15 @@ var cityCsv []byte
 
 var py = pinyin.NewArgs()
 
+type TreeBase struct {
+	Adcode string `json:"adcode"` // 唯一id 数字的
+	Name   string `json:"name"`   // 名称
+	Suffix string `json:"suffix"` // 后缀
+}
+
 type TreeNode struct {
+	TreeBase
 	Parent     string      `json:"parent"`      // 这个是父级的adcode
-	Adcode     string      `json:"adcode"`      // 唯一id 数字的
-	Name       string      `json:"name"`        // 名称
-	Suffix     string      `json:"suffix"`      // 后缀
 	Py         string      `json:"py"`          // 拼音
 	Pf         string      `json:"pf"`          // 拼音首字符
 	IsProvince bool        `json:"is_province"` // 省份
@@ -123,11 +127,8 @@ func mapToTree(c csvMap) *TreeNode {
 		city = true
 	}
 
-	return &TreeNode{
+	var r = &TreeNode{
 		Parent:     c.Parent,
-		Adcode:     c.Adcode,
-		Name:       c.Name,
-		Suffix:     c.Suffix,
 		Py:         st.String(),
 		Pf:         pf.String(),
 		IsProvince: province,
@@ -137,6 +138,12 @@ func mapToTree(c csvMap) *TreeNode {
 		Lng:        c.Lng,
 		Children:   []*TreeNode{},
 	}
+
+	r.Adcode = c.Adcode
+	r.Name = c.Name
+	r.Suffix = c.Suffix
+
+	return r
 }
 
 func init() {

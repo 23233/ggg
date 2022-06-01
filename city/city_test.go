@@ -6,8 +6,13 @@ func TestRandomGet(t *testing.T) {
 	l := RandomGet(1, "自治州")
 	allCity := GetAllCityStr(true)
 	t.Log(len(allCity))
-	t.Log(allCity)
+	//t.Log(allCity)
 	t.Log(l[0])
+}
+
+func TestGetAllCityBase(t *testing.T) {
+	allCity := GetAllCityBase()
+	t.Log(len(allCity))
 }
 
 func TestAdCodeGet(t *testing.T) {

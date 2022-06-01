@@ -125,6 +125,15 @@ func GetAllCityStr(hasSuffix bool) []string {
 	return r
 }
 
+func GetAllCityBase() []TreeBase {
+	var allCity = GetAllCity()
+	var r = make([]TreeBase, 0, len(allCity))
+	for _, node := range allCity {
+		r = append(r, node.TreeBase)
+	}
+	return r
+}
+
 func AdCodeGet(code string) *TreeNode {
 	var r TreeNode
 	for _, node := range FlatData {

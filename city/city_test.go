@@ -10,6 +10,11 @@ func TestRandomGet(t *testing.T) {
 	t.Log(l[0])
 }
 
+func TestGetZcsStr(t *testing.T) {
+	t.Log(GetZcsStr(true))
+	t.Log(GetZscBase())
+}
+
 func TestGetAllCityBase(t *testing.T) {
 	allCity := GetAllCityBase()
 	t.Log(len(allCity))

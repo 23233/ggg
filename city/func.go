@@ -36,12 +36,46 @@ func randomGetOne(exclude ...string) *TreeNode {
 	return nil
 }
 
+// GetCodes 合并获取多个code内容
+func GetCodes(codes ...string) []TreeNode {
+	if len(codes) >= 1 {
+		var r = make([]TreeNode, 0)
+		for _, code := range codes {
+			result := AdCodeGet(code)
+			if result != nil {
+				r = append(r, *result)
+			}
+		}
+		return r
+	}
+	return nil
+}
+
+func GetZsc() []TreeNode {
+	return GetCodes("110100", "310000", "500100", "120100")
+}
+
 // GetZcsStr 获取直辖市
 func GetZcsStr(hasSuffix bool) []string {
-	if hasSuffix {
-		return []string{"北京市", "上海市", "重庆市", "天津市"}
+	result := GetZsc()
+	var r = make([]string, 0, 4)
+	for _, node := range result {
+		if hasSuffix {
+			r = append(r, node.Name+node.Suffix)
+		} else {
+			r = append(r, node.Name)
+		}
 	}
-	return []string{"北京", "上海", "重庆", "天津"}
+	return r
+}
+
+func GetZscBase() []TreeBase {
+	result := GetZsc()
+	var r = make([]TreeBase, 0, len(result))
+	for _, node := range result {
+		r = append(r, node.TreeBase)
+	}
+	return r
 }
 
 // GetGytStr 获取港澳台

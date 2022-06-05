@@ -9,7 +9,7 @@
     * markdown 作用于表单 会渲染为markdown编辑器
 * fk 外键
     * 例子: fk=User
-    * 建议只使用id primitive.ObjectID类型
+    * 可选 col=[FieldName] 即指定映射字段信息 eg: fk=EventManage,col=Name 建议只使用id primitive.ObjectID类型
 
 ##### 图表接口
 

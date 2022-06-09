@@ -106,11 +106,16 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 				break
 			}
 			var item bson.E
+			var val any
+			var err error
 
 			// 赋值未过类型检测机制 则跳过
-			val, err := typeGetVal(v, field.Types)
-			if err != nil {
-				break
+			// 若操作为bool则不用校验类型
+			if op != "null" && op != "exists" {
+				val, err = typeGetVal(v, field.Types)
+				if err != nil {
+					break
+				}
 			}
 
 			// 包含struct分隔符就是fullName 默认value是string

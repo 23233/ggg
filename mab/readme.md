@@ -38,7 +38,7 @@ struct定义的名称
 
 参数操作符
   * 通过_[op] 或 _[op]_ 可进行操作符定义 eg: params: address__position_eq_="赵日天" 会转换成 {"address.position":{"$eq":"赵日天"}}
-  * 支持的op有 `eq`, `gt`, `gte`, `lt`, `lte`, `ne` , `in`, `nin`,`exists`
+  * 支持的op有 `eq`, `gt`, `gte`, `lt`, `lte`, `ne` , `in`, `nin`,`exists`,`null`
   * `exists` 不是内容 而是指字段是否存在 例如 `name_exists_`:`true`|`false` 则表示`name`字段是否存在
   * `null` 表示内容是否存在 eg: `name_null_`:`true`|`false` 则表示`name`字段内容是否存在
 

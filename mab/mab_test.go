@@ -818,7 +818,7 @@ func TestOp(t *testing.T) {
 	existsGet.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
 
 	nullGet := e.GET(fp).WithQueryObject(map[string]any{
-		"name_null_": true,
+		"name_null_": false,
 	}).Expect().Status(httptest.StatusOK)
 	nullGet.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
 

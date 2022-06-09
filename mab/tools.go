@@ -158,7 +158,8 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 				// 检查字段内容是否存在
 				if op == "null" {
 					if v == "0" || v == "false" || len(v) < 1 {
-						item.Value = bson.M{"$type": 10}
+						var m = []any{nil, ""}
+						item.Value = bson.M{"$nin": m}
 					} else {
 						item.Value = bson.M{"$ne": nil}
 					}

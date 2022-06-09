@@ -16,7 +16,7 @@
     * spherical 为true 是球面计算方式
     * maxDistance 取参数`_gmax` 单位为米 可不传
     * minDistance 取参数`_gmin` 单位为米 可不传
-    * key 默认为location 暂不支持修改 
+    * key 默认为location 暂不支持修改
 
 * _gmax 必须与_g参数同时出现才有意义 为最大距离 单位米
 * _gmin 必须与_g参数同时出现才有意义 为最小距离 单位米
@@ -38,12 +38,14 @@ struct定义的名称
 
 参数操作符
   * 通过_[op] 或 _[op]_ 可进行操作符定义 eg: params: address__position_eq_="赵日天" 会转换成 {"address.position":{"$eq":"赵日天"}}
-  * 支持的op有 `eq`, `gt`, `gte`, `lt`, `lte`, `ne` , `in` `nin` 
+  * 支持的op有 `eq`, `gt`, `gte`, `lt`, `lte`, `ne` , `in`, `nin`,`exists`
+  * `exists` 不是内容 而是指字段是否存在 例如 `name_exists_`:`true`|`false` 则表示`name`字段是否存在
+  * `null` 表示内容是否存在 eg: `name_null_`:`true`|`false` 则表示`name`字段内容是否存在
 
 ```
 
 * 请一定要设置bson标签 若不设置则自动小写的蛇形
-* 字段别名 comment 标签 
+* 字段别名 comment 标签
 * 表别名 struct方法 Alias() string 或者SpAlias() string 方法
 * 修改成功后返回的是成功变更的字段序列
 * private context上下文传递的时候类型一定要同struct定义的一致

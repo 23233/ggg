@@ -36,7 +36,7 @@ func isContain(items []string, item string) bool {
 	return false
 }
 
-var operators = []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin"}
+var operators = []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin", "exists", "null"}
 
 // 操作后缀的分隔符
 var operatorsSep = "_"
@@ -142,9 +142,28 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 						}
 						val = result
 					}
-
 				}
+
+				// 为查询字段是否存在
+				if op == "exists" {
+					if v == "0" || v == "false" || len(v) < 1 {
+						val = false
+					} else {
+						val = true
+					}
+				}
+
 				item.Value = bson.M{"$" + op: val}
+
+				// 检查字段内容是否存在
+				if op == "null" {
+					if v == "0" || v == "false" || len(v) < 1 {
+						item.Value = bson.M{"$type": 10}
+					} else {
+						item.Value = bson.M{"$ne": nil}
+					}
+				}
+
 			}
 
 			result = append(result, item)

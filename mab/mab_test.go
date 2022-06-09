@@ -776,6 +776,57 @@ func TestGeo(t *testing.T) {
 	}
 }
 
+// 测试操作符
+func TestOp(t *testing.T) {
+	mdb := getDb()
+	app := iris.New()
+	iris.WithoutBodyConsumptionOnUnmarshal(app)
+	prefix := "/api/v1"
+	part := app.Party(prefix)
+	checkMc := &Config{
+		Party: part,
+		Mdb:   mdb,
+		Models: []*SingleModel{
+			{
+				Model: new(testModel),
+			},
+		},
+	}
+	New(checkMc)
+	e := httptest.New(t, app)
+	fp := prefix + "/test_model"
+
+	bodyMap := map[string]interface{}{
+		"age":  68,
+		"desc": "desc",
+	}
+	addData := e.POST(fp).WithJSON(bodyMap).Expect().Status(httptest.StatusOK)
+	resp := addData.JSON().Object()
+	resp.Value("id").NotNull()
+	resp.Value("desc").Equal("desc")
+	resp.Value("age").Equal(68)
+	id := resp.Value("id").String().Raw()
+	fs := fp + "/" + id
+
+	getAll := e.GET(fp).WithQueryObject(map[string]interface{}{
+		"age_gte_": 68,
+	}).Expect().Status(httptest.StatusOK)
+	getAll.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
+	existsGet := e.GET(fp).WithQueryObject(map[string]any{
+		"name_exists_": true,
+	}).Expect().Status(httptest.StatusOK)
+	existsGet.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
+
+	nullGet := e.GET(fp).WithQueryObject(map[string]any{
+		"name_null_": true,
+	}).Expect().Status(httptest.StatusOK)
+	nullGet.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
+
+	deleteData := e.DELETE(fs).Expect().Status(httptest.StatusOK)
+	deleteData.JSON().Object().Value("id").NotNull()
+
+}
+
 func TestAll(t *testing.T) {
 	t.Run("getAllFilter", TestGetAllFilter)
 	t.Run("normalCurd", TestNormalCrud)
@@ -788,4 +839,5 @@ func TestAll(t *testing.T) {
 	t.Run("fields_search", TestFieldsSearch)
 	t.Run("cache", TestCache)
 	t.Run("geo", TestGeo)
+	t.Run("op", TestOp)
 }

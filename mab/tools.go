@@ -94,10 +94,10 @@ func paramsMatch(k, v string, prefix string, fields []StructInfo, structDelimite
 		v := strings.Trim(v, " ") // 先去掉前后的空格
 		n := k                    // 去掉前缀
 		if len(prefix) > 0 {
-			n = strings.Replace(k, prefix, "", 1)
+			n = n[len(prefix):]
 		}
 		// 判断是否拥有操作符
-		hasOp, n, op := containOperators(k)
+		hasOp, n, op := containOperators(n)
 
 		// 传入的字段名是 map 或者 fullName
 		if field.ParamsKey == n {

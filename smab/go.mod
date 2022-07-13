@@ -3,7 +3,7 @@ module github.com/23233/ggg/smab
 go 1.18
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220528095325-a2c2941f018c
+	github.com/23233/ggg/mab v0.0.0-20220713114037-c700f1794270
 	github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2
 	github.com/casbin/casbin/v2 v2.44.0
 	github.com/casbin/mongodb-adapter/v3 v3.2.1
@@ -65,7 +65,7 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailgun/raymond/v2 v2.0.46 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

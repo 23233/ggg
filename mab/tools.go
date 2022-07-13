@@ -343,21 +343,27 @@ func DiffBson(oldData bson.M, wantData bson.M, reqSendData bson.M) (diff bson.M,
 	eq = make(bson.M)
 
 	// 遍历传入的参数
-	for k, _ := range reqSendData {
+	for k, v := range reqSendData {
 		val, ok := wantData[k]
-		// 必须存在于提交的想修改的数据中
-		if ok {
-			ov, ok := oldData[k]
+		if !ok {
+			// 在旧数据存在说明字段存在 但是新提交的数据可能为false这种会过滤的数据
+			_, ok = oldData[k]
 			if !ok {
-				// 在原值中未找到的话
-				diff[k] = val
+				continue
+			}
+			// 旧值中存在的话 则把val直接赋值为发送上来的数据类型
+			val = v
+		}
+		ov, ok := oldData[k]
+		if !ok {
+			// 在原值中未找到的话
+			diff[k] = val
+		} else {
+			// 在原值中找到 判断是否一致
+			if cmp.Equal(ov, val) {
+				eq[k] = val
 			} else {
-				// 在原值中找到 判断是否一致
-				if cmp.Equal(ov, val) {
-					eq[k] = val
-				} else {
-					diff[k] = val
-				}
+				diff[k] = val
 			}
 		}
 	}

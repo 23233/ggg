@@ -3,7 +3,7 @@ module github.com/23233/ggg/smab
 go 1.18
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220713114037-c700f1794270
+	github.com/23233/ggg/mab v0.0.0-20220713115220-0025c3e7dfca
 	github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2
 	github.com/casbin/casbin/v2 v2.44.0
 	github.com/casbin/mongodb-adapter/v3 v3.2.1

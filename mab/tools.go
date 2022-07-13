@@ -338,25 +338,30 @@ func even(number int) bool {
 }
 
 // DiffBson 两个bson.m 对比 获取异同
-func DiffBson(o bson.M, n bson.M, jsonData bson.M) (diff bson.M, eq bson.M) {
+func DiffBson(oldData bson.M, wantData bson.M, reqSendData bson.M) (diff bson.M, eq bson.M) {
 	diff = make(bson.M)
 	eq = make(bson.M)
-	for k, v := range o {
-		// 先判断拥有同样的key
-		val, ok := n[k]
+
+	// 遍历传入的参数
+	for k, _ := range reqSendData {
+		val, ok := wantData[k]
+		// 必须存在于提交的想修改的数据中
 		if ok {
-			// 变更必须存在于已传入了这个参数
-			if _, ok := jsonData[k]; ok {
-				// 判断值是否相同
-				if cmp.Equal(v, val) {
+			ov, ok := oldData[k]
+			if !ok {
+				// 在原值中未找到的话
+				diff[k] = val
+			} else {
+				// 在原值中找到 判断是否一致
+				if cmp.Equal(ov, val) {
 					eq[k] = val
 				} else {
 					diff[k] = val
 				}
 			}
-
 		}
 	}
+
 	return
 }
 

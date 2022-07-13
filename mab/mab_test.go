@@ -223,8 +223,9 @@ func TestNormalCrud(t *testing.T) {
 	getAll := e.GET(fp).WithQueryObject(map[string]interface{}{
 		"age": 68,
 	}).Expect().Status(httptest.StatusOK)
-	getAll.JSON().Object().ContainsKey("data").Value("data").Array().NotEmpty()
-	getAll.JSON().Object().Value("data").Array().Element(0).Object().Value("test_inline").Object().Value("music").String().NotEmpty()
+	allResp := getAll.JSON().Object()
+	allResp.ContainsKey("data").Value("data").Array().NotEmpty()
+	allResp.Value("data").Array().Element(0).Object().Value("test_inline").Object().Value("music").String().NotEmpty()
 	t.Log("find data")
 	// get single
 	getSingle := e.GET(fs).Expect().Status(httptest.StatusOK)

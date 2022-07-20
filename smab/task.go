@@ -2,6 +2,7 @@ package smab
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +24,7 @@ type SmTask struct {
 	Desc         string             `json:"desc" bson:"desc" comment:"任务描述"`
 	Type         uint8              `json:"type" bson:"type" comment:"任务类型"` // 任务类型
 	Group        string             `json:"group" bson:"group" comment:"任务组"`
-	Content      string             `json:"content" bson:"content" comment:"任务内容"` // 任务内容 markdown格式
+	Content      string             `json:"content" bson:"content" comment:"任务内容" mab:"t=markdown"` // 任务内容 markdown格式
 	Action       []ActionItem       `json:"action" bson:"action" comment:"按钮组"`
 	ExpTime      time.Time          `json:"exp_time" bson:"exp_time" comment:"任务过期时间"`       // 任务过期时间
 	ToUser       primitive.ObjectID `json:"to_user" bson:"to_user" comment:"操作的用户"`          // 展示的用户
@@ -103,4 +104,29 @@ func GenTaskAtRoot(name string, desc ...string) *SmTask {
 	t.ToUser = RootUser.Id
 	t.CreateUser = RootUser.Id
 	return t
+}
+
+// GenTaskGroupAtRoot 生成特定组的root任务
+func GenTaskGroupAtRoot(name string, group string) *SmTask {
+	var t = GenTaskAtRoot(name)
+	t.Group = group
+	return t
+}
+
+// GenMarkdownVerifyTask 快速创建一个基于markdown介绍的审核类任务
+func GenMarkdownVerifyTask(ctx context.Context, name string, group string, desc string, content TaskMarkdownState, postUrl string, injectStrData string) error {
+	task := GenTaskGroupAtRoot(name, group)
+	task.Desc = desc
+	task.Content = content.GetStr()
+	task.Action = PassOrRejectAction(postUrl, injectStrData)
+	return CreateTask(ctx, task)
+}
+
+// GenTaskInjectData 快速生成inject的数据 可以是struct 也可以是map
+func GenTaskInjectData(input any) string {
+	jsonStr, err := json.Marshal(input)
+	if err != nil {
+		return string(jsonStr)
+	}
+	return ""
 }

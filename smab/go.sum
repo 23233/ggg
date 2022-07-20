@@ -2,6 +2,8 @@ github.com/23233/ggg/mab v0.0.0-20220713114037-c700f1794270 h1:15EHTvE4/BlmeNv+q
 github.com/23233/ggg/mab v0.0.0-20220713114037-c700f1794270/go.mod h1:1g2fbvVRYVnvFYYkMHiD/3+QOex7JWsRciwtC4wDJh8=
 github.com/23233/ggg/mab v0.0.0-20220713115220-0025c3e7dfca h1:wD75mbO/omBRK7u8KfKrjnJUYM1N0CbhYc45Asoiw1Q=
 github.com/23233/ggg/mab v0.0.0-20220713115220-0025c3e7dfca/go.mod h1:1g2fbvVRYVnvFYYkMHiD/3+QOex7JWsRciwtC4wDJh8=
+github.com/23233/ggg/mab v0.0.0-20220720071041-87e481a66c64 h1:3eydFFX3mU54PwkgXYBp4dp9NPyP+RTOQ2ixM44hWFQ=
+github.com/23233/ggg/mab v0.0.0-20220720071041-87e481a66c64/go.mod h1:1g2fbvVRYVnvFYYkMHiD/3+QOex7JWsRciwtC4wDJh8=
 github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2 h1:bs9wuer2GlEI8oixQvCHDnNCWeG0QJOJpYFlnaudF0k=
 github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2/go.mod h1:H1mEFrfMPv/HxdnIEE17v3BbdSu35AKBnXkX3d5SH1c=
 github.com/23233/ggg/ut v0.0.0-20220518132118-00a6559a333e h1:CCwd1jZq9fSGjX7WuX/GlunG6LAqpDuo8RZVcb59jqo=

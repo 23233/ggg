@@ -123,22 +123,28 @@ func (lib *SpAdmin) getAllPolicyListResp() permissionsResp {
 		}
 		var alias string
 		var group string
+		var groupLevel uint
+		var level uint
 		for _, modelList := range lib.mab.GetModelInfoList() {
 			if k == modelList.MapName {
 				if len(modelList.Alias) > 0 {
 					alias = modelList.Alias
 					group = modelList.Group
+					groupLevel = modelList.GroupLevel
+					level = modelList.Level
 				}
 				break
 			}
 		}
 		models = append(models, permissionsRespItem{
-			Title:    k,
-			Alias:    alias,
-			Key:      k + "_i",
-			V:        k,
-			Children: inline,
-			Group:    group,
+			Title:      k,
+			Alias:      alias,
+			Key:        k + "_i",
+			V:          k,
+			Children:   inline,
+			Group:      group,
+			GroupLevel: groupLevel,
+			Level:      level,
 		})
 	}
 

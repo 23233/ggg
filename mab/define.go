@@ -134,7 +134,6 @@ func (sm *SingleModel) Init(delimiter string, relPath string, privateContextKey 
 			groupInfo := strings.Split(splitGroup[1], "-")
 
 			info.Alias = splitGroup[2]
-
 			info.Group = groupInfo[0]
 			if len(groupInfo) > 1 {
 				level, err := strconv.Atoi(groupInfo[1])

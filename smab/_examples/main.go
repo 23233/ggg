@@ -72,7 +72,7 @@ type WorkDetail struct {
 }
 
 func (c *WorkDetail) Alias() string {
-	return "_作品_作品详情"
+	return "_作品3-3_作品详情-4"
 }
 
 type ComplexModel struct {
@@ -88,7 +88,7 @@ type ComplexModel struct {
 }
 
 func (c *ComplexModel) Alias() string {
-	return "复杂"
+	return "_组名1-1_复杂-3"
 }
 
 type WorkInfo struct {
@@ -97,7 +97,7 @@ type WorkInfo struct {
 }
 
 func (c *WorkInfo) Alias() string {
-	return "作品内容"
+	return "_组名2-2_作品内容-2"
 }
 
 type User struct {
@@ -106,7 +106,7 @@ type User struct {
 }
 
 func (c *User) Alias() string {
-	return "用户"
+	return "用户1-1"
 }
 
 type TwoInline struct {
@@ -115,7 +115,7 @@ type TwoInline struct {
 }
 
 func (c *TwoInline) Alias() string {
-	return "两个内联"
+	return "两个内联3-3"
 }
 
 func main() {

@@ -16,11 +16,26 @@ func (u *TaskMarkdownState) Add(n string) {
 	u.Stage = append(u.Stage, n)
 }
 
+func (u *TaskMarkdownState) Adds(layout string, inputs ...any) {
+	u.Stage = append(u.Stage, fmt.Sprintf(layout, inputs...))
+}
+
 func (u *TaskMarkdownState) AddImg(href string, title string) {
 	if len(href) < 1 {
 		return
 	}
 	u.Add(fmt.Sprintf(`![%s](%s)`, title, href))
+}
+
+func (u *TaskMarkdownState) AddCodeStr(code string, languages ...string) {
+	if len(code) < 1 {
+		return
+	}
+	var defaultLanguage = "shell"
+	if len(languages) >= 1 {
+		defaultLanguage = languages[0]
+	}
+	u.Add(fmt.Sprintf("```%s \n %s ```", defaultLanguage, code))
 }
 
 func (u *TaskMarkdownState) AddTitle(text string, level uint8) {

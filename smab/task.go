@@ -124,8 +124,8 @@ func GenMarkdownVerifyTask(ctx context.Context, name string, group string, desc 
 
 // GenTaskInjectData 快速生成inject的数据 可以是struct 也可以是map
 func GenTaskInjectData(input any) string {
-	jsonStr, err := json.Marshal(input)
-	if err != nil {
+	jsonStr, err := json.Marshal(&input)
+	if err == nil {
 		return string(jsonStr)
 	}
 	return ""

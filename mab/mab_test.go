@@ -31,6 +31,10 @@ type inlineTest struct {
 	ObjList []primitive.ObjectID `json:"obj_list" bson:"obj_list"`
 }
 
+func (c *inlineTest) Alias() string {
+	return "纯表名"
+}
+
 type testModel struct {
 	DefaultField `bson:",inline,flatten"`
 	Name         string    `bson:"name" json:"name"`
@@ -62,7 +66,7 @@ type testModel struct {
 }
 
 func (c *testModel) Alias() string {
-	return "_组名_表名"
+	return "_组名-1_表名-1"
 }
 
 type testLocation struct {

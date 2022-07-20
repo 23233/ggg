@@ -9,6 +9,7 @@ import (
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -127,11 +128,30 @@ func (sm *SingleModel) Init(delimiter string, relPath string, privateContextKey 
 		}
 	}
 	if len(info.Alias) >= 1 {
-		// 以_开头则表示有群组 eg: _组名_表名
+		// 以_开头则表示有群组 eg: _组名-1_表名-1
 		if strings.HasPrefix(info.Alias, "_") && strings.Count(info.Alias, "_") == 2 {
-			splitGroup := strings.Split(info.Alias, "_")
+			splitGroup := strings.Split(info.Alias, "_") // [-,g,s]
+			groupInfo := strings.Split(splitGroup[1], "-")
+
 			info.Alias = splitGroup[2]
-			info.Group = splitGroup[1]
+
+			info.Group = groupInfo[0]
+			if len(groupInfo) > 1 {
+				level, err := strconv.Atoi(groupInfo[1])
+				if err == nil {
+					info.GroupLevel = uint(level)
+				}
+			}
+
+		}
+	}
+
+	sheetInfo := strings.Split(info.Alias, "-")
+	info.Alias = sheetInfo[0]
+	if len(sheetInfo) > 1 {
+		level, err := strconv.Atoi(sheetInfo[1])
+		if err == nil {
+			info.Level = uint(level)
 		}
 	}
 
@@ -364,6 +384,8 @@ type ModelInfo struct {
 	FullPath   string       `json:"full_path"`
 	Alias      string       `json:"alias"`
 	Group      string       `json:"group"`
+	GroupLevel uint         `json:"group_level"`
+	Level      uint         `json:"level"`
 	FieldList  []StructInfo `json:"field_list"`
 	FlatFields []StructInfo `json:"flat_fields"`
 }

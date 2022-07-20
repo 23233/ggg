@@ -186,16 +186,15 @@ func main() {
 	})
 
 	go func() {
-		var m = smab.GenTask("新测试任务", "任务描述")
+		var m = smab.GenTaskAtRoot("新测试任务", "任务描述")
 		m.Group = "赵日天"
 		m.Type = 10
-		m.CreateUser = primitive.NewObjectID()
-		m.ToUser, _ = primitive.ObjectIDFromHex("61446c840d75676fa28df335")
-		m.Action = smab.PassOrNotReasonAction("/test", "/test", `{"obj_id":"98439834"}`)
+		m.InjectData = `{"obj_id":"98439834"}`
+		m.Action = smab.PassOrNotReasonAction("/test", "/test")
 		m.Content = `### 我是赵日天  我今天贼开心 你开不开心啊 \n 这是换行的图片 \n ![这是个图片](https://huyaimg.msstatic.com/avatar/1026/a3/21c624bf332d4ad165d20f66d5b590_180_135.jpg)`
 		err := smab.CreateTask(_ctx.Background(), m)
 		if err != nil {
-			return
+			panic(err)
 		}
 	}()
 

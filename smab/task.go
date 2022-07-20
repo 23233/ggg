@@ -13,7 +13,6 @@ import (
 type ActionItem struct {
 	Name   string `json:"name" bson:"name"`       // 不能重复
 	ReqUri string `json:"req_uri" bson:"req_uri"` // 操作请求地址
-	Built  string `json:"built" bson:"built"`     // 内置数据 json string
 	Scheme string `json:"scheme" bson:"scheme" `  // 需要用户填写的表单数据
 }
 
@@ -25,6 +24,7 @@ type SmTask struct {
 	Type         uint8              `json:"type" bson:"type" comment:"任务类型"` // 任务类型
 	Group        string             `json:"group" bson:"group" comment:"任务组"`
 	Content      string             `json:"content" bson:"content" comment:"任务内容" mab:"t=markdown"` // 任务内容 markdown格式
+	InjectData   string             `json:"inject_data" bson:"inject_data" comment:"t=textarea"`    // 任务注入的json字符串 可以自行序列化回去
 	Action       []ActionItem       `json:"action" bson:"action" comment:"按钮组"`
 	ExpTime      time.Time          `json:"exp_time" bson:"exp_time" comment:"任务过期时间"`       // 任务过期时间
 	ToUser       primitive.ObjectID `json:"to_user" bson:"to_user" comment:"操作的用户"`          // 展示的用户
@@ -118,7 +118,8 @@ func GenMarkdownVerifyTask(ctx context.Context, name string, group string, desc 
 	task := GenTaskGroupAtRoot(name, group)
 	task.Desc = desc
 	task.Content = content.GetStr()
-	task.Action = PassOrRejectAction(postUrl, injectStrData)
+	task.InjectData = injectStrData
+	task.Action = PassOrRejectAction(postUrl)
 	return CreateTask(ctx, task)
 }
 

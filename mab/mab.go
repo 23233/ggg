@@ -1,7 +1,6 @@
 package mab
 
 import (
-	"github.com/23233/ggg/sv"
 	"github.com/importcjj/sensitive"
 	"github.com/kataras/iris/v12/context"
 	"github.com/pkg/errors"
@@ -71,13 +70,6 @@ func (rest *RestApi) run() {
 					h = rest.AddData
 					route := api.Handle("POST", "/", h)
 
-					// 判断是否有自定义验证器
-					if item.PostValidator != nil {
-						route.Use(sv.Run(item.PostValidator))
-					} else {
-						route.Use(sv.Run(item.Model, "json"))
-					}
-
 					// rate
 					if item.getAddRate() != nil {
 						route.Use(LimitHandler(item.getAddRate(), item.RateErrorFunc))
@@ -90,12 +82,6 @@ func (rest *RestApi) run() {
 					h = rest.EditData
 					route := api.Handle("PUT", "/{mid:string range(1,32)}", h)
 
-					// 判断是否有自定义验证器
-					if item.PutValidator != nil {
-						route.Use(sv.Run(item.PutValidator))
-					} else {
-						route.Use(sv.Run(item.Model, "json"))
-					}
 					// rate
 					if item.getEditRate() != nil {
 						route.Use(LimitHandler(item.getEditRate(), item.RateErrorFunc))
@@ -111,10 +97,7 @@ func (rest *RestApi) run() {
 					if item.getDeleteRate() != nil {
 						route.Use(LimitHandler(item.getDeleteRate(), item.RateErrorFunc))
 					}
-					// 判断是否有自定义验证器
-					if item.DeleteValidator != nil {
-						route.Use(sv.Run(item.DeleteValidator))
-					}
+
 				}
 
 			}

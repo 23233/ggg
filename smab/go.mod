@@ -2,6 +2,12 @@ module github.com/23233/ggg/smab
 
 go 1.18
 
+replace (
+	github.com/23233/ggg/sv => ../sv
+	github.com/23233/ggg/ut => ../ut
+	github.com/23233/ggg/mab => ../mab
+)
+
 require (
 	github.com/23233/ggg/mab v0.0.0-20220720071041-87e481a66c64
 	github.com/23233/ggg/sv v0.0.0-20220518071309-0b697d5754d2

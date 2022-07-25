@@ -17,11 +17,11 @@ func TestRun(t *testing.T) {
 	app := iris.New()
 	app.Get("/", Run(new(req)), func(ctx iris.Context) {
 		req := ctx.Values().Get("sv").(*req)
-		_, _ = ctx.JSON(iris.Map{"name": req.Name})
+		ctx.JSON(iris.Map{"name": req.Name})
 	})
 	app.Get("/111", Run(new(req2)), func(ctx iris.Context) {
 		req := ctx.Values().Get("sv").(*req2)
-		_, _ = ctx.JSON(iris.Map{"name": req.Desc})
+		ctx.JSON(iris.Map{"name": req.Desc})
 	})
 
 	e := httptest.New(t, app)

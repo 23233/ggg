@@ -3,7 +3,6 @@ package mab
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/23233/ggg/sv"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,7 +24,7 @@ func fastError(err error, ctx iris.Context, msg ...string) {
 	if len(msg) >= 1 {
 		m = msg[0]
 	}
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"detail": m,
 	})
 	return
@@ -49,6 +48,14 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 	if err != nil {
 		fastError(err, ctx)
 		return
+	}
+
+	if sm.GetAllCheck != nil {
+		pass, msg := sm.GetAllCheck(ctx, parse)
+		if !pass {
+			fastError(nil, ctx, msg)
+			return
+		}
 	}
 
 	batch, result, err := ModelGetData(ctx, sm, rest.Cfg.Mdb, parse)
@@ -77,7 +84,7 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 		}
 	}
 
-	_, _ = ctx.JSON(result)
+	_ = ctx.JSON(result)
 }
 
 // GetSingle 单个 /{mid:string range(1,32)}
@@ -121,21 +128,28 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 		}
 	}
 
-	_, _ = ctx.JSON(newData)
+	_ = ctx.JSON(newData)
 }
 
 // AddData 新增数据
 func (rest *RestApi) AddData(ctx iris.Context) {
-	ctx.RecordRequestBody(true)
 	sm := rest.PathGetModel(ctx.Path())
 	if sm.CustomModel != nil {
 		sm = sm.CustomModel(ctx, sm)
 	}
+	bodyRaw, err := ctx.GetBody()
+	if err != nil {
+		fastError(err, ctx, "获取请求内容失败")
+		return
+	}
+
 	// 主要作用为发现url必填参数是否传递
-	var bodyParams map[string]interface{}
-	_ = ctx.ReadBody(&bodyParams)
-	req := ctx.Values().Get(sv.GlobalContextKey)
-	if req == nil {
+	var bodyParams map[string]any
+	_ = json.Unmarshal(bodyRaw, &bodyParams)
+
+	req := rest.newInterface(sm.Model)
+	err = json.Unmarshal(bodyRaw, &req)
+	if err != nil {
 		fastError(errors.New("参数错误"), ctx)
 		return
 	}
@@ -178,6 +192,14 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 		req = sm.PostDataParse(ctx, req)
 	}
 
+	if sm.PostDataCheck != nil {
+		pass, msg := sm.PostDataCheck(ctx, req)
+		if !pass {
+			fastError(nil, ctx, msg)
+			return
+		}
+	}
+
 	aff, err := rest.Cfg.Mdb.Collection(sm.info.MapName).InsertOne(ctx, req)
 	if err != nil || len(aff.InsertedID.(primitive.ObjectID).Hex()) < 1 {
 		fastError(err, ctx, "新增数据失败")
@@ -189,32 +211,35 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 		req = sm.PostResponseFunc(ctx, aff.InsertedID.(primitive.ObjectID).Hex(), req)
 	}
 
-	_, _ = ctx.JSON(req)
+	_ = ctx.JSON(req)
 }
 
 // EditData 修改数据 /{mid:string range(1,32)}
 func (rest *RestApi) EditData(ctx iris.Context) {
-	model := rest.PathGetModel(ctx.Path())
-	if model.CustomModel != nil {
-		model = model.CustomModel(ctx, model)
+	sm := rest.PathGetModel(ctx.Path())
+	if sm.CustomModel != nil {
+		sm = sm.CustomModel(ctx, sm)
 	}
 
-	// pa 就是传入的 params对象 仅做各类验证使用 有传入才会变更
-	body, _ := ctx.GetBody()
-	pa := make(bson.M)
-	err := json.Unmarshal(body, &pa)
+	bodyRaw, err := ctx.GetBody()
 	if err != nil {
-		fastError(err, ctx)
+		fastError(err, ctx, "获取请求内容失败")
 		return
 	}
 
-	// 这个是直接映射的模型 model 最后传入的关键
-	reqModel := ctx.Values().Get(sv.GlobalContextKey)
-	if reqModel == nil {
-		fastError(errors.New("参数错误"), ctx)
+	// 主要作用为发现url必填参数是否传递
+	var pa map[string]any
+	_ = json.Unmarshal(bodyRaw, &pa)
+
+	// 实际的模型信息
+	reqModel := rest.newInterface(sm.Model)
+	err = json.Unmarshal(bodyRaw, &reqModel)
+	if err != nil {
+		fastError(nil, ctx, "参数错误")
 		return
 	}
 
+	// 把模型转换为bson.M
 	reqMap := make(bson.M)
 	b, _ := bson.Marshal(reqModel)
 	err = bson.Unmarshal(b, &reqMap)
@@ -224,8 +249,8 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	// 如果有修改必须存在的参数
-	if len(model.PutMustFilters) > 0 {
-		for k := range model.PutMustFilters {
+	if len(sm.PutMustFilters) > 0 {
+		for k := range sm.PutMustFilters {
 			if _, ok := pa[k]; !ok {
 				fastError(nil, ctx, "必填参数缺失")
 				return
@@ -234,8 +259,8 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	// 进行敏感词验证
-	if len(model.sensitiveField) > 0 {
-		for _, k := range model.sensitiveField {
+	if len(sm.sensitiveField) > 0 {
+		for _, k := range sm.sensitiveField {
 			if v, ok := pa[k]; ok {
 				if val, ok := v.(string); ok {
 					pass, firstWork := rest.runWordValid(val)
@@ -248,12 +273,12 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		}
 	}
 
-	if model.private {
-		val, _ := model.DisablePrivateMap["post"]
+	if sm.private {
+		val, _ := sm.DisablePrivateMap["post"]
 		if !val {
-			privateVal := ctx.Values().Get(model.PrivateContextKey)
-			if _, ok := reqMap[model.PrivateColName]; ok {
-				reflect.Indirect(reflect.ValueOf(reqModel)).Field(model.privateIndex).Set(reflect.ValueOf(privateVal))
+			privateVal := ctx.Values().Get(sm.PrivateContextKey)
+			if _, ok := reqMap[sm.PrivateColName]; ok {
+				reflect.Indirect(reflect.ValueOf(reqModel)).Field(sm.privateIndex).Set(reflect.ValueOf(privateVal))
 			}
 		}
 	}
@@ -267,26 +292,26 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		fastError(err, ctx, "获取请求内容出错")
 		return
 	}
-	privateValue := ctx.Values().Get(model.PrivateContextKey)
+	privateValue := ctx.Values().Get(sm.PrivateContextKey)
 
-	data := rest.newInterface(model.Model)
+	data := rest.newInterface(sm.Model)
 
 	query := bson.M{"_id": objId}
 
-	if model.private {
-		val, _ := model.DisablePrivateMap["put"]
+	if sm.private {
+		val, _ := sm.DisablePrivateMap["put"]
 		if !val {
-			query[model.PrivateColName] = privateValue
+			query[sm.PrivateColName] = privateValue
 		}
 	}
 
 	// 满足特殊需求的query
-	if model.PutQueryParse != nil {
-		query = model.PutQueryParse(ctx, mid, query, reqModel, privateValue)
+	if sm.PutQueryParse != nil {
+		query = sm.PutQueryParse(ctx, mid, query, reqModel, privateValue)
 	}
 
 	// 先获取这条数据
-	err = rest.Cfg.Mdb.Collection(model.info.MapName).Find(ctx, query).One(data)
+	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(data)
 	if err != nil {
 		fastError(err, ctx, "查询数据失败")
 		return
@@ -305,9 +330,17 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		return
 	}
 
+	if sm.PutDataCheck != nil {
+		pass, msg := sm.PutDataCheck(ctx, data, reqMap, diff)
+		if !pass {
+			fastError(nil, ctx, msg)
+			return
+		}
+	}
+
 	// 寻找inline内联 删除外层传递的参数
 	// 新增不用这样处理 因为新增是使用struct device自动会进行处理
-	for _, field := range model.info.FieldList {
+	for _, field := range sm.info.FieldList {
 		if v, ok := diff[field.MapName]; ok {
 			if field.IsInline {
 				for kk, vv := range v.(bson.M) {
@@ -319,7 +352,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	// 判断是否有更新时
-	for _, field := range model.info.FlatFields {
+	for _, field := range sm.info.FlatFields {
 		if field.IsUpdated {
 			// 判断参数中是否存在 存在则以参数中为准
 			if v, ok := pa[field.MapName]; !ok {
@@ -332,32 +365,32 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	// 如果需要变更数据
-	if model.PutDataParse != nil {
-		diff = model.PutDataParse(ctx, mid, diff)
+	if sm.PutDataParse != nil {
+		diff = sm.PutDataParse(ctx, mid, diff)
 	}
 
-	err = rest.Cfg.Mdb.Collection(model.info.MapName).UpdateId(ctx, objId, bson.M{"$set": diff})
+	err = rest.Cfg.Mdb.Collection(sm.info.MapName).UpdateId(ctx, objId, bson.M{"$set": diff})
 	if err != nil {
 		fastError(err, ctx, "修改数据失败")
 		return
 	}
 
 	// 更新缓存
-	if model.getSingleCacheTime() >= 1 {
+	if sm.getSingleCacheTime() >= 1 {
 
 		// 删除缓存 extra?
-		rKey := genCacheKey(ctx.Request().RequestURI, model.PrivateColName, fmt.Sprintf("%v", privateValue))
+		rKey := genCacheKey(ctx.Request().RequestURI, sm.PrivateColName, fmt.Sprintf("%v", privateValue))
 		success := rest.deleteAtCache(rKey)
 		if !success {
 			rest.Cfg.ErrorTrace(errors.New("cache delete fail"), "delete", "cache", "edit")
 		}
 	}
 
-	if model.PutResponseFunc != nil {
-		diff = model.PutResponseFunc(ctx, mid)
+	if sm.PutResponseFunc != nil {
+		diff = sm.PutResponseFunc(ctx, mid)
 	}
 
-	_, _ = ctx.JSON(diff)
+	_ = ctx.JSON(diff)
 }
 
 // DeleteData 删除数据 /{mid:string range(1,32)}
@@ -394,6 +427,13 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 		fastError(err, ctx, "预先获取数据失败")
 		return
 	}
+	if sm.DeleteDataCheck != nil {
+		pass, msg := sm.DeleteDataCheck(ctx, data)
+		if !pass {
+			fastError(nil, ctx, msg)
+			return
+		}
+	}
 
 	// 再进行删除 不用担心先获取一次的性能消耗 根据统计 平均删除率不超过10%
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Remove(ctx, query)
@@ -415,7 +455,7 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 			rest.Cfg.ErrorTrace(errors.New("cache delete fail"), "delete", "cache", "delete")
 		}
 	}
-	_, _ = ctx.JSON(result)
+	_ = ctx.JSON(result)
 
 }
 
@@ -427,7 +467,7 @@ func (rest *RestApi) GetModelInfo(ctx iris.Context) {
 	for _, model := range rest.Cfg.Models {
 		if model.info.MapName == modelName {
 			if model.AllowGetInfo {
-				_, _ = ctx.JSON(iris.Map{
+				_ = ctx.JSON(iris.Map{
 					"info":  model.info,
 					"empty": rest.newInterface(model.Model),
 				})
@@ -487,32 +527,17 @@ func (rest *RestApi) generatorMiddleware(ctx iris.Context) {
 			if sm.getAddRate() != nil {
 				ctx.AddHandler(LimitHandler(sm.getAddRate(), sm.RateErrorFunc))
 			}
-			if sm.PostValidator != nil {
-				ctx.AddHandler(sv.Run(sm.PostValidator))
-			} else {
-				ctx.AddHandler(sv.Run(sm.Model, "json"))
-			}
 			ctx.AddHandler(rest.AddData)
 			break
 		case "put":
 			if sm.getEditRate() != nil {
 				ctx.AddHandler(LimitHandler(sm.getEditRate(), sm.RateErrorFunc))
 			}
-			// 判断是否有自定义验证器
-			if sm.PutValidator != nil {
-				ctx.AddHandler(sv.Run(sm.PutValidator))
-			} else {
-				ctx.AddHandler(sv.Run(sm.Model, "json"))
-			}
 			ctx.AddHandler(rest.EditData)
 			break
 		case "delete":
 			if sm.getDeleteRate() != nil {
 				ctx.AddHandler(LimitHandler(sm.getDeleteRate(), sm.RateErrorFunc))
-			}
-			// 判断是否有自定义验证器
-			if sm.DeleteValidator != nil {
-				ctx.AddHandler(sv.Run(sm.DeleteValidator))
 			}
 			ctx.AddHandler(rest.DeleteData)
 			break
@@ -557,7 +582,7 @@ func (rest *RestApi) getCacheMiddleware(from string) iris.Handler {
 		resp, err := restCache.Get(rKey)
 		if err == nil {
 			ctx.Header("is_cache", "1")
-			_, _ = ctx.JSON(resp)
+			_ = ctx.JSON(resp)
 			return
 		}
 

@@ -156,7 +156,6 @@ func TestNormalCrud(t *testing.T) {
 	t.Log("run add")
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
 	prefix := "/"
 	checkMc := &Config{
 		Party: app.Party(prefix),
@@ -237,7 +236,7 @@ func TestNormalCrud(t *testing.T) {
 	t.Log("get single data success")
 
 	editPosition := randomStr(4)
-	editMap := map[string]interface{}{"name": "edit", "address": map[string]interface{}{"position": editPosition}}
+	editMap := map[string]any{"name": "edit", "address": map[string]any{"position": editPosition}}
 	edit := e.PUT(fs).WithJSON(editMap).Expect().Status(httptest.StatusOK)
 	edit.JSON().Object().Value("name").Equal("edit")
 	edit.JSON().Object().Value("address").Object().Value("position").Equal(editPosition)

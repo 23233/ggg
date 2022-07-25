@@ -9,7 +9,7 @@ import (
 var (
 	GlobalFailFunc = func(err error, ctx iris.Context) {
 		ctx.StatusCode(iris.StatusBadRequest)
-		_, _ = ctx.JSON(iris.Map{"detail": err.Error()})
+		ctx.JSON(iris.Map{"detail": err.Error()})
 		return
 	}
 	GlobalContextKey = "sv"
@@ -22,6 +22,7 @@ func Run(valid interface{}, mode ...string) iris.Handler {
 	}
 
 	return func(ctx iris.Context) {
+		ctx.RecordRequestBody(true)
 		// 回复到初始状态
 		s := reflect.TypeOf(valid).Elem()
 		newS := reflect.New(s)

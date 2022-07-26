@@ -75,11 +75,24 @@ type testLocation struct {
 	Name         string        `json:"name" bson:"name"`
 }
 
+type InjectData struct {
+	AA string `json:"aa"`
+	BB string `json:"bb"`
+}
+
+type JsonInlineData struct {
+	CC string `json:"cc"`
+	DD string `json:"dd"`
+}
+
 type testInline struct {
-	DefaultField `bson:",inline,flatten"`
-	Colors       []colorModel `json:"colors" bson:"colors"`
-	NotInline    inlineTest   `json:"not_inline" bson:"not_inline"`
-	Inline       inlineTest   `json:"inline" bson:"inline"`
+	DefaultField    `bson:",inline,flatten"`
+	InjectData      `bson:",inline"`
+	Name            string         `json:"name" bson:"name"`
+	NoJsonTagInline inlineTest     `bson:"no_json_tag_inline"`
+	Inline          inlineTest     `json:"inline" bson:"inline"`
+	NotInline       inlineTest     `json:"not_inline" bson:"not_inline"`
+	JsonInline      JsonInlineData `json:"json_inline,inline" bson:"inline"`
 }
 
 type testFk struct {
@@ -236,7 +249,10 @@ func TestNormalCrud(t *testing.T) {
 	t.Log("get single data success")
 
 	editPosition := randomStr(4)
-	editMap := map[string]any{"name": "edit", "address": map[string]any{"position": editPosition}}
+	editMap := map[string]any{
+		"name":    "edit",
+		"address": map[string]any{"position": editPosition},
+	}
 	edit := e.PUT(fs).WithJSON(editMap).Expect().Status(httptest.StatusOK)
 	edit.JSON().Object().Value("name").Equal("edit")
 	edit.JSON().Object().Value("address").Object().Value("position").Equal(editPosition)
@@ -259,7 +275,7 @@ func TestFkCrud(t *testing.T) {
 	t.Log("run add")
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	fkAlias := "podcast"
 	checkMc := &Config{
@@ -347,7 +363,7 @@ func TestFkCrud(t *testing.T) {
 func TestContextAdd(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	userId := "607a92d8055b53cf0b3e89cc"
 	part := app.Party(prefix)
@@ -388,7 +404,7 @@ func TestContextAdd(t *testing.T) {
 func TestMustFilter(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -427,7 +443,7 @@ func TestMustFilter(t *testing.T) {
 func TestSensitive(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	name := "赵日天"
@@ -467,7 +483,7 @@ func TestSensitive(t *testing.T) {
 func TestGenerator(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -508,7 +524,7 @@ func TestGenerator(t *testing.T) {
 func TestSearch(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -552,7 +568,7 @@ func TestSearch(t *testing.T) {
 func TestFieldsSearch(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -591,7 +607,7 @@ func TestFieldsSearch(t *testing.T) {
 func TestGetAllFilter(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -633,7 +649,7 @@ func TestGetAllFilter(t *testing.T) {
 func TestCache(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -689,7 +705,7 @@ func TestCache(t *testing.T) {
 func TestGeo(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -784,7 +800,7 @@ func TestGeo(t *testing.T) {
 func TestOp(t *testing.T) {
 	mdb := getDb()
 	app := iris.New()
-	iris.WithoutBodyConsumptionOnUnmarshal(app)
+
 	prefix := "/api/v1"
 	part := app.Party(prefix)
 	checkMc := &Config{
@@ -831,6 +847,105 @@ func TestOp(t *testing.T) {
 
 }
 
+// 测试内敛
+func TestInline(t *testing.T) {
+	mdb := getDb()
+	app := iris.New()
+
+	prefix := "/api/v1"
+	part := app.Party(prefix)
+	checkMc := &Config{
+		Party: part,
+		Mdb:   mdb,
+		Models: []*SingleModel{
+			{
+				Model: new(testInline),
+			},
+		},
+	}
+	New(checkMc)
+	e := httptest.New(t, app)
+	fp := prefix + "/test_inline"
+
+	inlineData := func(seed string) map[string]any {
+		return map[string]any{
+			"event": "事件" + seed,
+			"age":   100,
+			"year":  2000,
+			"tags":  []string{"标签1" + seed, "标签2" + seed},
+		}
+	}
+
+	bodyMap := map[string]any{
+		"name":            "测试内联",
+		"inline":          inlineData("inline"),
+		"not_inline":      inlineData("not_inline"),
+		"NoJsonTagInline": inlineData("no_json_tag_inline"),
+		"aa":              "aaaaa",
+		"bb":              "bbbbb",
+		"json_inline": map[string]any{
+			"cc": "ccccc",
+			"dd": "ddddd",
+		},
+	}
+	addData := e.POST(fp).WithJSON(bodyMap).Expect().Status(httptest.StatusOK)
+	resp := addData.JSON().Object()
+	resp.Value("id").NotNull() // 这里必须是id 而不是_id 因为只有这里使用了模型新增
+	resp.Value("NoJsonTagInline").Object().NotEmpty()
+	resp.Value("not_inline").Object().NotEmpty()
+	resp.Value("inline").Object().NotEmpty()
+	resp.Value("aa").NotNull()
+	resp.Value("bb").NotNull()
+	resp.Value("json_inline").Object().ContainsKey("cc")
+	resp.NotContainsKey("event")
+
+	id := resp.Value("id").String().Raw()
+	fs := fp + "/" + id
+
+	// 修改
+	// 问题在于修改需要传入的是直接的bson.M 而不是一个模型
+	// input {"inline":{"key":"v"}} out {"key":"v"}
+	// 因为不能直接全量更新 而是要局部更新
+	// 解决办法为 把传入的json数据序列化到对象中为A 然后获取之前久的数据为B
+	// 把A和B都序列化为bson 然后取不同项进行更新即可 问题: 未传但会存在默认值会被覆盖
+
+	editMap := map[string]any{
+		"name":            "测试修改内联",
+		"not_inline":      inlineData("not_inline_edit"),
+		"NoJsonTagInline": inlineData("no_json_tag_inline_edit"),
+		// inline
+		"event": "edit normal event",
+		// inject data
+		"aa": "aaaaa_edit",
+		"bb": "bbbbb_edit",
+		// json_inline
+		"cc": "ccccc_edit",
+		"dd": "ddddd_edit",
+		//"json_inline": map[string]any{
+		//	"cc": "ccccc_edit",
+		//	"dd": "ddddd_edit",
+		//},
+	}
+	editReq := e.PUT(fs).WithJSON(editMap).Expect().Status(httptest.StatusOK)
+	editResp := editReq.JSON().Object()
+	editResp.Value("name").Equal(editMap["name"])
+	editResp.Value("event").Equal(editMap["event"])
+	editResp.Value("aa").Equal(editMap["aa"])
+	editResp.Value("bb").Equal(editMap["bb"])
+	editResp.Value("cc").Equal(editMap["cc"])
+	editResp.Value("dd").Equal(editMap["dd"])
+	editResp.Value("not_inline").Object().NotEmpty()
+	// 因为bson指定了字段名
+	editResp.NotContainsKey("NoJsonTagInline")
+	editResp.ContainsKey("no_json_tag_inline")
+
+	err := mdb.Collection("test_inline").DropCollection(_ctx.TODO())
+	if err != nil {
+		t.Fatal(err, "移除Collection失败")
+	}
+
+}
+
 func TestAll(t *testing.T) {
 	t.Run("getAllFilter", TestGetAllFilter)
 	t.Run("normalCurd", TestNormalCrud)
@@ -844,4 +959,5 @@ func TestAll(t *testing.T) {
 	t.Run("cache", TestCache)
 	t.Run("geo", TestGeo)
 	t.Run("op", TestOp)
+	t.Run("inline", TestInline)
 }

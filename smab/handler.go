@@ -53,7 +53,7 @@ func Login(ctx iris.Context) {
 		}
 	}
 
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"token": jwt,
 		"user": iris.Map{
 			"name":  u.Name,
@@ -75,7 +75,7 @@ func GetQianKunConfigFunc(ctx iris.Context) {
 	if u.isSuper() {
 		u.QianKun = append(u.QianKun, NowSp.config.SuperUserQianKun...)
 	}
-	_, _ = ctx.JSON(u.QianKun)
+	_ = ctx.JSON(u.QianKun)
 }
 
 // GetUserInfo 获取用户信息包含权限
@@ -98,7 +98,7 @@ func GetUserInfo(ctx iris.Context) {
 	if u.isSuper() {
 		u.QianKun = append(u.QianKun, NowSp.config.SuperUserQianKun...)
 	}
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"policy":     resp,
 		"qiankun":    u.QianKun,
 		"welcome":    NowSp.config.WelComeConfig,
@@ -140,7 +140,7 @@ func ChangeUserPassword(ctx iris.Context) {
 			return
 		}
 
-		_, _ = ctx.JSON(iris.Map{"detail": "操作成功"})
+		_ = ctx.JSON(iris.Map{"detail": "操作成功"})
 		return
 	}
 	fastMethodNotAllowedError("无权操作", ctx)
@@ -169,7 +169,7 @@ func getUsers(ctx iris.Context) {
 		fastError(err, ctx)
 		return
 	}
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"data": result,
 	})
 }
@@ -238,7 +238,7 @@ func addUsers(ctx iris.Context) {
 		}
 	}
 
-	_, _ = ctx.JSON(iris.Map{"detail": "创建成功"})
+	_ = ctx.JSON(iris.Map{"detail": "创建成功"})
 }
 
 // 删除用户
@@ -270,7 +270,7 @@ func deleteUser(ctx iris.Context) {
 		}
 		// 删除所有权限
 		_, _ = casbinEnforcer.DeletePermissionsForUser(setUser.Name)
-		_, _ = ctx.JSON(iris.Map{"detail": "操作成功"})
+		_ = ctx.JSON(iris.Map{"detail": "操作成功"})
 		return
 	}
 	fastMethodNotAllowedError("无权操作", ctx)
@@ -321,7 +321,7 @@ func changeUserInfo(ctx iris.Context) {
 			fastError(errors.New("变更信息失败"), ctx)
 			return
 		}
-		_, _ = ctx.JSON(iris.Map{"detail": "操作成功"})
+		_ = ctx.JSON(iris.Map{"detail": "操作成功"})
 		return
 	}
 	fastMethodNotAllowedError("无权操作", ctx)
@@ -374,7 +374,7 @@ func changeUserPermissions(ctx iris.Context) {
 			}
 		}
 
-		_, _ = ctx.JSON(iris.Map{"detail": "操作完成"})
+		_ = ctx.JSON(iris.Map{"detail": "操作完成"})
 		return
 	}
 	fastMethodNotAllowedError("无权操作", ctx)

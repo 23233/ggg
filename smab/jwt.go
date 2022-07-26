@@ -25,7 +25,7 @@ func TokenToUserUidMiddleware(ctx iris.Context) {
 	userUid, err := jwtData["userUid"].(string)
 	if err != true {
 		ctx.StatusCode(iris.StatusUnauthorized)
-		_, _ = ctx.JSON(iris.Map{
+		_ = ctx.JSON(iris.Map{
 			"detail": "jwt token if fail",
 		})
 		return
@@ -33,7 +33,7 @@ func TokenToUserUidMiddleware(ctx iris.Context) {
 	userName, err := jwtData["userName"].(string)
 	if err != true {
 		ctx.StatusCode(iris.StatusUnauthorized)
-		_, _ = ctx.JSON(iris.Map{
+		_ = ctx.JSON(iris.Map{
 			"detail": "jwt token if fail",
 		})
 		return

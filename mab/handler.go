@@ -131,7 +131,15 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 	_ = ctx.JSON(newData)
 }
 
-// AddData 新增数据
+// AddData 新增数据 使用json序列化 并且新增的是一个struct对象 所以可以使用qmgo的事件
+// 注意事项 传入数据一定要符合`json`格式的预期 因为是直接通过 `json.Unmarshal` 结构到 struct
+// 示例 Inline `bson:"inline"` 传入 {"key":""} 没有定义类型则直接传入inline的子元素
+// 示范 Inline any `bson:",inline"` 传入 {"Inline":{"key":""}} 未设置json标签则取字段名称
+// 示范 Inline any `json:"inline" bson:"inline"` 传入数据 {"inline":{"key":""}}
+// 示范 JsonInLine any `json:"json_in_line,inline" bson:"inline"` 传入数据 {"json_in_line":{"key":""}}
+// json tag的inline标签在Unmarshal时候似乎无作用
+// 推荐 对于inline层面的数据 不要设置类型 直接引入 加入bson inline的tag标记即可
+// eg: Inline `bson:",inline"`
 func (rest *RestApi) AddData(ctx iris.Context) {
 	sm := rest.PathGetModel(ctx.Path())
 	if sm.CustomModel != nil {
@@ -145,12 +153,16 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 
 	// 主要作用为发现url必填参数是否传递
 	var bodyParams map[string]any
-	_ = json.Unmarshal(bodyRaw, &bodyParams)
-
-	req := rest.newInterface(sm.Model)
-	err = json.Unmarshal(bodyRaw, &req)
+	err = json.Unmarshal(bodyRaw, &bodyParams)
 	if err != nil {
-		fastError(errors.New("参数错误"), ctx)
+		fastError(err, ctx, "请求体参数解析失败")
+		return
+	}
+
+	reqModel := rest.newInterface(sm.Model)
+	err = json.Unmarshal(bodyRaw, &reqModel)
+	if err != nil {
+		fastError(err, ctx, "参数错误")
 		return
 	}
 
@@ -183,24 +195,24 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 		val, _ := sm.DisablePrivateMap["post"]
 		if !val {
 			privateVal := ctx.Values().Get(sm.PrivateContextKey)
-			reflect.Indirect(reflect.ValueOf(req)).Field(sm.privateIndex).Set(reflect.ValueOf(privateVal))
+			reflect.Indirect(reflect.ValueOf(reqModel)).Field(sm.privateIndex).Set(reflect.ValueOf(privateVal))
 		}
 	}
 
 	// 如果需要把数据转化
 	if sm.PostDataParse != nil {
-		req = sm.PostDataParse(ctx, req)
+		reqModel = sm.PostDataParse(ctx, reqModel)
 	}
 
 	if sm.PostDataCheck != nil {
-		pass, msg := sm.PostDataCheck(ctx, req)
+		pass, msg := sm.PostDataCheck(ctx, reqModel)
 		if !pass {
 			fastError(nil, ctx, msg)
 			return
 		}
 	}
 
-	aff, err := rest.Cfg.Mdb.Collection(sm.info.MapName).InsertOne(ctx, req)
+	aff, err := rest.Cfg.Mdb.Collection(sm.info.MapName).InsertOne(ctx, reqModel)
 	if err != nil || len(aff.InsertedID.(primitive.ObjectID).Hex()) < 1 {
 		fastError(err, ctx, "新增数据失败")
 		return
@@ -208,13 +220,16 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 
 	// 需要自定义返回
 	if sm.PostResponseFunc != nil {
-		req = sm.PostResponseFunc(ctx, aff.InsertedID.(primitive.ObjectID).Hex(), req)
+		reqModel = sm.PostResponseFunc(ctx, aff.InsertedID.(primitive.ObjectID).Hex(), reqModel)
 	}
 
-	_ = ctx.JSON(req)
+	_ = ctx.JSON(reqModel)
 }
 
 // EditData 修改数据 /{mid:string range(1,32)}
+// 因为修改是按需传入变更的字段 而且会存在着直接传入 bson tag inline的情况 所以会先分析传入值 进行解析
+// 如果 bson 标签有 inline 但是 json 标签有指定字段名时 传入json命名会自动结构到平级 传入下级会自动归类到json命名中
+// 如果 json没有指定字段名 但是bson指定了时 传入的是字段名也就是大写 则会自动生成一个 bson字段名的元素
 func (rest *RestApi) EditData(ctx iris.Context) {
 	sm := rest.PathGetModel(ctx.Path())
 	if sm.CustomModel != nil {
@@ -228,23 +243,58 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	// 主要作用为发现url必填参数是否传递
-	var pa map[string]any
-	_ = json.Unmarshal(bodyRaw, &pa)
-
-	// 实际的模型信息
-	reqModel := rest.newInterface(sm.Model)
-	err = json.Unmarshal(bodyRaw, &reqModel)
+	var pa bson.M
+	err = json.Unmarshal(bodyRaw, &pa)
 	if err != nil {
-		fastError(nil, ctx, "参数错误")
+		fastError(err, ctx, "请求体参数解析失败")
 		return
 	}
 
-	// 把模型转换为bson.M
-	reqMap := make(bson.M)
-	b, _ := bson.Marshal(reqModel)
-	err = bson.Unmarshal(b, &reqMap)
+	for _, field := range sm.info.FieldList {
+		if field.Kind == "struct" || field.Kind == "map" {
+			// 如果 bson 标签有 inline 但是 json 标签有指定字段名
+			if field.IsInline && len(field.JsonName) >= 1 {
+				// 判断是否传入了
+				if v, ok := pa[field.JsonName]; ok {
+					// 如果有传入的话 提升到同级
+					for kk, vv := range v.(map[string]any) {
+						pa[kk] = vv
+					}
+				} else {
+					// 没有传入判断下级是否传入
+					var c = make(map[string]any)
+					if len(field.Children) >= 1 {
+						for _, child := range field.Children {
+							if v, ok := pa[child.JsonName]; ok {
+								c[child.JsonName] = v
+							}
+						}
+						if len(c) >= 1 {
+							pa[field.JsonName] = c
+						}
+					}
+
+				}
+				continue
+			}
+
+			// 如果json没有指定字段名 但是bson指定了
+			if len(field.JsonName) < 1 && len(field.BsonName) >= 1 {
+				// 如果传入的是字段名 则转换为bson的字段名
+				if v, ok := pa[field.Name]; ok {
+					pa[field.BsonName] = v
+				}
+			}
+
+		}
+	}
+
+	// 实际的模型信息
+	reqModel := rest.newInterface(sm.Model)
+	b, _ := json.Marshal(&pa)
+	err = json.Unmarshal(b, &reqModel)
 	if err != nil {
-		fastError(err, ctx)
+		fastError(nil, ctx, "参数错误")
 		return
 	}
 
@@ -277,9 +327,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		val, _ := sm.DisablePrivateMap["post"]
 		if !val {
 			privateVal := ctx.Values().Get(sm.PrivateContextKey)
-			if _, ok := reqMap[sm.PrivateColName]; ok {
-				reflect.Indirect(reflect.ValueOf(reqModel)).Field(sm.privateIndex).Set(reflect.ValueOf(privateVal))
-			}
+			reflect.Indirect(reflect.ValueOf(reqModel)).Field(sm.privateIndex).Set(reflect.ValueOf(privateVal))
 		}
 	}
 
@@ -293,8 +341,6 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		return
 	}
 	privateValue := ctx.Values().Get(sm.PrivateContextKey)
-
-	data := rest.newInterface(sm.Model)
 
 	query := bson.M{"_id": objId}
 
@@ -310,19 +356,26 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 		query = sm.PutQueryParse(ctx, mid, query, reqModel, privateValue)
 	}
 
-	// 先获取这条数据
+	// 获取旧数据
+	data := rest.newInterface(sm.Model)
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(data)
 	if err != nil {
 		fastError(err, ctx, "查询数据失败")
 		return
 	}
 
+	// 把旧数据转换为bson
 	dataBson := make(bson.M)
 	b, _ = bson.Marshal(data)
 	_ = bson.Unmarshal(b, &dataBson)
 
+	// 把请求的数据也转换为bson
+	reqBson := make(bson.M)
+	b, _ = bson.Marshal(reqModel)
+	_ = bson.Unmarshal(b, &reqBson)
+
 	// 取不同 会存在嵌套struct整体更新的问题 逻辑上正常 暂不修改
-	diff, _ := DiffBson(dataBson, reqMap, pa)
+	diff, _ := DiffBson(dataBson, reqBson, pa)
 
 	// 如果没有什么不同 则直接返回
 	if len(diff) < 1 {
@@ -331,23 +384,10 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 
 	if sm.PutDataCheck != nil {
-		pass, msg := sm.PutDataCheck(ctx, data, reqMap, diff)
+		pass, msg := sm.PutDataCheck(ctx, data, reqBson, pa, diff)
 		if !pass {
 			fastError(nil, ctx, msg)
 			return
-		}
-	}
-
-	// 寻找inline内联 删除外层传递的参数
-	// 新增不用这样处理 因为新增是使用struct device自动会进行处理
-	for _, field := range sm.info.FieldList {
-		if v, ok := diff[field.MapName]; ok {
-			if field.IsInline {
-				for kk, vv := range v.(bson.M) {
-					diff[kk] = vv
-				}
-				delete(diff, field.MapName)
-			}
 		}
 	}
 

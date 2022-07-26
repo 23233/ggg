@@ -66,4 +66,4 @@
 
 #### 记录
 
-* bson标签的flatten主要用于 `mongo-go-struct-to-bson` 这个库
+* ~~bson标签的flatten主要用于 `mongo-go-struct-to-bson` 这个库~~ 已经放弃使用

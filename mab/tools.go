@@ -401,7 +401,19 @@ func TableNameGetNestedStructMaps(r reflect.Type, parentStructName, parentMapNam
 		d.ValidateTag = field.Tag.Get("validate")
 		d.DescTag = field.Tag.Get("desc")
 		d.Bson = strings.Split(field.Tag.Get("bson"), ",")
+		if len(d.Bson) >= 1 {
+			d.BsonName = d.Bson[0]
+			if d.BsonName == "," || d.BsonName == "omitempty" || d.BsonName == "inline" {
+				d.BsonName = ""
+			}
+		}
 		d.JsonTag = strings.Split(field.Tag.Get("json"), ",")
+		if len(d.JsonTag) >= 1 {
+			d.JsonName = d.JsonTag[0]
+			if d.JsonName == "," || d.JsonName == "omitempty" {
+				d.JsonName = ""
+			}
+		}
 		d.Index = i
 		if len(parentLevel) > 0 {
 			d.Level = strings.Join([]string{parentLevel, "-", strconv.Itoa(i)}, "")

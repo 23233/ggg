@@ -158,7 +158,7 @@ func idGetUserMiddleware(ctx iris.Context) {
 		}
 	}
 	ctx.StatusCode(iris.StatusUnauthorized)
-	_, _ = ctx.JSON(iris.Map{"detail": "获取当前用户失败,请重新登录"})
+	_ = ctx.JSON(iris.Map{"detail": "获取当前用户失败,请重新登录"})
 	ctx.StopExecution()
 	return
 

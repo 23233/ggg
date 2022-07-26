@@ -22,7 +22,7 @@ func fastError(err error, ctx iris.Context, msg ...string) {
 	if len(msg) >= 1 {
 		m = msg[0]
 	}
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"detail": m,
 	})
 	return
@@ -30,7 +30,7 @@ func fastError(err error, ctx iris.Context, msg ...string) {
 
 func fastMethodNotAllowedError(msg string, ctx iris.Context) {
 	ctx.StatusCode(iris.StatusMethodNotAllowed)
-	_, _ = ctx.JSON(iris.Map{
+	_ = ctx.JSON(iris.Map{
 		"detail": msg,
 	})
 	return

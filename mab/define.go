@@ -24,62 +24,62 @@ import (
 //	}
 //
 type SingleModel struct {
-	Prefix                string                                                                              // 路由前缀
-	Suffix                string                                                                              // 路由后缀
-	Model                 any                                                                                 // xorm Model
-	ShowCount             bool                                                                                // 显示搜索数量
-	ShowDocCount          bool                                                                                // 显示文档数量
-	AllowGetInfo          bool                                                                                // 允许获取表结构信息
-	uriPath               string                                                                              // 实际匹配的uri
-	CustomModel           func(ctx iris.Context, model *SingleModel) *SingleModel                             // 记住要进行指针值传递 返回一个新对象 否则会修改原始配置文件
-	Pk                    func() []bson.D                                                                     // 外键
-	info                  ModelInfo                                                                           //
-	DisablePrivate        bool                                                                                // 禁用私密参数
-	DisablePrivateMap     map[string]bool                                                                     // 禁用私密参数定制项 key为方法 value为启用与否 前提条件必须启用后才能禁用 而不能禁用后启用
-	private               bool                                                                                // 当有context key 以及col name时为true
-	PrivateContextKey     string                                                                              // 上下文key string int uint
-	PrivateColName        string                                                                              // 数据库字段名 MapName or ColName is ok
-	privateStructName     string                                                                              // 根据colName 找到真实的struct name
-	privateIndex          int                                                                                 //
-	AllowMethods          []string                                                                            // allow methods first
-	DisableMethods        []string                                                                            // get(all) get(single) post put delete
-	MustSearch            bool                                                                                // 必须搜索模式 会忽略下面的搜索设置强制开启搜索 (非slice|struct|primitive.ObjectID)
-	AllowSearchFields     []string                                                                            // 搜索的字段 struct名称
-	searchFields          []StructInfo                                                                        // allow search col names
-	InjectParams          func(ctx iris.Context) map[string]string                                            // 注入params 用于get请求参数的自定义
-	GetAllResponseFunc    func(ctx iris.Context, result iris.Map, dataList []bson.M) iris.Map                 // 返回内容替换的方法
-	GetAllExtraFilters    func(ctx iris.Context) map[string]any                                               // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
-	GetAllMustFilters     map[string]string                                                                   // 获取全部必须拥有筛选
-	GetAllCheck           func(ctx iris.Context, params *CtxGetDataParse) (bool, string)                      // 获取是否通过审核
-	GetSingleResponseFunc func(ctx iris.Context, item bson.M) bson.M                                          // 获取单个返回内容替换的方法
-	GetSingleExtraFilters func(ctx iris.Context) map[string]any                                               // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
-	GetSingleMustFilters  map[string]string                                                                   // 获取单个必须拥有筛选
-	PostMustFilters       map[string]string                                                                   // 新增必须存在的参数
-	PostResponseFunc      func(ctx iris.Context, mid string, item any) any                                    //
-	PostDataParse         func(ctx iris.Context, raw any) any                                                 //
-	PostDataCheck         func(ctx iris.Context, data any) (bool, string)                                     // 新增数据校验
-	PutDataParse          func(ctx iris.Context, mid string, diff bson.M) bson.M                              //
-	PutQueryParse         func(ctx iris.Context, mid string, query bson.M, data any, privateValue any) bson.M // 修改的时候query可以自定义修改
-	PutResponseFunc       func(ctx iris.Context, mid string) iris.Map                                         // 在修改之前还可以变更一下数据
-	PutDataCheck          func(ctx iris.Context, item any, reqData any, diff bson.M) (bool, string)           // 新增数据校验
-	PutMustFilters        map[string]string                                                                   //
-	DeleteDataCheck       func(ctx iris.Context, item any) (bool, string)                                     // 删除验证
-	DeleteResponseFunc    func(ctx iris.Context, mid string, item bson.M, result iris.Map) iris.Map           //
-	SensitiveFields       []string                                                                            // 使用struct name 或者mapname 均可(map对象为bson:)
-	sensitiveField        []string                                                                            // post传入的key
-	CacheTime             time.Duration                                                                       // full cache time
-	GetAllCacheTime       time.Duration                                                                       // get all cache time
-	GetSingleCacheTime    time.Duration                                                                       // get single cache time
-	DelayDeleteTime       time.Duration                                                                       // 延迟多久双删 default 500ms
-	MaxPageSize           int64                                                                               // max page size limit
-	MaxPageCount          int64                                                                               // max page count limit
-	RateErrorFunc         func(*tollerr.HTTPError, iris.Context)                                              //
-	Rate                  *limiter.Limiter                                                                    // all
-	GetAllRate            *limiter.Limiter                                                                    //
-	GetSingleRate         *limiter.Limiter                                                                    //
-	AddRate               *limiter.Limiter                                                                    //
-	PutRate               *limiter.Limiter                                                                    //
-	DeleteRate            *limiter.Limiter                                                                    //
+	Prefix                string                                                                                   // 路由前缀
+	Suffix                string                                                                                   // 路由后缀
+	Model                 any                                                                                      // xorm Model
+	ShowCount             bool                                                                                     // 显示搜索数量
+	ShowDocCount          bool                                                                                     // 显示文档数量
+	AllowGetInfo          bool                                                                                     // 允许获取表结构信息
+	uriPath               string                                                                                   // 实际匹配的uri
+	CustomModel           func(ctx iris.Context, model *SingleModel) *SingleModel                                  // 记住要进行指针值传递 返回一个新对象 否则会修改原始配置文件
+	Pk                    func() []bson.D                                                                          // 外键
+	info                  ModelInfo                                                                                //
+	DisablePrivate        bool                                                                                     // 禁用私密参数
+	DisablePrivateMap     map[string]bool                                                                          // 禁用私密参数定制项 key为方法 value为启用与否 前提条件必须启用后才能禁用 而不能禁用后启用
+	private               bool                                                                                     // 当有context key 以及col name时为true
+	PrivateContextKey     string                                                                                   // 上下文key string int uint
+	PrivateColName        string                                                                                   // 数据库字段名 MapName or ColName is ok
+	privateStructName     string                                                                                   // 根据colName 找到真实的struct name
+	privateIndex          int                                                                                      //
+	AllowMethods          []string                                                                                 // allow methods first
+	DisableMethods        []string                                                                                 // get(all) get(single) post put delete
+	MustSearch            bool                                                                                     // 必须搜索模式 会忽略下面的搜索设置强制开启搜索 (非slice|struct|primitive.ObjectID)
+	AllowSearchFields     []string                                                                                 // 搜索的字段 struct名称
+	searchFields          []StructInfo                                                                             // allow search col names
+	InjectParams          func(ctx iris.Context) map[string]string                                                 // 注入params 用于get请求参数的自定义
+	GetAllResponseFunc    func(ctx iris.Context, result iris.Map, dataList []bson.M) iris.Map                      // 返回内容替换的方法
+	GetAllExtraFilters    func(ctx iris.Context) map[string]any                                                    // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
+	GetAllMustFilters     map[string]string                                                                        // 获取全部必须拥有筛选
+	GetAllCheck           func(ctx iris.Context, params *CtxGetDataParse) (bool, string)                           // 获取是否通过审核
+	GetSingleResponseFunc func(ctx iris.Context, item bson.M) bson.M                                               // 获取单个返回内容替换的方法
+	GetSingleExtraFilters func(ctx iris.Context) map[string]any                                                    // 额外的固定过滤 key(数据库列名) 和 value 若与请求过滤重复则覆盖 优先级最高
+	GetSingleMustFilters  map[string]string                                                                        // 获取单个必须拥有筛选
+	PostMustFilters       map[string]string                                                                        // 新增必须存在的参数
+	PostResponseFunc      func(ctx iris.Context, mid string, item any) any                                         //
+	PostDataParse         func(ctx iris.Context, raw any) any                                                      //
+	PostDataCheck         func(ctx iris.Context, data any) (bool, string)                                          // 新增数据校验
+	PutDataParse          func(ctx iris.Context, mid string, diff bson.M) bson.M                                   //
+	PutQueryParse         func(ctx iris.Context, mid string, query bson.M, data any, privateValue any) bson.M      // 修改的时候query可以自定义修改
+	PutResponseFunc       func(ctx iris.Context, mid string) iris.Map                                              // 在修改之前还可以变更一下数据
+	PutDataCheck          func(ctx iris.Context, item any, reqData any, reqMap bson.M, diff bson.M) (bool, string) // 新增数据校验
+	PutMustFilters        map[string]string                                                                        //
+	DeleteDataCheck       func(ctx iris.Context, item any) (bool, string)                                          // 删除验证
+	DeleteResponseFunc    func(ctx iris.Context, mid string, item bson.M, result iris.Map) iris.Map                //
+	SensitiveFields       []string                                                                                 // 使用struct name 或者mapname 均可(map对象为bson:)
+	sensitiveField        []string                                                                                 // post传入的key
+	CacheTime             time.Duration                                                                            // full cache time
+	GetAllCacheTime       time.Duration                                                                            // get all cache time
+	GetSingleCacheTime    time.Duration                                                                            // get single cache time
+	DelayDeleteTime       time.Duration                                                                            // 延迟多久双删 default 500ms
+	MaxPageSize           int64                                                                                    // max page size limit
+	MaxPageCount          int64                                                                                    // max page count limit
+	RateErrorFunc         func(*tollerr.HTTPError, iris.Context)                                                   //
+	Rate                  *limiter.Limiter                                                                         // all
+	GetAllRate            *limiter.Limiter                                                                         //
+	GetSingleRate         *limiter.Limiter                                                                         //
+	AddRate               *limiter.Limiter                                                                         //
+	PutRate               *limiter.Limiter                                                                         //
+	DeleteRate            *limiter.Limiter                                                                         //
 }
 
 func (sm *SingleModel) Init(delimiter string, relPath string, privateContextKey string, PrivateColName string) {
@@ -408,8 +408,10 @@ type StructInfo struct {
 	Comment       string       `json:"comment,omitempty"`
 	Level         string       `json:"level"` // parentIndex - .... - self index
 	Kind          string       `json:"kind"`
-	Bson          []string     `json:"bson"`     // bson tag
+	Bson          []string     `json:"bson"` // bson tag
+	BsonName      string       `json:"bson_name"`
 	JsonTag       []string     `json:"json_tag"` // json tag
+	JsonName      string       `json:"json_name"`
 	Types         string       `json:"types"`
 	Index         int          `json:"index,omitempty"`
 	IsDefaultWrap bool         `json:"is_default_wrap,omitempty"`

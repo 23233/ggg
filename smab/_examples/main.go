@@ -182,7 +182,7 @@ func main() {
 	})
 
 	app.Post("/test", func(ctx iris.Context) {
-		_, _ = ctx.JSON(iris.Map{"detail": "处理完成"})
+		_ = ctx.JSON(iris.Map{"detail": "处理完成"})
 	})
 
 	go func() {

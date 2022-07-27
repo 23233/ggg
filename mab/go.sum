@@ -1,3 +1,5 @@
+github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b h1:PvdTCLTgMDElbo0zDUbw/LWtcmtw1CtXJTV9flwn6LU=
+github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b/go.mod h1:PrSjWlL9GQQ1Cq5pL036LDV9Dv8tob6AxinnZxub8aM=
 github.com/BurntSushi/toml v1.2.0 h1:Rt8g24XnyGTyglgET/PRUNlrUeu9F5L+7FilkXfZgs0=
 github.com/BurntSushi/toml v1.2.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 h1:sR+/8Yb4slttB4vD+b9btVEnWgL3Q00OBTzVT8B9C0c=

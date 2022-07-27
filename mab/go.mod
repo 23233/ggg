@@ -2,10 +2,8 @@ module github.com/23233/ggg/mab
 
 go 1.18
 
-replace github.com/23233/ggg/ut => ../ut
-
 require (
-	github.com/23233/ggg/ut v0.0.0-20220720134023-5c0cff84a58e
+	github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b
 	github.com/bluele/gcache v0.0.2
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/google/go-cmp v0.5.8

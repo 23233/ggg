@@ -85,6 +85,11 @@ type ComplexModel struct {
 	TestInline      InlineTest   `json:"test_inline" bson:"test_inline,inline" comment:"内链"`
 	TestNotInline   InlineTest   `json:"test_not_inline" bson:"test_not_inline" comment:"非内链"`
 	TestSliceInline []InlineTest `json:"test_slice_inline" bson:"test_slice_inline" comment:"数组链接"`
+	HiddenTable     string       `json:"hidden_table" bson:"hidden_table" comment:"表格中不显示" mab:"hide=table"`
+	HiddenAll       string       `json:"hidden_all" bson:"hidden_all" comment:"全都不显示" mab:"hide"`
+	HiddenForm      string       `json:"hidden_form" bson:"hidden_form" comment:"表单中不显示" mab:"hide=form"`
+	HiddenAdd       string       `json:"hidden_add" bson:"hidden_add" comment:"新增不显示" mab:"hide=add"`
+	HiddenEdit      string       `json:"hidden_edit" bson:"hidden_edit" comment:"修改不显示" mab:"hide=edit"`
 }
 
 func (c *ComplexModel) Alias() string {

@@ -1,6 +1,5 @@
 ### mongo版本 admin管理
 
-
 #### mab标签可选
 
 * t 代表前端渲染的类型
@@ -11,6 +10,13 @@
 * fk 外键
     * 例子: fk=User
     * 可选 col=[FieldName] 即指定映射字段信息 eg: fk=EventManage,col=Name 建议只使用id primitive.ObjectID类型
+
+* hide 隐藏显示
+    * hide=form 在新增/修改时候隐藏
+    * hide=add 在新增时候隐藏
+    * hide=edit 在修改时隐藏
+    * hide=table 在表格显示时隐藏
+    * hide 在所有情况下都隐藏
 
 ##### 图表接口
 

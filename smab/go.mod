@@ -9,8 +9,8 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220725151438-79294e3e2624
-	github.com/23233/ggg/sv v0.0.0-20220720134023-5c0cff84a58e
+	github.com/23233/ggg/mab v0.0.0-20220727105847-256804eb7b5b
+	github.com/23233/ggg/sv v0.0.0-20220727105847-256804eb7b5b
 	github.com/casbin/casbin/v2 v2.51.0
 	github.com/casbin/mongodb-adapter/v3 v3.3.0
 	github.com/imdario/mergo v0.3.13
@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	github.com/23233/ggg/ut v0.0.0-20220720134023-5c0cff84a58e // indirect
+	github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b // indirect
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.1.0 // indirect
@@ -96,9 +96,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
+	golang.org/x/net v0.0.0-20220726230323-06994584191e // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/sys v0.0.0-20220727055044-e65921a090b8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect

@@ -258,7 +258,7 @@ func cmpQuery(or, filter, search, private, extra []bson.E, lastMid primitive.Obj
 }
 
 // 组合包含外键的参数
-func fkCmpQuery(match bson.D, lookup []bson.D, page, pageSize int64, descField, orderBy string) []bson.D {
+func fkCmpQuery(match bson.D, lookup []bson.D, page, pageSize int64, descField, orderBy []string) []bson.D {
 	// 这里顺序特别重要 一定不能随意变更顺序 必须是match在前 lookup中间
 	pipeline := make([]bson.D, 0)
 	if len(match) > 0 {
@@ -269,10 +269,14 @@ func fkCmpQuery(match bson.D, lookup []bson.D, page, pageSize int64, descField, 
 	// 解析出sort 顺序在limit skip之前
 	sort := bson.D{}
 	if len(descField) > 0 {
-		sort = append(sort, bson.E{Key: descField, Value: -1})
+		for _, s := range descField {
+			sort = append(sort, bson.E{Key: s, Value: -1})
+		}
 	}
 	if len(orderBy) > 0 {
-		sort = append(sort, bson.E{Key: orderBy, Value: 1})
+		for _, s := range orderBy {
+			sort = append(sort, bson.E{Key: s, Value: 1})
+		}
 	}
 	if len(sort) > 0 {
 		pipeline = append(pipeline, bson.D{{"$sort", sort}})
@@ -287,7 +291,7 @@ func fkCmpQuery(match bson.D, lookup []bson.D, page, pageSize int64, descField, 
 }
 
 // geoQuery 地理位置获取参数
-func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat float64, maxDistance, minDistance int64, descField, orderBy string) []bson.D {
+func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat float64, maxDistance, minDistance int64, descField, orderBy []string) []bson.D {
 	// 这里顺序特别重要 一定不能随意变更顺序 geo信息必须在最前
 	pipeline := make([]bson.D, 0)
 
@@ -318,10 +322,14 @@ func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat floa
 	// 在geo模式下尽量不要使用sort 应该使用默认的距离返回模式
 	sort := bson.D{}
 	if len(descField) > 0 {
-		sort = append(sort, bson.E{Key: descField, Value: -1})
+		for _, s := range descField {
+			sort = append(sort, bson.E{Key: s, Value: -1})
+		}
 	}
 	if len(orderBy) > 0 {
-		sort = append(sort, bson.E{Key: orderBy, Value: 1})
+		for _, s := range orderBy {
+			sort = append(sort, bson.E{Key: s, Value: 1})
+		}
 	}
 	if len(sort) > 0 {
 		pipeline = append(pipeline, bson.D{{"$sort", sort}})

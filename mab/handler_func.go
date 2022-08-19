@@ -22,8 +22,8 @@ type CtxGetDataParse struct {
 	FilterBson  []bson.E // and
 	PrivateBson []bson.E // 私密
 	ExtraBson   []bson.E // 额外附加
-	SortDesc    string   // 降序
-	SortAsc     string   // 升序
+	SortDesc    []string // 降序
+	SortAsc     []string // 升序
 	SortList    []string // order by
 	LastMid     primitive.ObjectID
 	HasGeo      bool        // 是否包含geo信息
@@ -133,14 +133,18 @@ func CtxDataParse(ctx iris.Context, sm *SingleModel, delimiter string) (*CtxGetD
 	r.LastMid = lastObj
 
 	// 解析出order by
-	descField := ctx.URLParam("_od")
-	orderBy := ctx.URLParam("_o")
-	sortList := make([]string, 0, 2)
+	descField := strings.Split(ctx.URLParam("_od"), ",")
+	orderBy := strings.Split(ctx.URLParam("_o"), ",")
+	sortList := make([]string, 0)
 	if len(descField) > 0 {
-		sortList = append(sortList, "-"+descField)
+		for _, s := range descField {
+			sortList = append(sortList, "-"+s)
+		}
 	}
 	if len(orderBy) > 0 {
-		sortList = append(sortList, orderBy)
+		for _, s := range orderBy {
+			sortList = append(sortList, s)
+		}
 	}
 
 	r.SortDesc = descField

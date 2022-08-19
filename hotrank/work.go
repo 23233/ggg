@@ -31,14 +31,14 @@ type WorkCall struct {
 // 实际操作
 func (c *WorkCall) run(ctx context.Context) bool {
 	// 根据event name 运行不同的验证器
-	runChange := false
+	isValid := false
 
 	if fc, ok := scoreTrigger[c.EventName]; ok {
-		runChange = fc(c)
+		isValid = fc(c)
 	}
 
 	// 如果通过了验证
-	if runChange {
+	if isValid {
 		// 变更自身热度并写入历史
 		c.applySelf(ctx)
 		// 写入每日排行榜

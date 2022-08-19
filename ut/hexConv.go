@@ -17,6 +17,14 @@ func StrToInt(s string) int64 {
 	return int64(keyInt)
 }
 
+func StrToInt64(s string) int64 {
+	h := xxhash.New64()
+	r := strings.NewReader(s)
+	_, _ = io.Copy(h, r)
+	keyInt := h.Sum64()
+	return int64(keyInt)
+}
+
 func StrToB62(s string) string {
 	d := strconv.FormatUint(uint64(StrToInt(s)), 10)
 	return base62.EncodeToString([]byte(d))

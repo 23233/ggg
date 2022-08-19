@@ -17,7 +17,7 @@ type timeItem struct {
 	Now  time.Time
 }
 
-type funcTime struct {
+type FuncCalcTime struct {
 	Name      string
 	id        string
 	Stage     []timeItem
@@ -26,7 +26,7 @@ type funcTime struct {
 }
 
 // Print i为截止下标
-func (c *funcTime) Print(endIndexs ...int) {
+func (c *FuncCalcTime) Print(endIndexs ...int) {
 	var endIndex = len(c.Stage)
 	if len(endIndexs) > 0 {
 		endIndex = endIndexs[0]
@@ -59,9 +59,13 @@ func (c *funcTime) Print(endIndexs ...int) {
 	logger.Printf("[%s][%s][%s]%s", c.Name, c.id, c.start.Format("2006-01-02 15:04:05"), st.String())
 }
 
-func (c *funcTime) Add(t string, msg ...interface{}) {
+func (c *FuncCalcTime) Add(t string, msg ...interface{}) {
+	name := t
+	if len(msg) >= 1 {
+		name = fmt.Sprintf(t, msg...)
+	}
 	var item = timeItem{
-		Name: fmt.Sprintf(t, msg...),
+		Name: name,
 		Now:  time.Now(),
 	}
 	c.Stage = append(c.Stage, item)
@@ -69,13 +73,13 @@ func (c *funcTime) Add(t string, msg ...interface{}) {
 		c.Print()
 	}
 }
-func (c *funcTime) ChangeLinePrint(show bool) {
+func (c *FuncCalcTime) ChangeLinePrint(show bool) {
 	c.LinePrint = show
 }
 
 // NewFST 方法计时器
-func NewFST(name string) funcTime {
-	c := funcTime{
+func NewFST(name string) FuncCalcTime {
+	c := FuncCalcTime{
 		Name:  name,
 		Stage: make([]timeItem, 0),
 		start: time.Now(),

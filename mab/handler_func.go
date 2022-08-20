@@ -26,6 +26,7 @@ type CtxGetDataParse struct {
 	SortAsc     []string // 升序
 	SortList    []string // order by
 	LastMid     primitive.ObjectID
+	LastSort    string      // 最后mid排序方式 默认desc
 	HasGeo      bool        // 是否包含geo信息
 	GeoInfo     *CtxGeoInfo // geo信息
 	Search      string      // 搜索词
@@ -122,6 +123,7 @@ func CtxDataParse(ctx iris.Context, sm *SingleModel, delimiter string) (*CtxGetD
 
 	// 最后的id
 	lastMid := ctx.URLParam("_last")
+	lastSort := ctx.URLParamDefault("_lastSort", "gt")
 	var lastObj primitive.ObjectID
 	if len(lastMid) > 0 {
 		lastObj, err = primitive.ObjectIDFromHex(lastMid)
@@ -131,17 +133,22 @@ func CtxDataParse(ctx iris.Context, sm *SingleModel, delimiter string) (*CtxGetD
 	}
 
 	r.LastMid = lastObj
+	r.LastSort = lastSort
 
-	// 解析出order by
-	descField := strings.Split(ctx.URLParam("_od"), ",")
-	orderBy := strings.Split(ctx.URLParam("_o"), ",")
+	// 解析出排序的 desc 或asc order by
 	sortList := make([]string, 0)
-	if len(descField) > 0 {
+	descStr := ctx.URLParam("_od")
+	descField := make([]string, 0)
+	if len(descStr) > 0 {
+		descField = strings.Split(descStr, ",")
 		for _, s := range descField {
 			sortList = append(sortList, "-"+s)
 		}
 	}
-	if len(orderBy) > 0 {
+	ascStr := ctx.URLParam("_o")
+	orderBy := make([]string, 0)
+	if len(ascStr) > 0 {
+		orderBy = strings.Split(ctx.URLParam("_o"), ",")
 		for _, s := range orderBy {
 			sortList = append(sortList, s)
 		}
@@ -258,16 +265,16 @@ func ModelGetData(ctx iris.Context, sm *SingleModel, mdb *qmgo.Database, parse *
 	batch := make([]bson.M, 0)
 
 	// 组合出查询条件
-	query := cmpQuery(parse.OrBson, parse.FilterBson, parse.SearchBson, parse.PrivateBson, parse.ExtraBson, parse.LastMid)
+	query := cmpQuery(parse)
 
 	// 如果有geo 进入geo分支
 	if parse.HasGeo {
-		pipeline := geoQuery(query, parse.Pk, parse.Page, parse.PageSize, parse.GeoInfo.Lng, parse.GeoInfo.Lat, parse.GeoInfo.GeoMax, parse.GeoInfo.GeoMin, parse.SortDesc, parse.SortAsc)
+		pipeline := geoQuery(query, parse)
 		err = mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).All(&batch)
 	} else {
 		// 如果是包含外键的
 		if len(parse.Pk) > 0 {
-			pipeline := fkCmpQuery(query, parse.Pk, parse.Page, parse.PageSize, parse.SortDesc, parse.SortAsc)
+			pipeline := fkCmpQuery(query, parse)
 			err = mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).All(&batch)
 		} else {
 			err = mdb.Collection(sm.info.MapName).Find(ctx, query).Limit(parse.PageSize).Skip((parse.Page - 1) * parse.PageSize).Sort(parse.SortList...).All(&batch)
@@ -402,12 +409,14 @@ func CtxSingleDataParse(ctx iris.Context, sm *SingleModel, mid string, delimiter
 func ModelGetSingle(ctx iris.Context, sm *SingleModel, mdb *qmgo.Database, parse *CtxGetDataParse) (bson.M, error) {
 	// 一样必须为bson.M 如果为struct 则无法映射外键数据
 	var newData = bson.M{}
-	query := cmpQuery(parse.OrBson, parse.FilterBson, nil, parse.PrivateBson, parse.ExtraBson, primitive.NilObjectID)
+	query := cmpQuery(parse)
 
 	var err error
 	// 如果是包含外键的
 	if len(parse.Pk) > 0 {
-		pipeline := fkCmpQuery(query, parse.Pk, 1, 1, parse.SortDesc, parse.SortAsc)
+		parse.Page = 1
+		parse.PageSize = 1
+		pipeline := fkCmpQuery(query, parse)
 		err = mdb.Collection(sm.info.MapName).Aggregate(ctx, pipeline).One(&newData)
 	} else {
 		err = mdb.Collection(sm.info.MapName).Find(ctx, query).One(&newData)

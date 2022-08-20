@@ -197,32 +197,32 @@ func filterMatch(fullParams map[string]string, fields []StructInfo, structDelimi
 }
 
 // 组合参数
-func cmpQuery(or, filter, search, private, extra []bson.E, lastMid primitive.ObjectID) bson.D {
+func cmpQuery(parse *CtxGetDataParse) bson.D {
 	// bson.D[bson.E{"$and":bson.A[bson.D{bson.E,bson.E}]},{"$or": bson.A{ bson.D{{}}, bson.D{{}}}]
 	r := bson.D{}
 
-	if !lastMid.IsZero() {
+	if !parse.LastMid.IsZero() {
 		r = append(r, bson.E{
 			Key: "_id",
 			Value: bson.M{
-				"$gt": lastMid,
+				"$" + parse.LastSort: parse.LastMid,
 			},
 		})
 	}
 
 	andItem := bson.D{}
-	if len(filter) > 0 {
-		for _, e := range filter {
+	if len(parse.FilterBson) > 0 {
+		for _, e := range parse.FilterBson {
 			andItem = append(andItem, e)
 		}
 	}
-	if len(private) > 0 {
-		for _, e := range private {
+	if len(parse.PrivateBson) > 0 {
+		for _, e := range parse.PrivateBson {
 			andItem = append(andItem, e)
 		}
 	}
-	if len(extra) > 0 {
-		for _, e := range extra {
+	if len(parse.ExtraBson) > 0 {
+		for _, e := range parse.ExtraBson {
 			andItem = append(andItem, e)
 		}
 	}
@@ -234,16 +234,16 @@ func cmpQuery(or, filter, search, private, extra []bson.E, lastMid primitive.Obj
 		})
 	}
 
-	if len(or) > 0 || len(search) > 0 {
+	if len(parse.OrBson) > 0 || len(parse.SearchBson) > 0 {
 		// {"$or": bson.A{ bson.D{{}}, bson.D{{}}}
 		orItem := bson.A{}
-		if len(search) > 0 {
-			for _, e := range search {
+		if len(parse.SearchBson) > 0 {
+			for _, e := range parse.SearchBson {
 				orItem = append(orItem, bson.D{e})
 			}
 		}
-		if len(or) > 0 {
-			for _, e := range or {
+		if len(parse.OrBson) > 0 {
+			for _, e := range parse.OrBson {
 				orItem = append(orItem, bson.D{e})
 			}
 		}
@@ -258,56 +258,56 @@ func cmpQuery(or, filter, search, private, extra []bson.E, lastMid primitive.Obj
 }
 
 // 组合包含外键的参数
-func fkCmpQuery(match bson.D, lookup []bson.D, page, pageSize int64, descField, orderBy []string) []bson.D {
+func fkCmpQuery(match bson.D, parse *CtxGetDataParse) []bson.D {
 	// 这里顺序特别重要 一定不能随意变更顺序 必须是match在前 lookup中间
 	pipeline := make([]bson.D, 0)
 	if len(match) > 0 {
 		pipeline = append(pipeline, bson.D{{"$match", match}})
 	}
-	pipeline = append(pipeline, lookup...)
+	pipeline = append(pipeline, parse.Pk...)
 
 	// 解析出sort 顺序在limit skip之前
 	sort := bson.D{}
-	if len(descField) > 0 {
-		for _, s := range descField {
+	if len(parse.SortDesc) > 0 {
+		for _, s := range parse.SortDesc {
 			sort = append(sort, bson.E{Key: s, Value: -1})
 		}
 	}
-	if len(orderBy) > 0 {
-		for _, s := range orderBy {
+	if len(parse.SortAsc) > 0 {
+		for _, s := range parse.SortAsc {
 			sort = append(sort, bson.E{Key: s, Value: 1})
 		}
 	}
 	if len(sort) > 0 {
 		pipeline = append(pipeline, bson.D{{"$sort", sort}})
 	}
-	skip := (page - 1) * pageSize
+	skip := (parse.Page - 1) * parse.PageSize
 	if skip > 0 {
 		pipeline = append(pipeline, bson.D{{"$skip", skip}})
 	}
-	pipeline = append(pipeline, bson.D{{"$limit", pageSize}})
+	pipeline = append(pipeline, bson.D{{"$limit", parse.PageSize}})
 
 	return pipeline
 }
 
 // geoQuery 地理位置获取参数
-func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat float64, maxDistance, minDistance int64, descField, orderBy []string) []bson.D {
+func geoQuery(match bson.D, parse *CtxGetDataParse) []bson.D {
 	// 这里顺序特别重要 一定不能随意变更顺序 geo信息必须在最前
 	pipeline := make([]bson.D, 0)
 
 	var near = bson.M{
 		"near": bson.M{
 			"type":        "Point",
-			"coordinates": []float64{lng, lat},
+			"coordinates": []float64{parse.GeoInfo.Lng, parse.GeoInfo.Lat},
 		},
 		"distanceField": "_distance",
 		"spherical":     true,
 	}
-	if maxDistance >= 1 {
-		near["maxDistance"] = maxDistance
+	if parse.GeoInfo.GeoMax >= 1 {
+		near["maxDistance"] = parse.GeoInfo.GeoMax
 	}
-	if minDistance >= 1 {
-		near["minDistance"] = minDistance
+	if parse.GeoInfo.GeoMin >= 1 {
+		near["minDistance"] = parse.GeoInfo.GeoMin
 	}
 	if len(match) > 0 {
 		near["query"] = match
@@ -316,18 +316,18 @@ func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat floa
 	geoNear := bson.D{{"$geoNear", near}}
 	pipeline = append(pipeline, geoNear)
 
-	pipeline = append(pipeline, lookup...)
+	pipeline = append(pipeline, parse.Pk...)
 
 	// 解析出sort 顺序在limit skip之前
 	// 在geo模式下尽量不要使用sort 应该使用默认的距离返回模式
 	sort := bson.D{}
-	if len(descField) > 0 {
-		for _, s := range descField {
+	if len(parse.SortDesc) > 0 {
+		for _, s := range parse.SortDesc {
 			sort = append(sort, bson.E{Key: s, Value: -1})
 		}
 	}
-	if len(orderBy) > 0 {
-		for _, s := range orderBy {
+	if len(parse.SortAsc) > 0 {
+		for _, s := range parse.SortAsc {
 			sort = append(sort, bson.E{Key: s, Value: 1})
 		}
 	}
@@ -335,8 +335,8 @@ func geoQuery(match bson.D, lookup []bson.D, page, pageSize int64, lng, lat floa
 		pipeline = append(pipeline, bson.D{{"$sort", sort}})
 	}
 
-	pipeline = append(pipeline, bson.D{{"$skip", (page - 1) * pageSize}})
-	pipeline = append(pipeline, bson.D{{"$limit", pageSize}})
+	pipeline = append(pipeline, bson.D{{"$skip", (parse.Page - 1) * parse.PageSize}})
+	pipeline = append(pipeline, bson.D{{"$limit", parse.PageSize}})
 
 	return pipeline
 }

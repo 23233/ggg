@@ -12,8 +12,7 @@ import (
 	"time"
 )
 
-// 错误返回
-func fastError(err error, ctx iris.Context, msg ...string) {
+func (rest *RestApi) ErrorResponse(err error, ctx iris.Context, msg ...string) {
 	ctx.StatusCode(iris.StatusBadRequest)
 	var m string
 	if err == nil {
@@ -46,21 +45,21 @@ func (rest *RestApi) GetAllFunc(ctx iris.Context) {
 
 	parse, err := CtxDataParse(ctx, sm, rest.Cfg.StructDelimiter)
 	if err != nil {
-		fastError(err, ctx)
+		rest.ErrorResponse(err, ctx)
 		return
 	}
 
 	if sm.GetAllCheck != nil {
 		pass, msg := sm.GetAllCheck(ctx, parse)
 		if !pass {
-			fastError(nil, ctx, msg)
+			rest.ErrorResponse(nil, ctx, msg)
 			return
 		}
 	}
 
 	batch, result, err := ModelGetData(ctx, sm, rest.Cfg.Mdb, parse)
 	if err != nil {
-		fastError(err, ctx, "查询数据出现错误")
+		rest.ErrorResponse(err, ctx, "查询数据出现错误")
 		return
 	}
 
@@ -100,13 +99,13 @@ func (rest *RestApi) GetSingle(ctx iris.Context) {
 
 	parse, err := CtxSingleDataParse(ctx, sm, mid, rest.Cfg.StructDelimiter)
 	if err != nil {
-		fastError(err, ctx)
+		rest.ErrorResponse(err, ctx)
 		return
 	}
 
 	newData, err := ModelGetSingle(ctx, sm, rest.Cfg.Mdb, parse)
 	if err != nil {
-		fastError(err, ctx, "查询数据失败")
+		rest.ErrorResponse(err, ctx, "查询数据失败")
 		return
 	}
 
@@ -147,7 +146,7 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 	}
 	bodyRaw, err := ctx.GetBody()
 	if err != nil {
-		fastError(err, ctx, "获取请求内容失败")
+		rest.ErrorResponse(err, ctx, "获取请求内容失败")
 		return
 	}
 
@@ -155,14 +154,14 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 	var bodyParams map[string]any
 	err = json.Unmarshal(bodyRaw, &bodyParams)
 	if err != nil {
-		fastError(err, ctx, "请求体参数解析失败")
+		rest.ErrorResponse(err, ctx, "请求体参数解析失败")
 		return
 	}
 
 	reqModel := rest.newInterface(sm.Model)
 	err = json.Unmarshal(bodyRaw, &reqModel)
 	if err != nil {
-		fastError(err, ctx, "参数错误")
+		rest.ErrorResponse(err, ctx, "参数错误")
 		return
 	}
 
@@ -170,7 +169,7 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 	if len(sm.PostMustFilters) > 0 {
 		for k := range sm.PostMustFilters {
 			if _, ok := bodyParams[k]; !ok {
-				fastError(nil, ctx, "必填参数缺失")
+				rest.ErrorResponse(nil, ctx, "必填参数缺失")
 				return
 			}
 		}
@@ -183,7 +182,7 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 				if val, ok := v.(string); ok {
 					pass, firstWork := rest.runWordValid(val)
 					if !pass {
-						fastError(errors.New("检测到敏感词"), ctx, "请勿输入敏感词%s", firstWork)
+						rest.ErrorResponse(errors.New("检测到敏感词"), ctx, "请勿输入敏感词%s", firstWork)
 						return
 					}
 				}
@@ -207,14 +206,14 @@ func (rest *RestApi) AddData(ctx iris.Context) {
 	if sm.PostDataCheck != nil {
 		pass, msg := sm.PostDataCheck(ctx, reqModel)
 		if !pass {
-			fastError(nil, ctx, msg)
+			rest.ErrorResponse(nil, ctx, msg)
 			return
 		}
 	}
 
 	aff, err := rest.Cfg.Mdb.Collection(sm.info.MapName).InsertOne(ctx, reqModel)
 	if err != nil || len(aff.InsertedID.(primitive.ObjectID).Hex()) < 1 {
-		fastError(err, ctx, "新增数据失败")
+		rest.ErrorResponse(err, ctx, "新增数据失败")
 		return
 	}
 
@@ -238,7 +237,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 
 	bodyRaw, err := ctx.GetBody()
 	if err != nil {
-		fastError(err, ctx, "获取请求内容失败")
+		rest.ErrorResponse(err, ctx, "获取请求内容失败")
 		return
 	}
 
@@ -246,7 +245,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	var pa bson.M
 	err = json.Unmarshal(bodyRaw, &pa)
 	if err != nil {
-		fastError(err, ctx, "请求体参数解析失败")
+		rest.ErrorResponse(err, ctx, "请求体参数解析失败")
 		return
 	}
 
@@ -294,7 +293,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	b, _ := json.Marshal(&pa)
 	err = json.Unmarshal(b, &reqModel)
 	if err != nil {
-		fastError(nil, ctx, "参数错误")
+		rest.ErrorResponse(nil, ctx, "参数错误")
 		return
 	}
 
@@ -302,7 +301,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	if len(sm.PutMustFilters) > 0 {
 		for k := range sm.PutMustFilters {
 			if _, ok := pa[k]; !ok {
-				fastError(nil, ctx, "必填参数缺失")
+				rest.ErrorResponse(nil, ctx, "必填参数缺失")
 				return
 			}
 		}
@@ -315,7 +314,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 				if val, ok := v.(string); ok {
 					pass, firstWork := rest.runWordValid(val)
 					if !pass {
-						fastError(errors.New("检测到敏感词"), ctx, "请勿输入敏感词%s", firstWork)
+						rest.ErrorResponse(errors.New("检测到敏感词"), ctx, "请勿输入敏感词%s", firstWork)
 						return
 					}
 				}
@@ -337,7 +336,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	}
 	objId, err := primitive.ObjectIDFromHex(mid)
 	if err != nil {
-		fastError(err, ctx, "获取请求内容出错")
+		rest.ErrorResponse(err, ctx, "获取请求内容出错")
 		return
 	}
 	privateValue := ctx.Values().Get(sm.PrivateContextKey)
@@ -360,7 +359,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 	data := rest.newInterface(sm.Model)
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(data)
 	if err != nil {
-		fastError(err, ctx, "查询数据失败")
+		rest.ErrorResponse(err, ctx, "查询数据失败")
 		return
 	}
 
@@ -379,14 +378,14 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 
 	// 如果没有什么不同 则直接返回
 	if len(diff) < 1 {
-		fastError(err, ctx, "数据未产生变化")
+		rest.ErrorResponse(err, ctx, "数据未产生变化")
 		return
 	}
 
 	if sm.PutDataCheck != nil {
 		pass, msg := sm.PutDataCheck(ctx, data, reqBson, pa, diff)
 		if !pass {
-			fastError(nil, ctx, msg)
+			rest.ErrorResponse(nil, ctx, msg)
 			return
 		}
 	}
@@ -411,7 +410,7 @@ func (rest *RestApi) EditData(ctx iris.Context) {
 
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).UpdateId(ctx, objId, bson.M{"$set": diff})
 	if err != nil {
-		fastError(err, ctx, "修改数据失败")
+		rest.ErrorResponse(err, ctx, "修改数据失败")
 		return
 	}
 
@@ -446,7 +445,7 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 	}
 	objId, err := primitive.ObjectIDFromHex(mid)
 	if err != nil {
-		fastError(err, ctx, "获取请求内容出错")
+		rest.ErrorResponse(err, ctx, "获取请求内容出错")
 		return
 	}
 
@@ -464,13 +463,13 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 	// 先获取一下数据
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Find(ctx, query).One(&data)
 	if err != nil {
-		fastError(err, ctx, "预先获取数据失败")
+		rest.ErrorResponse(err, ctx, "预先获取数据失败")
 		return
 	}
 	if sm.DeleteDataCheck != nil {
 		pass, msg := sm.DeleteDataCheck(ctx, data)
 		if !pass {
-			fastError(nil, ctx, msg)
+			rest.ErrorResponse(nil, ctx, msg)
 			return
 		}
 	}
@@ -478,7 +477,7 @@ func (rest *RestApi) DeleteData(ctx iris.Context) {
 	// 再进行删除 不用担心先获取一次的性能消耗 根据统计 平均删除率不超过10%
 	err = rest.Cfg.Mdb.Collection(sm.info.MapName).Remove(ctx, query)
 	if err != nil {
-		fastError(err, ctx, "删除数据失败")
+		rest.ErrorResponse(err, ctx, "删除数据失败")
 		return
 	}
 	result := iris.Map{"id": mid}
@@ -513,11 +512,11 @@ func (rest *RestApi) GetModelInfo(ctx iris.Context) {
 				})
 				return
 			}
-			fastError(errors.New("未授权获取信息"), ctx)
+			rest.ErrorResponse(errors.New("未授权获取信息"), ctx)
 			return
 		}
 	}
-	fastError(errors.New("模型获取失败"), ctx)
+	rest.ErrorResponse(errors.New("模型获取失败"), ctx)
 	return
 }
 
@@ -527,7 +526,7 @@ func (rest *RestApi) generatorMiddleware(ctx iris.Context) {
 	modelPath, mid := rest.PathGetMid(method, ctx.Params().GetString("Model"))
 	sm, err := rest.NameGetModel(modelPath)
 	if err != nil {
-		fastError(err, ctx)
+		rest.ErrorResponse(err, ctx)
 		return
 	}
 

@@ -15,7 +15,8 @@ var (
 )
 
 var (
-	TimeRangerParamsError = errors.New("params error : endTime <= startTime ")
+	TimeRangerParamsError  = errors.New("params error : endTime <= startTime ")
+	ParamsLengthEmptyError = errors.New("params error : input params is empty")
 )
 
 // HyperStats HyperLog redis的统计
@@ -132,8 +133,11 @@ func (c *HyperStats) TimeRangerCount(ctx context.Context, start time.Time, end t
 	return allCount, err
 }
 
-// SummaryKeys 汇总统计多个KEY 对每个key进行计数 不是合并
+// SummaryKeys 汇总统计多个KEY 对每个key进行计数 仅计数不合并不生成额外key
 func (c *HyperStats) SummaryKeys(ctx context.Context, keys ...string) (int64, error) {
+	if len(keys) < 1 {
+		return 0, ParamsLengthEmptyError
+	}
 	var allCount int64
 	pipeline := c.Rdb.Pipeline()
 	for _, k := range keys {
@@ -152,6 +156,15 @@ func (c *HyperStats) SummaryKeys(ctx context.Context, keys ...string) (int64, er
 		}
 	}
 	return allCount, nil
+}
+
+// SummaryKeysUseRule 汇总统计多个KEY 使用规则生成最终的key eg: [prefix]:[event]:[id]
+func (c *HyperStats) SummaryKeysUseRule(ctx context.Context, ids ...string) (int64, error) {
+	allKeys := make([]string, 0, len(ids))
+	for _, id := range ids {
+		allKeys = append(allKeys, c.GenerateKey(id))
+	}
+	return c.SummaryKeys(ctx, allKeys...)
 }
 
 // GetNowWeekCount 获取本周汇总 周一到今天

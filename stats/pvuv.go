@@ -147,3 +147,11 @@ func (c *HyperStats) GetNowWeekCount(ctx context.Context) (int64, error) {
 func (c *HyperStats) GetNowMonthCount(ctx context.Context) (int64, error) {
 	return c.TimeRangerCount(ctx, ut.GetFirstDateOfMonth(), time.Now())
 }
+
+// GetAnyMonthCount 获取任何月份整月汇总 请输入1-12的月份
+func (c *HyperStats) GetAnyMonthCount(ctx context.Context, monthNumber time.Month) (int64, error) {
+	now := time.Now()
+	monthStart := time.Date(now.Year(), monthNumber, 1, 0, 0, 0, 0, now.Location())
+	monthEnd := monthStart.AddDate(0, 1, -1)
+	return c.TimeRangerCount(ctx, monthStart, monthEnd)
+}

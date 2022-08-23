@@ -55,20 +55,25 @@ func TestNewStats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("今日总数 应该4 实际:%d", count)
+	t.Logf("今日总数:%d", count)
 	// 测试本月总数
 	mc, err := m.GetNowWeekCount(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("本月总数 应该>=8 实际:%d", mc)
+	t.Logf("本月总数:%d", mc)
 	// 测试上月总数
 	sm, err := m.TimeRangerCount(ctx, mt, ut.GetFirstDateOfMonth())
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("上月总数 应该>=5 实际:%d", sm)
-
+	t.Logf("上月总数:%d", sm)
+	// 测试汇总本月
+	mzb, err := m.GetAnyMonthCount(ctx, time.Now().Month())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("测试本月汇总:%d", mzb)
 }
 
 func BenchmarkNewStats(b *testing.B) {

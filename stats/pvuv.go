@@ -11,6 +11,10 @@ import (
 )
 
 var (
+	DefaultPrefix = "st"
+)
+
+var (
 	TimeRangerParamsError = errors.New("params error : endTime <= startTime ")
 )
 
@@ -19,36 +23,48 @@ type HyperStats struct {
 	Prefix string
 	Event  string
 	Rdb    *redis.Client
+	nowKey string
 }
 
+// NewStats 默认统计方法 以今日时间为维度
 func NewStats(event string, rdb *redis.Client) *HyperStats {
-	return &HyperStats{
-		Prefix: "st",
-		Event:  event,
-		Rdb:    rdb,
-	}
+	var h HyperStats
+	h.Prefix = DefaultPrefix
+	h.Event = event
+	h.Rdb = rdb
+	h.nowKey = h.GenerateKey(time.Now().Format("2006-01-02"))
+	return &h
 }
 
-func (c *HyperStats) GenerateKey(t time.Time) string {
+// NewStatsKey 可选统计方法 指定key后缀 适用于文章等以ID为主的维度
+func NewStatsKey(event string, rdb *redis.Client, key string) *HyperStats {
+	var h = NewStats(event, rdb)
+	h.ChangeDefaultKey(key)
+	return h
+}
+
+// GenerateKey 通用生成规则的k [prefix]:[event]:[string]
+func (c *HyperStats) GenerateKey(k string) string {
 	var st strings.Builder
 	st.WriteString(c.Prefix + ":")
 	st.WriteString(c.Event + ":")
-	st.WriteString(t.Format("2006-01-02"))
+	st.WriteString(k)
 	return st.String()
 }
 
-func (c *HyperStats) TodayKey() string {
-	return c.GenerateKey(time.Now())
+// ChangeDefaultKey 变更默认的k生成方式 仅变更最后的string
+func (c *HyperStats) ChangeDefaultKey(k string) {
+	c.nowKey = c.GenerateKey(k)
 }
 
 // Add 已存在的重复元素不会计数
 func (c *HyperStats) Add(ctx context.Context, elements ...string) error {
-	return c.AddAny(ctx, c.TodayKey(), elements...)
+	return c.AddAny(ctx, c.nowKey, elements...)
 }
 
 // MustAdd 必然新增
 func (c *HyperStats) MustAdd(ctx context.Context, elements ...string) {
-	c.MustAddAny(ctx, c.TodayKey(), elements...)
+	c.MustAddAny(ctx, c.nowKey, elements...)
 	return
 }
 
@@ -70,10 +86,10 @@ func (c *HyperStats) Del(ctx context.Context, keys ...string) error {
 
 // NowCount 统计当前
 func (c *HyperStats) NowCount(ctx context.Context) (int64, error) {
-	return c.SummaryKeys(ctx, c.TodayKey())
+	return c.SummaryKeys(ctx, c.nowKey)
 }
 
-// Merges 合并多个keys
+// Merges 合并多个keys  一定要注意 是合并 如果A存在于 key1 和 key2中 只会计数1次
 func (c *HyperStats) Merges(ctx context.Context, keys ...string) (saveKey string, err error) {
 	var st strings.Builder
 	for _, key := range keys {
@@ -84,9 +100,9 @@ func (c *HyperStats) Merges(ctx context.Context, keys ...string) (saveKey string
 	return saveKey, err
 }
 
-// Counts 合并多个key 一定要注意 是合并 如果A存在于 key1 和 key2中 只会计数1次
-func (c *HyperStats) Counts(ctx context.Context, hold bool, keys ...string) (string, int64, error) {
-	saveKey, err := c.Merges(ctx, keys...)
+// Counts 统计多个keys 先合并 再计数 hold为统计之后是否保留
+func (c *HyperStats) Counts(ctx context.Context, hold bool, keys ...string) (saveKey string, allCount int64, err error) {
+	saveKey, err = c.Merges(ctx, keys...)
 	if err != nil {
 		return saveKey, 0, err
 	}
@@ -96,7 +112,7 @@ func (c *HyperStats) Counts(ctx context.Context, hold bool, keys ...string) (str
 		}
 	}()
 
-	allCount, err := c.SummaryKeys(ctx, saveKey)
+	allCount, err = c.SummaryKeys(ctx, saveKey)
 	return saveKey, allCount, err
 }
 
@@ -109,7 +125,7 @@ func (c *HyperStats) TimeRangerCount(ctx context.Context, start time.Time, end t
 	}
 	var keys = make([]string, 0, days)
 	for i := 0; i < days; i++ {
-		keys = append(keys, c.GenerateKey(start.AddDate(0, 0, i)))
+		keys = append(keys, c.GenerateKey(start.AddDate(0, 0, i).Format("2006-01-02")))
 	}
 	// 获取总数量
 	allCount, err := c.SummaryKeys(ctx, keys...)

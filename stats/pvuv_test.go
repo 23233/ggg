@@ -31,19 +31,19 @@ func initRdb() *redis.Client {
 func TestNewStats(t *testing.T) {
 	rdb := initRdb()
 	ctx := context.Background()
-	m := NewStats("article", rdb)
+	m := NewStats("all", rdb)
 	m.MustAdd(ctx, "今天1")
 	m.MustAdd(ctx, "今天2")
 	m.MustAdd(ctx, "今天3")
 	m.MustAdd(ctx, "今天4")
-	oKey := m.GenerateKey(time.Now().AddDate(0, 0, -1))
+	oKey := m.GenerateKey(time.Now().AddDate(0, 0, -1).Format("2006-01-02"))
 	m.MustAddAny(ctx, oKey, "昨天1")
 	m.MustAddAny(ctx, oKey, "昨天2")
 	m.MustAddAny(ctx, oKey, "昨天3")
 	m.MustAddAny(ctx, oKey, "昨天4")
 	// 获取上个月第一天
 	mt := ut.GetFirstDateOfMonth().AddDate(0, -1, 0)
-	mKey := m.GenerateKey(mt)
+	mKey := m.GenerateKey(mt.Format("2006-01-02"))
 	m.MustAddAny(ctx, mKey, "上月1")
 	m.MustAddAny(ctx, mKey, "上月2")
 	m.MustAddAny(ctx, mKey, "上月3")
@@ -74,6 +74,26 @@ func TestNewStats(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("测试本月汇总:%d", mzb)
+
+}
+
+func TestNewStatsKey(t *testing.T) {
+	rdb := initRdb()
+	ctx := context.Background()
+	m := NewStatsKey("article", rdb, "idlonglengthaaaa")
+	m.MustAdd(ctx, "今天1")
+	m.MustAdd(ctx, "今天1")
+	m.MustAdd(ctx, "今天2")
+	m.MustAdd(ctx, "今天3")
+	m.MustAdd(ctx, "今天4")
+	m.MustAdd(ctx, "今天5")
+	// 测试汇总
+	count, err := m.NowCount(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("总数:%d", count)
+
 }
 
 func BenchmarkNewStats(b *testing.B) {

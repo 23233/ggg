@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var rdb *redis.Client
+
 func getEnv(key, fallback string) string {
 	value := os.Getenv(key)
 	if len(value) == 0 {
@@ -28,8 +30,13 @@ func initRdb() *redis.Client {
 	})
 }
 
+func TestMain(m *testing.M) {
+	rdb = initRdb()
+	m.Run()
+	_ = rdb.Close()
+}
+
 func TestNewStats(t *testing.T) {
-	rdb := initRdb()
 	ctx := context.Background()
 	m := NewStats("all", rdb)
 	m.MustAdd(ctx, "今天1")
@@ -63,7 +70,7 @@ func TestNewStats(t *testing.T) {
 	}
 	t.Logf("本月总数:%d", mc)
 	// 测试上月总数
-	sm, err := m.TimeRangerCount(ctx, mt, ut.GetFirstDateOfMonth())
+	sm, err := m.DayTimeRangerCount(ctx, mt, ut.GetFirstDateOfMonth())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +85,6 @@ func TestNewStats(t *testing.T) {
 }
 
 func TestNewStatsKey(t *testing.T) {
-	rdb := initRdb()
 	ctx := context.Background()
 	m := NewStatsKey("article", rdb, "idlonglengthaaaa")
 	m.MustAdd(ctx, "今天1")
@@ -97,7 +103,6 @@ func TestNewStatsKey(t *testing.T) {
 }
 
 func BenchmarkNewStats(b *testing.B) {
-	rdb := initRdb()
 	ctx := context.Background()
 	m := NewStats("article", rdb)
 

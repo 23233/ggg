@@ -17,6 +17,7 @@ var (
 var (
 	TimeRangerParamsError  = errors.New("params error : endTime <= startTime ")
 	ParamsLengthEmptyError = errors.New("params error : input params is empty")
+	ParamsKeyEmptyError    = errors.New("params error : default key is empty please use newStats or NewStatsKey init struct")
 )
 
 // HyperStats HyperLog redis的统计
@@ -53,9 +54,14 @@ func (c *HyperStats) GenerateKey(k string) string {
 	return st.String()
 }
 
-// ChangeDefaultKey 变更默认的k生成方式 仅变更最后的string
+// ChangeDefaultKey 变更默认的key生成方式 仅变更最后的string
 func (c *HyperStats) ChangeDefaultKey(k string) {
 	c.nowKey = c.GenerateKey(k)
+}
+
+// ChangePrefix 变更前缀 请在生成时就变更 最好别变更
+func (c *HyperStats) ChangePrefix(newPrefix string) {
+	c.Prefix = newPrefix
 }
 
 // Add 已存在的重复元素不会计数
@@ -71,6 +77,9 @@ func (c *HyperStats) MustAdd(ctx context.Context, elements ...string) {
 
 // AddAny 任何key赋值
 func (c *HyperStats) AddAny(ctx context.Context, key string, elements ...string) error {
+	if len(key) < 1 {
+		return ParamsKeyEmptyError
+	}
 	return c.Rdb.PFAdd(ctx, key, elements).Err()
 }
 
@@ -88,6 +97,12 @@ func (c *HyperStats) Del(ctx context.Context, keys ...string) error {
 // NowCount 统计当前
 func (c *HyperStats) NowCount(ctx context.Context) (int64, error) {
 	return c.SummaryKeys(ctx, c.nowKey)
+}
+
+// NowCountVal 统计当前 仅返回数量
+func (c *HyperStats) NowCountVal(ctx context.Context) int64 {
+	val, _ := c.NowCount(ctx)
+	return val
 }
 
 // Merges 合并多个keys  一定要注意 是合并 如果A存在于 key1 和 key2中 只会计数1次
@@ -117,8 +132,8 @@ func (c *HyperStats) Counts(ctx context.Context, hold bool, keys ...string) (sav
 	return saveKey, allCount, err
 }
 
-// TimeRangerCount 时间范围统计 包含开始和结束当天
-func (c *HyperStats) TimeRangerCount(ctx context.Context, start time.Time, end time.Time) (int64, error) {
+// DayTimeRangerCount 时间范围统计 包含开始和结束当天
+func (c *HyperStats) DayTimeRangerCount(ctx context.Context, start time.Time, end time.Time) (int64, error) {
 	diff := end.Sub(start)
 	days := int(math.Ceil(diff.Hours() / 24))
 	if days < 1 {
@@ -169,12 +184,12 @@ func (c *HyperStats) SummaryKeysUseRule(ctx context.Context, ids ...string) (int
 
 // GetNowWeekCount 获取本周汇总 周一到今天
 func (c *HyperStats) GetNowWeekCount(ctx context.Context) (int64, error) {
-	return c.TimeRangerCount(ctx, ut.GetFirstDateOfWeek(), time.Now())
+	return c.DayTimeRangerCount(ctx, ut.GetFirstDateOfWeek(), time.Now())
 }
 
 // GetNowMonthCount 获取本月汇总 从1号到今天
 func (c *HyperStats) GetNowMonthCount(ctx context.Context) (int64, error) {
-	return c.TimeRangerCount(ctx, ut.GetFirstDateOfMonth(), time.Now())
+	return c.DayTimeRangerCount(ctx, ut.GetFirstDateOfMonth(), time.Now())
 }
 
 // GetAnyMonthCount 获取任何月份整月汇总 请输入1-12的月份
@@ -182,5 +197,5 @@ func (c *HyperStats) GetAnyMonthCount(ctx context.Context, monthNumber time.Mont
 	now := time.Now()
 	monthStart := time.Date(now.Year(), monthNumber, 1, 0, 0, 0, 0, now.Location())
 	monthEnd := monthStart.AddDate(0, 1, -1)
-	return c.TimeRangerCount(ctx, monthStart, monthEnd)
+	return c.DayTimeRangerCount(ctx, monthStart, monthEnd)
 }

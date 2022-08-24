@@ -3,6 +3,8 @@ package sv
 import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/httptest"
+	"strconv"
+	"sync"
 	"testing"
 )
 
@@ -21,10 +23,61 @@ func TestRun(t *testing.T) {
 	})
 	app.Get("/111", Run(new(req2)), func(ctx iris.Context) {
 		req := ctx.Values().Get("sv").(*req2)
-		ctx.JSON(iris.Map{"name": req.Desc})
+		ctx.JSON(iris.Map{"desc": req.Desc})
 	})
 
 	e := httptest.New(t, app)
-	//e.GET("/").Expect().Status(httptest.StatusBadRequest)
-	e.GET("/111").WithQuery("desc", "123123").Expect().Status(httptest.StatusOK)
+	e.GET("/").Expect().Status(httptest.StatusBadRequest)
+
+	type ttss struct {
+		Path   string
+		Key    string
+		Val    string
+		Status int
+		Pass   bool
+	}
+	var testList = make([]*ttss, 0)
+	for i := 0; i < 20; i++ {
+		testList = append(testList, &ttss{
+			Path:   "/",
+			Key:    "name",
+			Val:    "",
+			Status: iris.StatusBadRequest,
+			Pass:   false,
+		})
+	}
+	for i := 0; i < 20; i++ {
+		testList = append(testList, &ttss{
+			Path:   "/",
+			Key:    "name",
+			Val:    "33333" + strconv.Itoa(i),
+			Status: iris.StatusOK,
+			Pass:   true,
+		})
+	}
+	for i := 0; i < 20; i++ {
+		testList = append(testList, &ttss{
+			Path:   "/111",
+			Key:    "desc",
+			Val:    "1114444" + strconv.Itoa(i),
+			Status: iris.StatusOK,
+			Pass:   true,
+		})
+	}
+
+	var wg sync.WaitGroup
+
+	for _, m := range testList {
+		wg.Add(1)
+		m := m
+		go func() {
+			resp := e.GET(m.Path).WithQuery(m.Key, m.Val).Expect().Status(m.Status)
+			if m.Pass {
+				resp.JSON().Object().Value(m.Key).Equal(m.Val)
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
 }

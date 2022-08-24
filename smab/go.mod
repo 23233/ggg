@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/mab v0.0.0-20220727105847-256804eb7b5b
+	github.com/23233/ggg/mab v0.0.0-20220824132110-73511b93d348
 	github.com/23233/ggg/sv v0.0.0-20220727105847-256804eb7b5b
 	github.com/casbin/casbin/v2 v2.51.0
 	github.com/casbin/mongodb-adapter/v3 v3.3.0
@@ -18,11 +18,12 @@ require (
 	github.com/kataras/iris/v12 v12.2.0-beta4
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.1
-	go.mongodb.org/mongo-driver v1.10.0
+	go.mongodb.org/mongo-driver v1.10.1
 )
 
 require (
 	github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b // indirect
+	github.com/23233/lad v0.1.3 // indirect
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.1.0 // indirect
@@ -52,7 +53,6 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
-	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b // indirect
 	github.com/iris-contrib/httpexpect/v2 v2.3.1 // indirect
 	github.com/iris-contrib/jade v1.1.4 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect

@@ -17,9 +17,18 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
-#
-#    - name: Build
-#      run: go build -v ./...
-#
-#    - name: Test
-#      run: go test -v ./...
+
+    - name: Test ut
+      run: go test -v ut/...
+
+    - name: Test sv
+      run: go test -v sv/...
+
+    - name: Test logger
+      run: go test -v logger/...
+
+    - name: Test htct
+      run: go test -v htct/...
+
+    - name: Test city
+      run: go test -v city/...

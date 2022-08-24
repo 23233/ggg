@@ -4,16 +4,21 @@ import (
 	"context"
 	"github.com/23233/ggg/ut"
 	"github.com/go-redis/redis/v8"
+	"github.com/pkg/errors"
+	"log"
+	"math"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type WorkStatsResp struct {
-	Share   int `json:"share"`
-	Like    int `json:"like"`
-	Comment int `json:"comment"`
-	Pv      int `json:"pv"`
-	Uv      int `json:"uv"`
+	Id      string `json:"id"`
+	Share   int    `json:"share"`
+	Like    int    `json:"like"`
+	Comment int    `json:"comment"`
+	Pv      int    `json:"pv"`
+	Uv      int    `json:"uv"`
 }
 
 // WorkStats 作品统计
@@ -118,13 +123,14 @@ func (c *WorkStats) SummarySync(ctx context.Context) error {
 	return c.Rdb.HMSet(ctx, c.summaryKey, "share", shareCount, "like", likeCount, "comment", commentCount, "pv", pvCount, "uv", uvCount).Err()
 }
 
+// GetSummary 获取汇总信息
 func (c *WorkStats) GetSummary(ctx context.Context) (*WorkStatsResp, error) {
 	m, err := c.Rdb.HGetAll(ctx, c.summaryKey).Result()
 	if err != nil {
 		return nil, err
 	}
 	var resp WorkStatsResp
-
+	resp.Id = c.WorkId
 	if v, ok := m["share"]; ok {
 		i, _ := strconv.Atoi(v)
 		resp.Share = i
@@ -147,4 +153,73 @@ func (c *WorkStats) GetSummary(ctx context.Context) (*WorkStatsResp, error) {
 	}
 
 	return &resp, nil
+}
+
+// ManyWorkGetSummary 多个作品获取汇总信息
+func ManyWorkGetSummary(ctx context.Context, rdb *redis.Client, batchLimit int, wordIds ...string) ([]*WorkStatsResp, error) {
+	if len(wordIds) < 1 {
+		return nil, errors.New("params is empty")
+	}
+
+	var wg sync.WaitGroup
+
+	// 获取每个组的id区间
+	var scope = make(map[int][]string, 0)
+	// 剩余数量
+	var remaining = len(wordIds)
+	// 单批大小
+	var limit = batchLimit
+
+	// 取得最后余数
+	var endBlock = remaining % limit
+	// 取得批次数量
+	var batchCount = int(math.Floor(float64(remaining / limit)))
+	// 遍历批次
+	for i := 0; i < batchCount; i++ {
+		start := i * limit
+		end := (i + 1) * limit
+		scope[i] = wordIds[start:end]
+	}
+	scope[-1] = wordIds[len(wordIds)-endBlock:]
+
+	var result = make([]*WorkStatsResp, 0, len(wordIds))
+
+	// 遍历区间
+	for _, v := range scope {
+		wg.Add(1)
+		remain := len(v)
+		itemList := v
+		go func() {
+			for {
+				if remain < 1 {
+					break
+				}
+				item := itemList[remain-1]
+				remain -= 1
+				stats := NewWorkStats(item, rdb)
+				err := stats.SummarySync(ctx)
+				if err != nil {
+					log.Printf("进行作品%s汇总失败 err:%v", item, err)
+					continue
+				}
+				resp, err := stats.GetSummary(ctx)
+				if err != nil {
+					log.Printf("获取作品%s汇总信息失败 err:%v", item, err)
+					continue
+				}
+				result = append(result, resp)
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	// 传入数量和结果数量不一致的话?
+
+	return result, nil
+}
+
+// BatchWorkGetSummary 自动按批次并发获取作品汇总信息
+func BatchWorkGetSummary(ctx context.Context, rdb *redis.Client, wordIds ...string) ([]*WorkStatsResp, error) {
+	return ManyWorkGetSummary(ctx, rdb, 10, wordIds...)
 }

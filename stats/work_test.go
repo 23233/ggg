@@ -59,4 +59,12 @@ func TestNewWorkStats(t *testing.T) {
 	c, _ := json.Marshal(result)
 	t.Log(string(c))
 
+	resp, err := BatchWorkGetSummary(ctx, rdb, "sjdifijwef", "jsdiof", "1", "2", "3", "4", "5")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ = json.Marshal(resp)
+	t.Log(len(resp))
+	t.Log(string(c))
+
 }

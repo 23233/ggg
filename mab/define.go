@@ -2,9 +2,9 @@ package mab
 
 import (
 	"github.com/23233/ggg/ut"
+	"github.com/23233/lad"
 	tollerr "github.com/didip/tollbooth/v6/errors"
 	"github.com/didip/tollbooth/v6/limiter"
-	"github.com/importcjj/sensitive"
 	"github.com/kataras/iris/v12"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -392,7 +392,7 @@ type ModelInfo struct {
 
 type RestApi struct {
 	Cfg               *Config
-	sensitiveInstance *sensitive.Filter
+	sensitiveInstance *lad.AcMachine
 }
 
 // StructInfo 模型字段信息

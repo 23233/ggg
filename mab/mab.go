@@ -1,7 +1,7 @@
 package mab
 
 import (
-	"github.com/importcjj/sensitive"
+	"github.com/23233/lad"
 	"github.com/kataras/iris/v12/context"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -123,7 +123,7 @@ func (rest *RestApi) GetModelInfoList() []ModelInfo {
 }
 
 // 获取关键词模型
-func (rest *RestApi) getSensitive() *sensitive.Filter {
+func (rest *RestApi) getSensitive() *lad.AcMachine {
 	return rest.sensitiveInstance
 }
 

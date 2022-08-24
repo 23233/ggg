@@ -2,8 +2,9 @@ package mab
 
 import (
 	"fmt"
-	"github.com/importcjj/sensitive"
+	"github.com/23233/lad"
 	"log"
+	"time"
 )
 
 func (rest *RestApi) checkConfig() {
@@ -21,25 +22,26 @@ func (rest *RestApi) checkConfig() {
 // 初始化敏感词库
 // *.txt 每个关键词一行
 func (rest *RestApi) initSensitive() {
-	rest.sensitiveInstance = sensitive.New()
+	rest.sensitiveInstance = lad.New()
 	if len(rest.Cfg.SensitiveUri) > 0 {
 		for _, uri := range rest.Cfg.SensitiveUri {
-			err := rest.sensitiveInstance.LoadNetWordDict(uri)
+			err := rest.sensitiveInstance.LoadRemote(uri, 20*time.Second)
 			if err != nil {
 				panic(fmt.Errorf("获取敏感词库失败 连接:%s 错误:%v", uri, err))
 			}
 		}
 	}
 	if len(rest.Cfg.SensitiveWords) > 0 {
-		rest.sensitiveInstance.AddWord(rest.Cfg.SensitiveWords...)
+		rest.sensitiveInstance.AddOfList(rest.Cfg.SensitiveWords)
 	}
+	rest.sensitiveInstance.Build()
 }
 
 func (rest *RestApi) runWordValid(words ...string) (bool, string) {
 	for _, word := range words {
-		pass, firstWord := rest.sensitiveInstance.Validate(word)
-		if pass != true {
-			return false, firstWord
+		matchList := rest.sensitiveInstance.Find(word)
+		if len(matchList) >= 1 {
+			return false, matchList[0]
 		}
 	}
 	return true, ""

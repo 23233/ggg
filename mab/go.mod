@@ -6,10 +6,10 @@ replace github.com/23233/ggg/ut => ../ut
 
 require (
 	github.com/23233/ggg/ut v0.0.0-20220727105847-256804eb7b5b
+	github.com/23233/lad v0.1.3
 	github.com/bluele/gcache v0.0.2
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/google/go-cmp v0.5.8
-	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b
 	github.com/kataras/iris/v12 v12.2.0-beta4
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.1

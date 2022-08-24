@@ -3,39 +3,40 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/city"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/hotrank"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/htct"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/mab"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/smab"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/stats"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/sv"
     schedule:
-      interval: "daily"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "/ut"
     schedule:
-      interval: "daily"
+      # daily
+      interval: "weekly"

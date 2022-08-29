@@ -17,7 +17,7 @@ require (
 	github.com/iris-contrib/middleware/jwt v0.0.0-20220722121102-69215b87ab0b
 	github.com/kataras/iris/v12 v12.2.0-beta4
 	github.com/pkg/errors v0.9.1
-	github.com/qiniu/qmgo v1.1.1
+	github.com/qiniu/qmgo v1.1.2
 	go.mongodb.org/mongo-driver v1.10.1
 )
 

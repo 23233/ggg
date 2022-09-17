@@ -33,18 +33,18 @@ func TestNew(t *testing.T) {
 	//	},
 	//}
 
-	c.InitLogger()
+	l := c.InitLogger()
 
-	Info("info level test")
-	Error("dsdadadad level test", WithError(errors.New("sabhksasas")))
-	Error("121212121212 error")
-	Warn("warn level test")
-	Debug("debug level test")
+	l.Info("info level test")
+	l.Error("dsdadadad level test", l.WithError(errors.New("sabhksasas")))
+	l.Error("121212121212 error")
+	l.Warn("warn level test")
+	l.Debug("debug level test")
 
 	time.Sleep(2 * time.Second) // 避免程序结束太快，没有上传sentry
 
-	Info("this is a log", With("trace", "12345677"))
-	Info("this is a log", WithError(errors.New("this is a new error")))
+	l.Info("this is a log", l.With("trace", "12345677"))
+	l.Info("this is a log", l.WithError(errors.New("this is a new error")))
 
 	t.Logf("info queue size : %d", c.InfoQueue().Size())
 	t.Logf("error queue size : %d", c.ErrorQueue().Size())
@@ -54,30 +54,22 @@ func TestNew(t *testing.T) {
 }
 
 func TestViewQueueFunc(t *testing.T) {
-	c := New()
-	c.SetEnableQueue(true)
-	c.SetEncoding("json") // 输出格式 "json" 或者 "console"
 
-	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
-	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
+	J.Info("info level test")
+	J.Error("dsdadadad level test", J.WithError(errors.New("sabhksasas")))
+	J.Error("121212121212 error")
+	J.Warn("warn level test")
+	J.Debug("debug level test")
 
-	c.InitLogger()
-
-	Info("info level test")
-	Error("dsdadadad level test", WithError(errors.New("sabhksasas")))
-	Error("121212121212 error")
-	Warn("warn level test")
-	Debug("debug level test")
-
-	t.Logf("info queue size : %d", c.InfoQueue().Size())
-	t.Logf("error queue size : %d", c.ErrorQueue().Size())
+	t.Logf("info queue size : %d", J.Op.InfoQueue().Size())
+	t.Logf("error queue size : %d", J.Op.ErrorQueue().Size())
 
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	ViewQueueFunc(rr, req)
+	J.ViewQueueFunc(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -95,19 +87,9 @@ func TestViewQueueFunc(t *testing.T) {
 }
 
 func TestViewStatsFunc(t *testing.T) {
-	c := New()
-	c.SetEncoding("json") // 输出格式 "json" 或者 "console"
-	c.SetEnableStats(true)
-	c.SetStatsFormat("2006-01-02 15:04:05")
-
-	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
-	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
-
-	c.InitLogger()
-
 	for i := 1; i < 10; i++ {
 		for ii := 0; ii < 100-(i*10); ii++ {
-			Warn("warn level test")
+			J.Warn("warn level test")
 		}
 		time.Sleep(2 * time.Second)
 	}
@@ -117,7 +99,7 @@ func TestViewStatsFunc(t *testing.T) {
 		t.Fatal(err)
 	}
 	rr := httptest.NewRecorder()
-	ViewStatsFunc(rr, req)
+	J.ViewStatsFunc(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -139,7 +121,7 @@ func BenchmarkLogger(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				Info("1234")
+				J.Info("1234")
 			}
 		})
 	})
@@ -150,7 +132,7 @@ func BenchmarkLogger(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				Info("1234", With("Trace", "1234455"))
+				J.Info("1234", J.With("Trace", "1234455"))
 			}
 		})
 	})
@@ -162,7 +144,7 @@ func BenchmarkLogger(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				Info("1234")
+				J.Info("1234")
 			}
 		})
 	})
@@ -174,7 +156,7 @@ func BenchmarkLogger(b *testing.B) {
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				Info("1234", With("Trace", "1234455"))
+				J.Info("1234", J.With("Trace", "1234455"))
 			}
 		})
 	})

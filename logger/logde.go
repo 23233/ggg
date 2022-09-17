@@ -25,7 +25,6 @@ const (
 )
 
 var (
-	Logger                    *Log
 	_encoderNameToConstructor = map[string]func(zapcore.EncoderConfig) zapcore.Encoder{
 		"console": func(encoderConfig zapcore.EncoderConfig) zapcore.Encoder {
 			return zapcore.NewConsoleEncoder(encoderConfig)
@@ -48,9 +47,9 @@ type LogOptions struct {
 	Encoding              string             `json:"encoding" yaml:"encoding" toml:"encoding"`
 	InfoFilename          string             `json:"info_filename" yaml:"info_filename" toml:"info_filename"`
 	ErrorFilename         string             `json:"error_filename" yaml:"error_filename" toml:"error_filename"`
-	MaxSize               int                `json:"max_size" yaml:"max_size" toml:"max_size"`
+	MaxSize               int                `json:"max_size" yaml:"max_size" toml:"max_size"` // mb 默认100mb
 	MaxBackups            int                `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
-	MaxAge                int                `json:"max_age" yaml:"max_age" toml:"max_age"`
+	MaxAge                int                `json:"max_age" yaml:"max_age" toml:"max_age"` // day 默认不限
 	Compress              bool               `json:"compress" yaml:"compress" toml:"compress"`
 	Division              string             `json:"division" yaml:"division" toml:"division"`
 	LevelSeparate         bool               `json:"level_separate" yaml:"level_separate" toml:"level_separate"`
@@ -182,7 +181,7 @@ func (c *LogOptions) sizeDivisionWriter(filename string) io.Writer {
 		Filename:   filename,
 		MaxSize:    c.MaxSize,
 		MaxBackups: c.MaxBackups,
-		MaxAge:     c.MaxSize,
+		MaxAge:     c.MaxAge,
 		Compress:   c.Compress,
 	}
 	return hook
@@ -323,59 +322,59 @@ func (c *LogOptions) InitLogger() *Log {
 		}))
 	}
 
-	Logger = &Log{L: logger, Op: c}
-	return Logger
+	l := &Log{L: logger, Op: c}
+	return l
 }
 
-func Info(msg string, args ...zap.Field) {
-	Logger.L.Info(msg, args...)
+func (c *Log) Info(msg string, args ...zap.Field) {
+	c.L.Info(msg, args...)
 }
 
-func Error(msg string, args ...zap.Field) {
-	Logger.L.Error(msg, args...)
+func (c *Log) Error(msg string, args ...zap.Field) {
+	c.L.Error(msg, args...)
 }
 
-func Warn(msg string, args ...zap.Field) {
-	Logger.L.Warn(msg, args...)
+func (c *Log) Warn(msg string, args ...zap.Field) {
+	c.L.Warn(msg, args...)
 }
 
-func Debug(msg string, args ...zap.Field) {
-	Logger.L.Debug(msg, args...)
+func (c *Log) Debug(msg string, args ...zap.Field) {
+	c.L.Debug(msg, args...)
 }
 
-func Fatal(msg string, args ...zap.Field) {
-	Logger.L.Fatal(msg, args...)
+func (c *Log) Fatal(msg string, args ...zap.Field) {
+	c.L.Fatal(msg, args...)
 }
 
-func Infof(format string, args ...interface{}) {
+func (c *Log) Infof(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Info(logMsg)
+	c.L.Info(logMsg)
 }
 
-func Errorf(format string, args ...interface{}) {
+func (c *Log) Errorf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Error(logMsg)
+	c.L.Error(logMsg)
 }
 
-func Warnf(format string, args ...interface{}) {
+func (c *Log) Warnf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Warn(logMsg)
+	c.L.Warn(logMsg)
 }
 
-func Debugf(format string, args ...interface{}) {
+func (c *Log) Debugf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Debug(logMsg)
+	c.L.Debug(logMsg)
 }
 
-func Fatalf(format string, args ...interface{}) {
+func (c *Log) Fatalf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	Logger.L.Fatal(logMsg)
+	c.L.Fatal(logMsg)
 }
 
-func With(k string, v interface{}) zap.Field {
+func (c *Log) With(k string, v interface{}) zap.Field {
 	return zap.Any(k, v)
 }
 
-func WithError(err error) zap.Field {
+func (c *Log) WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
 }

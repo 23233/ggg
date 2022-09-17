@@ -22,7 +22,7 @@ type htmlResp struct {
 	IsJson bool       `json:"is_json"`
 }
 
-func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
+func (c *Log) ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
 	t, err := template.New("online").Parse(string(onlineHtmlFs))
 	if err != nil {
 		panic(err.Error())
@@ -31,31 +31,31 @@ func ViewQueueFunc(w http.ResponseWriter, r *http.Request) {
 
 	tempData = append(tempData, htmlData{
 		Label: "info log list view",
-		Array: reverse(Logger.Op.InfoQueue().ItemsStr()),
+		Array: reverse(c.Op.InfoQueue().ItemsStr()),
 	})
 	tempData = append(tempData, htmlData{
 		Label: "error log list view",
-		Array: reverse(Logger.Op.ErrorQueue().ItemsStr()),
+		Array: reverse(c.Op.ErrorQueue().ItemsStr()),
 	})
 
 	var resp htmlResp
 	resp.Data = tempData
-	resp.IsJson = Logger.Op.Encoding != _defaultEncoding
+	resp.IsJson = c.Op.Encoding != _defaultEncoding
 
 	if err := t.Execute(w, resp); err != nil {
 		panic(err.Error())
 	}
 }
 
-func ViewStatsFunc(w http.ResponseWriter, r *http.Request) {
+func (c *Log) ViewStatsFunc(w http.ResponseWriter, r *http.Request) {
 	t, err := template.New("stats").Parse(string(statsHtmlFs))
 	if err != nil {
 		panic(err.Error())
 	}
-	var st = Logger.Op.GetStats()
+	var st = c.Op.GetStats()
 	stByte, err := json.Marshal(st)
 	if err != nil {
-		Errorf("marshal stats data fail %v", err)
+		c.Errorf("marshal stats data fail %v", err)
 		return
 	}
 

@@ -22,12 +22,8 @@ func getEnv(key, fallback string) string {
 
 func initRdb() *redis.Client {
 	db, _ := strconv.Atoi(getEnv("REDISDB", "2"))
-	return redis.NewClient(&redis.Options{
-		Addr:     getEnv("REDISHOST", "127.0.0.1:6379"),
-		Password: getEnv("REDISPD", ""),
-		DB:       db,
-		PoolSize: 100,
-	})
+	return GenRedisClient(getEnv("REDISHOST", "127.0.0.1:6379"),
+		getEnv("REDISPD", ""), db)
 }
 
 func TestMain(m *testing.M) {

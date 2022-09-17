@@ -44,10 +44,10 @@ func TestNewStats(t *testing.T) {
 	m.MustAdd(ctx, "今天3")
 	m.MustAdd(ctx, "今天4")
 	oKey := m.GenerateKey(time.Now().AddDate(0, 0, -1).Format("2006-01-02"))
-	m.MustAddAny(ctx, oKey, "昨天1")
-	m.MustAddAny(ctx, oKey, "昨天2")
-	m.MustAddAny(ctx, oKey, "昨天3")
-	m.MustAddAny(ctx, oKey, "昨天4")
+	m.MustAddAny(ctx, oKey, "昨天1", "昨天5", "昨天9")
+	m.MustAddAny(ctx, oKey, "昨天2", "昨天6", "昨天10")
+	m.MustAddAny(ctx, oKey, "昨天3", "昨天7", "昨天11")
+	m.MustAddAny(ctx, oKey, "昨天4", "昨天8", "昨天12")
 	// 获取上个月第一天
 	mt := ut.GetFirstDateOfMonth().AddDate(0, -1, 0)
 	mKey := m.GenerateKey(mt.Format("2006-01-02"))
@@ -87,12 +87,12 @@ func TestNewStats(t *testing.T) {
 func TestNewStatsKey(t *testing.T) {
 	ctx := context.Background()
 	m := NewStatsKey("article", rdb, "idlonglengthaaaa")
-	m.MustAdd(ctx, "今天1")
-	m.MustAdd(ctx, "今天1")
-	m.MustAdd(ctx, "今天2")
-	m.MustAdd(ctx, "今天3")
-	m.MustAdd(ctx, "今天4")
-	m.MustAdd(ctx, "今天5")
+	m.MustAdd(ctx, "今天1", "今天6")
+	m.MustAdd(ctx, "今天1", "今天7")
+	m.MustAdd(ctx, "今天2", "今天8")
+	m.MustAdd(ctx, "今天3", "今天9")
+	m.MustAdd(ctx, "今天4", "今天10")
+	m.MustAdd(ctx, "今天5", "今天11")
 	// 测试汇总
 	count, err := m.NowCount(ctx)
 	if err != nil {

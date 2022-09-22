@@ -356,6 +356,11 @@ func (c *Log) Errorf(format string, args ...interface{}) {
 	c.L.Error(logMsg)
 }
 
+func (c *Log) ErrorE(err error, format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	c.L.Error(logMsg, c.WithError(err))
+}
+
 func (c *Log) Warnf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
 	c.L.Warn(logMsg)
@@ -377,4 +382,13 @@ func (c *Log) With(k string, v interface{}) zap.Field {
 
 func (c *Log) WithError(err error) zap.Field {
 	return zap.NamedError("error", err)
+}
+
+func (c *Log) Close() *Log {
+	var l = &Log{
+		L:  c.L,
+		Op: c.Op,
+	}
+	l.Op.InitLogger()
+	return l
 }

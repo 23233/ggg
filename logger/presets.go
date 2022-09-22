@@ -15,7 +15,7 @@ func ChangeJsCaller(call int) {
 	Js = Js.Op.InitLogger()
 }
 
-func InitJsonTimeLog(prefix string) *Log {
+func InitJsonTimeLog(prefix string, t TimeUnit) *Log {
 	p := "j_"
 	if len(prefix) >= 1 {
 		p = prefix
@@ -25,7 +25,7 @@ func InitJsonTimeLog(prefix string) *Log {
 	jt.SetEnableQueue(true) // 启动错误队列
 	jt.SetDivision("time")
 	jt.SetEncoding("json")                         // 输出格式 "json" 或者 "console"
-	jt.SetTimeUnit(Day)                            // 按天归档
+	jt.SetTimeUnit(t)                              // 按天归档
 	jt.SetInfoFile(DefaultPath + p + "info.log")   // 设置info级别日志
 	jt.SetErrorFile(DefaultPath + p + "error.log") // 设置error级别日志
 	jt.SetCaller(true)
@@ -55,6 +55,6 @@ func InitJsonSizeLog(prefix string) *Log {
 }
 
 func init() {
-	J = InitJsonTimeLog("")
+	J = InitJsonTimeLog("", Day)
 	Js = InitJsonSizeLog("")
 }

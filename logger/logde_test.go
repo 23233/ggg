@@ -10,30 +10,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	c := New()
-	c.SetDivision("time") // 设置归档方式，"time"时间归档 "size" 文件大小归档，文件大小等可以在配置文件配置
-	c.SetTimeUnit(Day)    // 时间归档 可以设置切割单位
-	c.SetEncoding("json") // 输出格式 "json" 或者 "console"
-	//c.Stacktrace = true
-	c.SetCaller(true)
-	c.SetCallerSkip(1) // 如果需要自己封装的话 请再次+1 只到调用文件行号能够顺利显示未知
 
-	c.SetInfoFile("./logs/server.log")      // 设置info级别日志
-	c.SetErrorFile("./logs/server_err.log") // 设置warn级别日志
-
-	c.SetEnableQueue(true)
-
-	//c.SentryConfig = SentryLoggerConfig{
-	//	DSN:              "sentry dsn",
-	//	Debug:            true,
-	//	AttachStacktrace: true,
-	//	Environment:      "dev",
-	//	Tags: map[string]string{
-	//		"source": "demo",
-	//	},
-	//}
-
-	l := c.InitLogger()
+	l := InitJsonTimeLog("t_", Day)
 
 	l.Info("info level test")
 	l.Error("dsdadadad level test", l.WithError(errors.New("sabhksasas")))
@@ -46,10 +24,10 @@ func TestNew(t *testing.T) {
 	l.Info("this is a log", l.With("trace", "12345677"))
 	l.Info("this is a log", l.WithError(errors.New("this is a new error")))
 
-	t.Logf("info queue size : %d", c.InfoQueue().Size())
-	t.Logf("error queue size : %d", c.ErrorQueue().Size())
-	t.Logf("info quque list :%v", c.InfoQueue().ItemsMap())
-	t.Logf("error quque list :%v", c.ErrorQueue().ItemsMap())
+	t.Logf("info queue size : %d", l.Op.InfoQueue().Size())
+	t.Logf("error queue size : %d", l.Op.ErrorQueue().Size())
+	t.Logf("info quque list :%v", l.Op.InfoQueue().ItemsMap())
+	t.Logf("error quque list :%v", l.Op.ErrorQueue().ItemsMap())
 
 }
 

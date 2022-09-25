@@ -24,10 +24,10 @@ func InitJsonTimeLog(prefix string, t TimeUnit) *Log {
 	jt.SetEnableStats(true)
 	jt.SetEnableQueue(true) // 启动错误队列
 	jt.SetDivision("time")
-	jt.SetEncoding("json")                         // 输出格式 "json" 或者 "console"
-	jt.SetTimeUnit(t)                              // 按天归档
-	jt.SetInfoFile(DefaultPath + p + "info.log")   // 设置info级别日志
-	jt.SetErrorFile(DefaultPath + p + "error.log") // 设置error级别日志
+	jt.SetEncoding("json")                     // 输出格式 "json" 或者 "console"
+	jt.SetTimeUnit(t)                          // 按天归档
+	jt.SetInfoFile(DefaultPath + p + "info")   // 设置info级别日志
+	jt.SetErrorFile(DefaultPath + p + "error") // 设置error级别日志
 	jt.SetCaller(true)
 	jt.SetCallerSkip(1)
 	return jt.InitLogger()
@@ -43,8 +43,8 @@ func InitJsonSizeLog(prefix string) *Log {
 	js.SetEnableQueue(true)
 	js.SetDivision("size")
 	js.SetEncoding("json")
-	js.SetInfoFile(DefaultPath + p + "s_info.log")   // 设置info级别日志
-	js.SetErrorFile(DefaultPath + p + "s_error.log") // 设置error级别日志
+	js.SetInfoFile(DefaultPath + p + "s_info")   // 设置info级别日志
+	js.SetErrorFile(DefaultPath + p + "s_error") // 设置error级别日志
 	js.MaxSize = 500
 	js.MaxAge = 28
 	js.Compress = true

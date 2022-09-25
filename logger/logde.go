@@ -189,7 +189,7 @@ func (c *LogOptions) sizeDivisionWriter(filename string) io.Writer {
 
 func (c *LogOptions) timeDivisionWriter(filename string) io.Writer {
 	hook, err := rotatelogs.New(
-		filename+c.TimeUnit.Format(),
+		filename+c.TimeUnit.Format()+".log",
 		rotatelogs.WithMaxAge(time.Duration(int64(24*time.Hour)*int64(c.MaxAge))),
 		rotatelogs.WithRotationTime(c.TimeUnit.RotationGap()),
 	)

@@ -361,6 +361,11 @@ func (c *Log) ErrorE(err error, format string, args ...interface{}) {
 	c.L.Error(logMsg, c.WithError(err))
 }
 
+func (c *Log) ErrEf(err error, format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	c.L.Error(logMsg, c.With("err", err.Error()))
+}
+
 func (c *Log) Warnf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
 	c.L.Warn(logMsg)

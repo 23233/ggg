@@ -18,6 +18,7 @@ func TestNew(t *testing.T) {
 	l.Error("121212121212 error")
 	l.Warn("warn level test")
 	l.Debug("debug level test")
+	l.ErrEf(errors.New("dsjiofjwoiejf"), "real %s", "yes")
 
 	time.Sleep(2 * time.Second) // 避免程序结束太快，没有上传sentry
 

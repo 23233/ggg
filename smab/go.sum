@@ -24,8 +24,8 @@ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd3
 github.com/bluele/gcache v0.0.2 h1:WcbfdXICg7G/DGBh1PFfcirkWOQV+v077yF1pSy3DGw=
 github.com/bluele/gcache v0.0.2/go.mod h1:m15KV+ECjptwSPxKhOhQoAFQVtUFjTVkc3H8o0t/fp0=
 github.com/casbin/casbin/v2 v2.31.2/go.mod h1:vByNa/Fchek0KZUgG5wEsl7iFsiviAYKRtgrQfcJqHg=
-github.com/casbin/casbin/v2 v2.51.0 h1:BC41imD9Z2coIJpELapy2h5kMT+lB4vFDTYpMhTsU4A=
-github.com/casbin/casbin/v2 v2.51.0/go.mod h1:vByNa/Fchek0KZUgG5wEsl7iFsiviAYKRtgrQfcJqHg=
+github.com/casbin/casbin/v2 v2.55.1 h1:vaTAHSLkQfielg9UiHdIdvIVK/NAmMjBkDkrOM9iDqI=
+github.com/casbin/casbin/v2 v2.55.1/go.mod h1:vByNa/Fchek0KZUgG5wEsl7iFsiviAYKRtgrQfcJqHg=
 github.com/casbin/mongodb-adapter/v3 v3.3.0 h1:rmMt+bub9efnnBJedd5jtTpcl0tG7KczLVZ3e811JJY=
 github.com/casbin/mongodb-adapter/v3 v3.3.0/go.mod h1:6KNUlxI0PH7cK+jt8FbvqupNHGy4wGiDD/S4zSvYQqU=
 github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927/go.mod h1:h/aW8ynjgkuj+NQRlZcDbAbM1ORAbXjXX77sX7T289U=

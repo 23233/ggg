@@ -36,3 +36,15 @@ func PruneText(word string) (string, string) {
 	eng := strings.ToLower(ExtractEnglish(word)) // 转换成小写
 	return chinese, eng
 }
+
+// ClearText 清除标点符号和空格
+func ClearText(word string) string {
+	var m = make([]string, 0)
+	for _, runeValue := range word {
+		// 中文则直接生成 或者 非中文字符 非符号 非空格的内容
+		if unicode.Is(unicode.Han, runeValue) || (!unicode.IsPunct(runeValue) && !unicode.IsSymbol(runeValue) && !unicode.IsSpace(runeValue)) {
+			m = append(m, string(runeValue))
+		}
+	}
+	return Tc2Cn(strings.Join(m, ""))
+}

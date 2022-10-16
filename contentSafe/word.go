@@ -61,11 +61,11 @@ func AutoHitText(content string) (bool, string) {
 
 func hitText(content string) (bool, string) {
 
-	// 先切分中文和英文 把中文简繁切换 转小写
-	zh, _ := PruneText(content)
+	// 去掉所有标点符号
+	clear := ClearText(content)
 
-	if len(zh) >= 1 {
-		if LadClient.Match(zh) {
+	if len(clear) >= 1 {
+		if LadClient.Match(clear) {
 			return false, "中文有不良词汇,请修改"
 		}
 	}

@@ -11,8 +11,10 @@ func TestWxTextCheckV1(t *testing.T) {
 }
 
 func TestAutoHitText(t *testing.T) {
-	ok, _ := AutoHitText("性爱djifw图库")
+	ok, msg := AutoHitText("性爱!＂ 图库")
 	if ok {
-		t.Fatal("接口出错")
+		t.Fatal("测试失败")
+		return
 	}
+	t.Log(msg)
 }

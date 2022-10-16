@@ -40,3 +40,9 @@ updates:
     schedule:
       # daily
       interval: "weekly"
+
+  - package-ecosystem: "gomod"
+    directory: "/contentSafe"
+    schedule:
+      # daily
+      interval: "weekly"

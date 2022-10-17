@@ -4,7 +4,7 @@ import "testing"
 
 func TestWxImgV1(t *testing.T) {
 
-	pass, err := wxImgCheckV1("https://cdn.golangdocs.com/wp-content/uploads/2020/09/Download-Files-for-Golang.png")
+	pass, err := C.WxImgCheckV1("https://cdn.golangdocs.com/wp-content/uploads/2020/09/Download-Files-for-Golang.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -13,7 +13,7 @@ func TestWxImgV1(t *testing.T) {
 }
 
 func TestAutoHitImg(t *testing.T) {
-	pass, err := AutoHitImg("https://cdn.golangdocs.com/wp-content/uploads/2020/09/Download-Files-for-Golang.png")
+	pass, err := C.AutoHitImg("https://cdn.golangdocs.com/wp-content/uploads/2020/09/Download-Files-for-Golang.png")
 	if err != nil {
 		t.Fatal(err)
 	}

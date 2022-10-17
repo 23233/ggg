@@ -18,7 +18,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.0-beta4
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.1
-	go.mongodb.org/mongo-driver v1.10.1
+	go.mongodb.org/mongo-driver v1.10.3
 )
 
 require (
@@ -42,11 +42,11 @@ require (
 	github.com/go-pkgz/expirable-cache v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.0 // indirect
+	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/mock v1.5.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect

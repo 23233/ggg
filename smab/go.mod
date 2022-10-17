@@ -18,7 +18,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.0-beta5
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.1
-	go.mongodb.org/mongo-driver v1.10.1
+	go.mongodb.org/mongo-driver v1.10.3
 )
 
 require (

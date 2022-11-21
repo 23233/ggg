@@ -58,25 +58,25 @@ func TestNewStats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("今日总数:%d", count)
-	// 测试本月总数
+	t.Logf("今日总数:%d 初次测试应该是4", count)
+	// 测试本星期
 	mc, err := m.GetNowWeekCount(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("本月总数:%d", mc)
+	t.Logf("本星期总数:%d ", mc)
 	// 测试上月总数
 	sm, err := m.DayTimeRangerCount(ctx, mt, ut.GetFirstDateOfMonth())
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("上月总数:%d", sm)
+	t.Logf("上月总数:%d  初次测试应该是5", sm)
 	// 测试汇总本月
 	mzb, err := m.GetAnyMonthCount(ctx, time.Now().Month())
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("测试本月汇总:%d", mzb)
+	t.Logf("测试本月汇总:%d  初次测试应该是16", mzb)
 
 }
 

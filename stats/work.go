@@ -57,7 +57,13 @@ func (c *WorkStats) GenerateKey(event string) string {
 	return st.String()
 }
 
-// AddPv 新增pv ip+ua 做hash
+// AddPvHash 新增pv ip+ua 做hash
+func (c *WorkStats) AddPvHash(ctx context.Context, ip string, ua string) error {
+	k := ip + ua
+	return c.pvStats.Add(ctx, k)
+}
+
+// AddPv 新增pv ip+ua
 func (c *WorkStats) AddPv(ctx context.Context, ip string, ua string) error {
 	k := ut.StrToB58(ip + ua)
 	return c.pvStats.Add(ctx, k)
@@ -88,7 +94,6 @@ func (c *WorkStats) AddLike(ctx context.Context, userId string) error {
 func (c *WorkStats) InLike(ctx context.Context, userId string) (bool, error) {
 	rl, err := c.Rdb.SIsMember(ctx, c.likeKey, userId).Result()
 	return rl, err
-
 }
 
 // UnLike 取消喜欢

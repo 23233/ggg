@@ -5,7 +5,7 @@
 * 使用 redis `HyperLogLog` 结构实现 约 `0.81%` 的误差率
 * 支持任何事件级统计 例如
     * 页面PV UV 或 按钮点击次数
-* 默认自动以当前时间作为 `key` 格式为 `[prefix]:[event]:[date]`
+* 默认自动以当前时间作为 `key` 格式为 `[prefix]:[event]:[daytime]`
     * 也可以主动变更为最后的日期为任意字符串 格式为 `[prefix]:[event]:[string]`
 * 可汇聚任意时间段内进行统计
     * 也可以进行任意 `key` 的合并或统计

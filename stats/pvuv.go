@@ -24,8 +24,8 @@ var (
 type HyperStats struct {
 	Prefix string
 	Event  string
+	end    string
 	Rdb    *redis.Client
-	nowKey string
 }
 
 // NewStats 默认统计方法 以今日时间为维度
@@ -34,15 +34,18 @@ func NewStats(event string, rdb *redis.Client) *HyperStats {
 	h.Prefix = DefaultPrefix
 	h.Event = event
 	h.Rdb = rdb
-	h.nowKey = h.GenerateKey(time.Now().Format("2006-01-02"))
 	return &h
 }
 
 // NewStatsKey 可选统计方法 指定key后缀 适用于文章等以ID为主的维度
 func NewStatsKey(event string, rdb *redis.Client, key string) *HyperStats {
 	var h = NewStats(event, rdb)
-	h.ChangeDefaultKey(key)
+	h.end = key
 	return h
+}
+
+func (c *HyperStats) getNowKey() string {
+	return c.GenerateKey(time.Now().Format("2006-01-02"))
 }
 
 // GenerateKey 通用生成规则的k [prefix]:[event]:[string]
@@ -54,11 +57,6 @@ func (c *HyperStats) GenerateKey(k string) string {
 	return st.String()
 }
 
-// ChangeDefaultKey 变更默认的key生成方式 仅变更最后的string
-func (c *HyperStats) ChangeDefaultKey(k string) {
-	c.nowKey = c.GenerateKey(k)
-}
-
 // ChangePrefix 变更前缀 请在生成时就变更 最好别变更
 func (c *HyperStats) ChangePrefix(newPrefix string) {
 	c.Prefix = newPrefix
@@ -66,12 +64,12 @@ func (c *HyperStats) ChangePrefix(newPrefix string) {
 
 // Add 已存在的重复元素不会计数
 func (c *HyperStats) Add(ctx context.Context, elements ...string) error {
-	return c.AddAny(ctx, c.nowKey, elements...)
+	return c.AddAny(ctx, c.getNowKey(), elements...)
 }
 
 // MustAdd 必然新增
 func (c *HyperStats) MustAdd(ctx context.Context, elements ...string) {
-	c.MustAddAny(ctx, c.nowKey, elements...)
+	c.MustAddAny(ctx, c.getNowKey(), elements...)
 	return
 }
 
@@ -96,7 +94,7 @@ func (c *HyperStats) Del(ctx context.Context, keys ...string) error {
 
 // NowCount 统计当前
 func (c *HyperStats) NowCount(ctx context.Context) (int64, error) {
-	return c.SummaryKeys(ctx, c.nowKey)
+	return c.SummaryKeys(ctx, c.getNowKey())
 }
 
 // NowCountVal 统计当前 仅返回数量

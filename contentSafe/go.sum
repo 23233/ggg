@@ -133,8 +133,8 @@ github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpO
 github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHLwW0=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/imkira/go-interpol v1.1.0 h1:KIiKr0VSG2CUW1hl1jpiyuzuJeKUUpC8iM1AIE7N1Vk=
-github.com/imroc/req/v3 v3.25.0 h1:W3hFvD4PB8nNySxHuESbEuU2sY2/oBi14q2mlOlo+U8=
-github.com/imroc/req/v3 v3.25.0/go.mod h1:EluRnkfh8A39BmrCARYhcUrfGyR8qPw+O0BZyTy4j9k=
+github.com/imroc/req/v3 v3.26.5 h1:BmW+GRVyo+YJkfgA7+U/mHVm7+kCgoLXupTssQKTH+8=
+github.com/imroc/req/v3 v3.26.5/go.mod h1:AQ5kNHHkid1ibNfsYz3QvpMHJsagqNxbe3RYX7+8T1U=
 github.com/iris-contrib/httpexpect/v2 v2.3.1 h1:A69ilxKGW1jDRKK5UAhjTL4uJYh3RjD4qzt9vNZ7fpY=
 github.com/iris-contrib/schema v0.0.6 h1:CPSBLyx2e91H2yJzPuhGuifVRnZBBJ3pCOMbOvPZaTw=
 github.com/iris-contrib/schema v0.0.6/go.mod h1:iYszG0IOsuIsfzjymw1kMzTL8YQcCWlm65f3wX8J5iA=

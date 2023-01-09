@@ -15,7 +15,7 @@ require (
 	github.com/23233/lad v0.1.3
 	github.com/bluele/gcache v0.0.2
 	github.com/go-creed/sat v1.0.3
-	github.com/imroc/req/v3 v3.25.0
+	github.com/imroc/req/v3 v3.27.0
 	github.com/kataras/iris/v12 v12.2.0-beta6
 	github.com/pkg/errors v0.9.1
 	github.com/schollz/progressbar/v3 v3.11.0
@@ -96,11 +96,11 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20221002022538-bcab6841153b // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
-	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

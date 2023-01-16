@@ -15,7 +15,7 @@ require (
 	github.com/23233/lad v0.1.3
 	github.com/bluele/gcache v0.0.2
 	github.com/go-creed/sat v1.0.3
-	github.com/imroc/req/v3 v3.25.0
+	github.com/imroc/req/v3 v3.30.0
 	github.com/kataras/iris/v12 v12.2.0-beta6
 	github.com/pkg/errors v0.9.1
 	github.com/schollz/progressbar/v3 v3.11.0
@@ -60,14 +60,13 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
-	github.com/lucas-clemente/quic-go v0.28.1 // indirect
 	github.com/mailgun/raymond/v2 v2.0.47 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/marten-seemann/qpack v0.2.1 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
 	github.com/marten-seemann/qtls-go1-17 v0.1.2 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
-	github.com/marten-seemann/qtls-go1-19 v0.1.0-beta.1 // indirect
+	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
+	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect

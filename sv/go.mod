@@ -3,8 +3,8 @@ module github.com/23233/ggg/sv
 go 1.18
 
 require (
-	github.com/go-playground/locales v0.14.0
-	github.com/go-playground/universal-translator v0.18.0
+	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/kataras/iris/v12 v12.2.0-beta6
 )

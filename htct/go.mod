@@ -3,9 +3,9 @@ module github.com/23233/ggg/htct
 go 1.18
 
 require (
-	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/net v0.0.0-20220513224357-95641704303c
+	golang.org/x/net v0.7.0
 )
 
 require (

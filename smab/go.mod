@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/23233/ggg/mab v0.0.0-20220824132110-73511b93d348
 	github.com/23233/ggg/sv v0.0.0-20220727105847-256804eb7b5b
-	github.com/casbin/casbin/v2 v2.56.0
+	github.com/casbin/casbin/v2 v2.64.0
 	github.com/casbin/mongodb-adapter/v3 v3.4.1
 	github.com/imdario/mergo v0.3.13
 	github.com/iris-contrib/middleware/jwt v0.0.0-20220722121102-69215b87ab0b

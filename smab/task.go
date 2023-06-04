@@ -11,27 +11,28 @@ import (
 
 // ActionItem 操作
 type ActionItem struct {
-	Name   string `json:"name" bson:"name"`       // 不能重复
-	ReqUri string `json:"req_uri" bson:"req_uri"` // 操作请求地址
-	Scheme string `json:"scheme" bson:"scheme" `  // 需要用户填写的表单数据
+	Name   string `json:"name,omitempty" bson:"name,omitempty"`       // 不能重复
+	ReqUri string `json:"req_uri,omitempty" bson:"req_uri,omitempty"` // 操作请求地址
+	Scheme string `json:"scheme,omitempty" bson:"scheme,omitempty" `  // 需要用户填写的表单数据
 }
 
 // SmTask 任务
 type SmTask struct {
 	DefaultField `bson:",inline,flatten"`
-	Name         string             `json:"name" bson:"name" comment:"任务名称"`
-	Desc         string             `json:"desc" bson:"desc" comment:"任务描述"`
-	Type         uint8              `json:"type" bson:"type" comment:"任务类型"` // 任务类型
-	Group        string             `json:"group" bson:"group" comment:"任务组"`
-	Content      string             `json:"content" bson:"content" comment:"任务内容" mab:"t=markdown"` // 任务内容 markdown格式
-	InjectData   string             `json:"inject_data" bson:"inject_data" comment:"t=textarea"`    // 任务注入的json字符串 可以自行序列化回去
-	Action       []ActionItem       `json:"action" bson:"action" comment:"按钮组"`
-	ExpTime      time.Time          `json:"exp_time" bson:"exp_time" comment:"任务过期时间"`       // 任务过期时间
-	ToUser       primitive.ObjectID `json:"to_user" bson:"to_user" comment:"操作的用户"`          // 展示的用户
-	CreateUser   primitive.ObjectID `json:"create_user" bson:"create_user" comment:"创建用户"`   // 创建的用户
-	Success      bool               `json:"success" bson:"success" comment:"操作完成?"`          // 操作完成
-	Msg          string             `json:"msg" bson:"msg" comment:"操作结果"`                   // 操作结果
-	AllowDelete  bool               `json:"allow_delete" bson:"allow_delete" comment:"允许删除"` // 是否允许删除
+	Name         string             `json:"name,omitempty" bson:"name,omitempty" comment:"任务名称"`
+	Desc         string             `json:"desc,omitempty" bson:"desc,omitempty" comment:"任务描述"`
+	Type         uint8              `json:"type,omitempty" bson:"type,omitempty" comment:"任务类型"` // 任务类型
+	Group        string             `json:"group,omitempty" bson:"group,omitempty" comment:"任务组"`
+	Tags         []string           `json:"tags,omitempty" bson:"tags,omitempty" comment:"标签组"`
+	Content      string             `json:"content,omitempty" bson:"content,omitempty" comment:"任务内容" mab:"t=markdown"` // 任务内容 markdown格式
+	InjectData   string             `json:"inject_data,omitempty" bson:"inject_data,omitempty" comment:"t=textarea"`    // 任务注入的json字符串 可以自行序列化回去
+	Action       []ActionItem       `json:"action,omitempty" bson:"action,omitempty" comment:"按钮组"`
+	ExpTime      time.Time          `json:"exp_time,omitempty" bson:"exp_time,omitempty" comment:"任务过期时间"`       // 任务过期时间
+	ToUser       primitive.ObjectID `json:"to_user,omitempty" bson:"to_user,omitempty" comment:"操作的用户"`          // 展示的用户
+	CreateUser   primitive.ObjectID `json:"create_user,omitempty" bson:"create_user,omitempty" comment:"创建用户"`   // 创建的用户
+	Success      bool               `json:"success,omitempty" bson:"success,omitempty" comment:"操作完成?"`          // 操作完成
+	Msg          string             `json:"msg,omitempty" bson:"msg,omitempty" comment:"操作结果"`                   // 操作结果
+	AllowDelete  bool               `json:"allow_delete,omitempty" bson:"allow_delete,omitempty" comment:"允许删除"` // 是否允许删除
 }
 
 // CreateTask 创建任务

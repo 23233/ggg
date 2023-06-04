@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+var (
+	randSeed *rand.Rand
+)
+
 var mobile = []string{
 	"Mozilla/5.0 (Linux; Android 5.1.1; QTAQZ3 Build/LMY47V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.81 Safari/537.36",
 	"Mozilla/5.0 (Linux; Android 4.1.2; SCH-S968C Build/JZO54K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.81 Mobile Safari/537.36",
@@ -736,11 +740,11 @@ var win10 = []string{
 }
 
 func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 func randInt(min int, max int) int {
-	return min + rand.Intn(max-min)
+	return min + randSeed.Intn(max-min)
 }
 
 func GetMobile() string {

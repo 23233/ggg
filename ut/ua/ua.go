@@ -1,12 +1,8 @@
 package ua
 
 import (
-	"math/rand"
-	"time"
-)
-
-var (
-	randSeed *rand.Rand
+	"crypto/rand"
+	"math/big"
 )
 
 var mobile = []string{
@@ -739,12 +735,15 @@ var win10 = []string{
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 Edg/100.0.1185.50",
 }
 
-func init() {
-	randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
-
 func randInt(min int, max int) int {
-	return min + randSeed.Intn(max-min)
+
+	diff := big.NewInt(int64(max - min + 1))
+	num, err := rand.Int(rand.Reader, diff)
+	if err != nil {
+		return 0
+	}
+
+	return int(num.Int64()) + min
 }
 
 func GetMobile() string {

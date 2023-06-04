@@ -2,6 +2,7 @@ package logger
 
 import (
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,8 +12,8 @@ import (
 
 func TestNew(t *testing.T) {
 
-	l := InitJsonTimeLog("t_", Day)
-
+	l := InitJsonTimeLog("t_", Day, zap.Any("ttt", "bbb"))
+	//l.Op.AddField("ttt", "bbb")
 	l.Info("info level test")
 	l.Error("dsdadadad level test", l.WithError(errors.New("sabhksasas")))
 	l.Error("121212121212 error")

@@ -1,5 +1,7 @@
 package logger
 
+import "go.uber.org/zap"
+
 var (
 	DefaultPath = "./logs/"
 	J           *Log
@@ -15,7 +17,7 @@ func ChangeJsCaller(call int) {
 	Js = Js.Op.InitLogger()
 }
 
-func InitJsonTimeLog(prefix string, t TimeUnit) *Log {
+func InitJsonTimeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
 	p := "j_"
 	if len(prefix) >= 1 {
 		p = prefix
@@ -30,10 +32,11 @@ func InitJsonTimeLog(prefix string, t TimeUnit) *Log {
 	jt.SetErrorFile(DefaultPath + p + "error") // 设置error级别日志
 	jt.SetCaller(true)
 	jt.SetCallerSkip(1)
+	jt.Fields = fields
 	return jt.InitLogger()
 }
 
-func InitJsonSizeLog(prefix string) *Log {
+func InitJsonSizeLog(prefix string, fields ...zap.Field) *Log {
 	p := "s_"
 	if len(prefix) >= 1 {
 		p = prefix
@@ -51,6 +54,7 @@ func InitJsonSizeLog(prefix string) *Log {
 	js.MaxBackups = 10
 	js.SetCaller(true)
 	js.SetCallerSkip(1)
+	js.Fields = fields
 	return js.InitLogger()
 }
 

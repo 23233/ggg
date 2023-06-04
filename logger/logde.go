@@ -56,6 +56,7 @@ type LogOptions struct {
 	TimeUnit              TimeUnit           `json:"time_unit" yaml:"time_unit" toml:"time_unit"`
 	Stacktrace            bool               `json:"stacktrace" yaml:"stacktrace" toml:"stacktrace"`
 	SentryConfig          SentryLoggerConfig `json:"sentry_config" yaml:"sentry_config" toml:"sentry_config"`
+	Fields                []zap.Field        `json:"fields,omitempty" yaml:"fields" toml:"fields"`
 	closeDisplay          int
 	caller                bool
 	callerSkip            int
@@ -103,6 +104,10 @@ func (c *LogOptions) CloseConsoleDisplay() {
 
 func (c *LogOptions) SetCaller(b bool) {
 	c.caller = b
+}
+
+func (c *LogOptions) AddField(k string, v any) {
+	c.Fields = append(c.Fields, zap.Any(k, v))
 }
 
 func (c *LogOptions) SetCallerSkip(skip int) {
@@ -327,58 +332,58 @@ func (c *LogOptions) InitLogger() *Log {
 }
 
 func (c *Log) Info(msg string, args ...zap.Field) {
-	c.L.Info(msg, args...)
+	c.L.Info(msg, append(args, c.Op.Fields...)...)
 }
 
 func (c *Log) Error(msg string, args ...zap.Field) {
-	c.L.Error(msg, args...)
+	c.L.Error(msg, append(args, c.Op.Fields...)...)
 }
 
 func (c *Log) Warn(msg string, args ...zap.Field) {
-	c.L.Warn(msg, args...)
+	c.L.Warn(msg, append(args, c.Op.Fields...)...)
 }
 
 func (c *Log) Debug(msg string, args ...zap.Field) {
-	c.L.Debug(msg, args...)
+	c.L.Debug(msg, append(args, c.Op.Fields...)...)
 }
 
 func (c *Log) Fatal(msg string, args ...zap.Field) {
-	c.L.Fatal(msg, args...)
+	c.L.Fatal(msg, append(args, c.Op.Fields...)...)
 }
 
 func (c *Log) Infof(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Info(logMsg)
+	c.L.Info(logMsg, c.Op.Fields...)
 }
 
 func (c *Log) Errorf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Error(logMsg)
+	c.L.Error(logMsg, c.Op.Fields...)
 }
 
 func (c *Log) ErrorE(err error, format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Error(logMsg, c.WithError(err))
+	c.L.Error(logMsg, append(c.Op.Fields, c.WithError(err))...)
 }
 
 func (c *Log) ErrEf(err error, format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Error(logMsg, c.With("err", err.Error()))
+	c.L.Error(logMsg, append(c.Op.Fields, c.With("err", err.Error()))...)
 }
 
 func (c *Log) Warnf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Warn(logMsg)
+	c.L.Warn(logMsg, c.Op.Fields...)
 }
 
 func (c *Log) Debugf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Debug(logMsg)
+	c.L.Debug(logMsg, c.Op.Fields...)
 }
 
 func (c *Log) Fatalf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
-	c.L.Fatal(logMsg)
+	c.L.Fatal(logMsg, c.Op.Fields...)
 }
 
 func (c *Log) With(k string, v interface{}) zap.Field {

@@ -3,6 +3,7 @@ package ua
 import (
 	"crypto/rand"
 	"math/big"
+	"strings"
 )
 
 var mobile = []string{
@@ -746,8 +747,17 @@ func randInt(min int, max int) int {
 	return int(num.Int64()) + min
 }
 
-func GetMobile() string {
-	return mobile[randInt(0, len(mobile)-1)]
+// GetMobile 获取移动端数据 可选不包含选项 推荐 Iphone Android Ipad
+func GetMobile(notContain ...string) string {
+	pick := mobile[randInt(0, len(mobile)-1)]
+	if len(notContain) > 0 {
+		for _, s := range notContain {
+			if strings.Contains(pick, s) {
+				return GetMobile(notContain...)
+			}
+		}
+	}
+	return pick
 }
 
 func GetPc() string {

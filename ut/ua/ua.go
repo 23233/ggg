@@ -747,15 +747,28 @@ func randInt(min int, max int) int {
 	return int(num.Int64()) + min
 }
 
-// GetMobile 获取移动端数据 可选不包含选项 推荐 Iphone Android Ipad
-func GetMobile(notContain ...string) string {
-	pick := mobile[randInt(0, len(mobile)-1)]
-	if len(notContain) > 0 {
-		for _, s := range notContain {
-			if strings.Contains(pick, s) {
-				return GetMobile(notContain...)
-			}
-		}
+func GetMobile() string {
+	return mobile[randInt(0, len(mobile)-1)]
+}
+
+func GetAndroid() string {
+	pick := GetMobile()
+	if !strings.Contains(pick, "Android") {
+		return GetAndroid()
+	}
+	return pick
+}
+func GetIpad() string {
+	pick := GetMobile()
+	if !strings.Contains(pick, "iPad") {
+		return GetIpad()
+	}
+	return pick
+}
+func GetIphone() string {
+	pick := GetMobile()
+	if !strings.Contains(pick, "iPhone") {
+		return GetIphone()
 	}
 	return pick
 }

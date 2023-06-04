@@ -747,15 +747,15 @@ func randInt(min int, max int) int {
 }
 
 func GetMobile() string {
-	return mobile[randInt(0, len(mobile))]
+	return mobile[randInt(0, len(mobile)-1)]
 }
 
 func GetPc() string {
-	return pc[randInt(0, len(pc))]
+	return pc[randInt(0, len(pc)-1)]
 }
 
 func GetWin10() string {
-	return win10[randInt(0, len(win10))]
+	return win10[randInt(0, len(win10)-1)]
 }
 
 func Get() string {

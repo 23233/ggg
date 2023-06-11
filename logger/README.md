@@ -1,3 +1,5 @@
+### 需要注意 [lumberjack](https://github.com/natefinch/lumberjack) 不管是v2还是v3 都有多goroutine写入导致goroutine泄露的问题
+
 # logger
 
 基于Zap,可选日志文件归档方式

@@ -123,3 +123,44 @@ func StructCopy(origin, newData interface{}) error {
 	}
 	return nil
 }
+
+// GetDiffStruct 存在与bodyMap中的元素 判断与old和当前body值不同则写入diff
+// bodyMap中的key是 json tag 而不是字段名
+func GetDiffStruct(oldData interface{}, body interface{}, bodyMap map[string]interface{}) (map[string]interface{}, error) {
+	diff := make(map[string]interface{})
+
+	vOld := reflect.ValueOf(oldData).Elem()
+	vNew := reflect.ValueOf(body).Elem()
+
+	if vOld.Type() != vNew.Type() {
+		return nil, fmt.Errorf("different types: %v vs %v", vOld.Type(), vNew.Type())
+	}
+
+	for key := range bodyMap {
+		fieldName := getFieldNameByJSONTag(vOld.Type(), key)
+		if fieldName == "" {
+			continue
+		}
+
+		oldValue := vOld.FieldByName(fieldName)
+		newValue := vNew.FieldByName(fieldName)
+
+		if oldValue.IsValid() && newValue.IsValid() {
+			if oldValue.Interface() != newValue.Interface() {
+				diff[key] = newValue.Interface()
+			}
+		}
+	}
+
+	return diff, nil
+}
+
+func getFieldNameByJSONTag(structType reflect.Type, tagName string) string {
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+		if jsonTag := field.Tag.Get("json"); jsonTag == tagName {
+			return field.Name
+		}
+	}
+	return ""
+}

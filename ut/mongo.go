@@ -1,6 +1,7 @@
 package ut
 
 import (
+	"context"
 	"github.com/iancoleman/strcase"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -59,4 +60,10 @@ func MGen2dSphere(k string) mongo.IndexModel {
 	return mongo.IndexModel{
 		Keys: bson.M{k: "2dsphere"},
 	}
+}
+
+// MCreateIndex 快捷创建索引
+func MCreateIndex(ctx context.Context, db *mongo.Collection, indexs ...mongo.IndexModel) error {
+	_, err := db.Indexes().CreateMany(ctx, indexs)
+	return err
 }

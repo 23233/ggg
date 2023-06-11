@@ -29,6 +29,15 @@ type GeoItem struct {
 	GeoMin  int64   `json:"geo_min,omitempty"`  // 单位为米
 }
 
+type Pk struct {
+	LocalKey      string `json:"local_key,omitempty"`
+	RemoteModelId string `json:"remote_model_id,omitempty"`
+	RemoteKey     string `json:"remote_key,omitempty"`
+	Alias         string `json:"alias,omitempty"`
+	EmptyReturn   bool   `json:"empty_return,omitempty"`
+	Unwind        bool   `json:"unwind,omitempty"`
+}
+
 type QueryParse struct {
 	And  []*Kov   `json:"and,omitempty"`
 	Or   []*Kov   `json:"or,omitempty"`
@@ -67,6 +76,13 @@ type BaseQuery struct {
 	SortAsc  []string `json:"sort_asc,omitempty"`
 	Page     int64    `json:"page,omitempty"`
 	PageSize int64    `json:"page_size,omitempty"`
+}
+
+type QueryFull struct {
+	*QueryParse
+	*BaseQuery
+	Pks      []*Pk `json:"pks,omitempty"`
+	GetCount bool  `json:"get_count,omitempty"` // 获取过滤总数
 }
 
 type PruneCtxQuery struct {

@@ -5,6 +5,7 @@ import "go.uber.org/zap"
 var (
 	DefaultPath = "./logs/"
 	J           *Log
+	JH          *Log
 	Js          *Log
 )
 
@@ -61,4 +62,5 @@ func InitJsonSizeLog(prefix string, fields ...zap.Field) *Log {
 func init() {
 	J = InitJsonTimeLog("", Day)
 	Js = InitJsonSizeLog("")
+	JH = InitJsonTimeLog("", Hour)
 }

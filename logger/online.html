@@ -71,7 +71,7 @@
 <div class="container">
 
     {{ range .Data }}
-    <div class="warp hide" id="root">
+    <div class="warp hide">
         <h2>{{ .Label }}</h2>
         {{ range .Array }}
         <div class="line">
@@ -84,13 +84,16 @@
 </div>
 <script>
     function toggleClassName() {
-        var element = document.getElementById('root');
-        if (element.classList.contains('hide')) {
-            element.classList.remove('hide');
-            element.classList.add('show');
-        } else if (element.classList.contains('show')) {
-            element.classList.remove('show');
-            element.classList.add('hide');
+        var elements = document.getElementsByClassName('warp');
+        for (var i = 0; i < elements.length; i++) {
+            const element = elements[i]
+            if (element.classList.contains('hide')) {
+                element.classList.remove('hide');
+                element.classList.add('show');
+            } else if (element.classList.contains('show')) {
+                element.classList.remove('show');
+                element.classList.add('hide');
+            }
         }
     }
 

@@ -17,7 +17,7 @@ func TestSmsClient_Send(t *testing.T) {
 	}
 	mobile := "13866666666"
 	inst := NewDefaultSmsClient(rdb)
-	code, err := inst.SendBeforeCheck(context.TODO(), mobile)
+	code, err := inst.SendBeforeCheck(context.TODO(), "123456", mobile)
 	if err != nil {
 		t.Error(err)
 		return

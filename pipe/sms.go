@@ -116,13 +116,13 @@ func (s *SmsClient) Send(ctx context.Context, templateID string, mobile string) 
 
 }
 
-func (s *SmsClient) SendBeforeCheck(ctx context.Context, mobile string) (string, error) {
+func (s *SmsClient) SendBeforeCheck(ctx context.Context, templateId string, mobile string) (string, error) {
 	// 先验证key是否存在
 	resp := s.rdb.Do(ctx, s.rdb.B().Exists().Key(s.redisPrefix+mobile).Build())
 	if resp.Error() != nil {
 		// 如果不存在的时候才进行发送
 		if resp.Error() == redis.Nil {
-			return s.Send(ctx, "123456", mobile)
+			return s.Send(ctx, templateId, mobile)
 		}
 		return "", resp.Error()
 	}
@@ -131,7 +131,7 @@ func (s *SmsClient) SendBeforeCheck(ctx context.Context, mobile string) (string,
 	if has {
 		return "", orginErrors.New("已有信息在路上,若未收到请稍后重试")
 	}
-	return s.Send(ctx, "123456", mobile)
+	return s.Send(ctx, templateId, mobile)
 }
 
 func (s *SmsClient) Valid(ctx context.Context, mobile, code string) bool {

@@ -45,7 +45,7 @@ func NewSmsClient(secretId, secretKey, sign, appId string, rdb rueidis.Client) *
 
 func NewDefaultSmsClient(rdb rueidis.Client) *SmsClient {
 	client := NewSmsClient("", "", "", "", rdb)
-	client.region = "ap-chongqing"
+	client.region = ""
 	return client
 }
 
@@ -88,7 +88,7 @@ func (s *SmsClient) send(phones []string, TemplateID string, TemplateParamSet []
 }
 
 // Send 这个是发送的登录验证码
-func (s *SmsClient) Send(ctx context.Context, mobile string) (string, error) {
+func (s *SmsClient) Send(ctx context.Context, templateID string, mobile string) (string, error) {
 
 	var phones = []string{
 		"+86" + mobile,
@@ -102,7 +102,7 @@ func (s *SmsClient) Send(ctx context.Context, mobile string) (string, error) {
 		fmt.Sprintf("%v", s.expTime.Minutes()),
 	}
 
-	err := s.send(phones, "824190", sendParams)
+	err := s.send(phones, templateID, sendParams)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +122,7 @@ func (s *SmsClient) SendBeforeCheck(ctx context.Context, mobile string) (string,
 	if resp.Error() != nil {
 		// 如果不存在的时候才进行发送
 		if resp.Error() == redis.Nil {
-			return s.Send(ctx, mobile)
+			return s.Send(ctx, "123456", mobile)
 		}
 		return "", resp.Error()
 	}
@@ -131,7 +131,7 @@ func (s *SmsClient) SendBeforeCheck(ctx context.Context, mobile string) (string,
 	if has {
 		return "", orginErrors.New("已有信息在路上,若未收到请稍后重试")
 	}
-	return s.Send(ctx, mobile)
+	return s.Send(ctx, "123456", mobile)
 }
 
 func (s *SmsClient) Valid(ctx context.Context, mobile, code string) bool {

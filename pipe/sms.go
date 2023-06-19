@@ -44,7 +44,7 @@ func NewSmsClient(secretId, secretKey, sign, appId string, rdb rueidis.Client) *
 }
 
 func NewDefaultSmsClient(rdb rueidis.Client) *SmsClient {
-	client := NewSmsClient("AKID3tPl04qN4btLZZMn1HRRAd17wVrhCFIF", "sUrhGYbYOxFJBqGQbaIjurZ0AB0YqtmR", "星耀九州", "1400465278", rdb)
+	client := NewSmsClient("", "", "", "", rdb)
 	client.region = "ap-chongqing"
 	return client
 }

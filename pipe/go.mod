@@ -11,7 +11,8 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/casbin/casbin/v2 v2.71.1
 	github.com/casbin/redis-adapter/v2 v2.4.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/gookit/validate v1.4.6
 	github.com/imroc/req/v3 v3.37.0
@@ -21,7 +22,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.7
-	github.com/redis/rueidis v1.0.8
+	github.com/redis/rueidis v1.0.9
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/shockerli/cvt v0.2.7
 	github.com/sony/sonyflake v1.1.0
@@ -45,7 +46,9 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect
@@ -56,7 +59,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.11.2 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect

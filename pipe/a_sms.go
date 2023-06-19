@@ -1,0 +1,40 @@
+package pipe
+
+import (
+	"context"
+	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
+)
+
+// 短信相关
+
+type SmsPipe struct {
+	Mobile string `json:"mobile,omitempty" bson:"mobile,omitempty"`
+	Code   string `json:"code,omitempty" bson:"code,omitempty"`
+}
+
+var (
+	SmsSend = &RunnerContext[any, *SmsPipe, *SmsClient, string]{
+		Name: "短信验证码发送",
+		Key:  "sms_send",
+		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *PipeRunResp[string] {
+			code, err := db.SendBeforeCheck(ctx, params.Mobile)
+			return newPipeResultErr(code, err)
+		},
+	}
+	SmsValid = &RunnerContext[any, *SmsPipe, *SmsClient, bool]{
+		Name: "短信验证码验证",
+		Key:  "sms_valid",
+		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *PipeRunResp[bool] {
+
+			pass := db.Valid(ctx, params.Mobile, params.Code)
+			if !pass {
+				return newPipeErr[bool](errors.New("短信验证码验证失败"))
+
+			}
+			db.DelKey(context.TODO(), params.Mobile)
+
+			return newPipeResult(pass)
+		},
+	}
+)

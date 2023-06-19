@@ -28,7 +28,7 @@ var (
 	LocalCacheGet = &RunnerContext[any, *LocalCachePipe, gcache.Cache, any]{
 		Name: "本地缓存获取",
 		Key:  "local_cache_get",
-		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *RunResp[any] {
 
 			if params == nil {
 				return newPipeErr[any](PipePackParamsError)
@@ -59,7 +59,7 @@ var (
 	pipeLocalCacheSet = &RunnerContext[any, *LocalCachePipe, gcache.Cache, any]{
 		Name: "本地缓存设置",
 		Key:  "local_cache_set",
-		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *RunResp[any] {
 			if params == nil {
 				return newPipeErr[any](PipePackParamsError)
 			}

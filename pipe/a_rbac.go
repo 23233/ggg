@@ -25,7 +25,7 @@ var (
 	RbacRole = &RunnerContext[any, *RbacGetRolePipe, *RbacDomain, []string]{
 		Key:  "rbac_get_role",
 		Name: "rbac权限获取",
-		call: func(ctx iris.Context, origin any, params *RbacGetRolePipe, db *RbacDomain, more ...any) *PipeRunResp[[]string] {
+		call: func(ctx iris.Context, origin any, params *RbacGetRolePipe, db *RbacDomain, more ...any) *RunResp[[]string] {
 			roles, err := db.E.GetRolesForUser(params.UserId, params.Domain)
 			if err != nil {
 				return newPipeErr[[]string](err)
@@ -36,7 +36,7 @@ var (
 	RbacAllow = &RunnerContext[any, *RbacAllowPipe, *RbacDomain, bool]{
 		Key:  "rbac_allow",
 		Name: "rbac权限允许执行",
-		call: func(ctx iris.Context, origin any, params *RbacAllowPipe, db *RbacDomain, more ...any) *PipeRunResp[bool] {
+		call: func(ctx iris.Context, origin any, params *RbacAllowPipe, db *RbacDomain, more ...any) *RunResp[bool] {
 			if len(params.Sub) < 1 {
 				return newPipeErr[bool](errors.New("权限判断操作者不能为空"))
 			}

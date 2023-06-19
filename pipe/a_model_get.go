@@ -20,7 +20,7 @@ var (
 	QueryGetData = &RunnerContext[*ModelGetDataDep, *ModelGetData, *qmgo.Database, *ut.MongoFacetResult]{
 		Key:  "query_get_data",
 		Name: "query获取数据",
-		call: func(ctx iris.Context, origin *ModelGetDataDep, params *ModelGetData, db *qmgo.Database, more ...any) *PipeRunResp[*ut.MongoFacetResult] {
+		call: func(ctx iris.Context, origin *ModelGetDataDep, params *ModelGetData, db *qmgo.Database, more ...any) *RunResp[*ut.MongoFacetResult] {
 			pipeline := ut.QueryToMongoPipeline(origin.Query)
 
 			if params.Single {

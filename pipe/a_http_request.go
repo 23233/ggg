@@ -37,7 +37,7 @@ var (
 	HttpRequest = &RunnerContext[any, *HttpRequestConfig, any, *req.Response]{
 		Name: "http请求",
 		Key:  "http_request",
-		call: func(ctx iris.Context, origin any, params *HttpRequestConfig, db any, more ...any) *PipeRunResp[*req.Response] {
+		call: func(ctx iris.Context, origin any, params *HttpRequestConfig, db any, more ...any) *RunResp[*req.Response] {
 			if params == nil {
 				return newPipeErr[*req.Response](PipePackParamsError)
 			}

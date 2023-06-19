@@ -16,7 +16,7 @@ var (
 	ModelDel = &RunnerContext[any, *ModelDelConfig, *qmgo.Database, any]{
 		Key:  "model_ctx_del",
 		Name: "模型单条删除",
-		call: func(ctx iris.Context, origin any, params *ModelDelConfig, db *qmgo.Database, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *ModelDelConfig, db *qmgo.Database, more ...any) *RunResp[any] {
 			var result = make(map[string]any)
 			err := db.Collection(params.ModelId).Find(ctx, bson.M{ut.DefaultUidTag: params.RowId}).One(&result)
 			if err != nil {

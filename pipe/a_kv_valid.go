@@ -35,7 +35,7 @@ var (
 	KvValid = &RunnerContext[any, *KvValidConfig, any, bool]{
 		Name: "kv验证器",
 		Key:  "kv_valid",
-		call: func(ctx iris.Context, origin any, params *KvValidConfig, db any, more ...any) *PipeRunResp[bool] {
+		call: func(ctx iris.Context, origin any, params *KvValidConfig, db any, more ...any) *RunResp[bool] {
 			if params == nil {
 				return newPipeErr[bool](PipePackParamsError)
 			}
@@ -51,7 +51,7 @@ var (
 	pipeKvListValid = &RunnerContext[any, *KvsValidPipe, any, []bool]{
 		Name: "kv验证器",
 		Key:  "kv_valid",
-		call: func(ctx iris.Context, origin any, params *KvsValidPipe, db any, more ...any) *PipeRunResp[[]bool] {
+		call: func(ctx iris.Context, origin any, params *KvsValidPipe, db any, more ...any) *RunResp[[]bool] {
 
 			if params == nil {
 				return newPipeErr[[]bool](PipePackParamsError)

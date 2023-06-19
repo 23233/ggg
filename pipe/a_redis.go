@@ -159,7 +159,7 @@ var (
 	RedisCommand = &RunnerContext[any, *RedisOperate, rueidis.Client, any]{
 		Name: "redis单条操作",
 		Key:  "redis_command",
-		call: func(ctx iris.Context, origin any, params *RedisOperate, db rueidis.Client, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *RedisOperate, db rueidis.Client, more ...any) *RunResp[any] {
 
 			if params == nil {
 				return newPipeErr[any](PipePackParamsError)
@@ -197,7 +197,7 @@ var (
 	RedisCommands = &RunnerContext[any, *RedisOperates, rueidis.Client, []any]{
 		Name: "多条redis操作",
 		Key:  "redis_commands",
-		call: func(ctx iris.Context, origin any, params *RedisOperates, db rueidis.Client, more ...any) *PipeRunResp[[]any] {
+		call: func(ctx iris.Context, origin any, params *RedisOperates, db rueidis.Client, more ...any) *RunResp[[]any] {
 			rdb := db
 			cmdList := make(rueidis.Commands, 0, len(params.Records))
 			for _, rc := range params.Records {

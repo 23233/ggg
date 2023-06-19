@@ -41,7 +41,7 @@ var (
 	RequestRate = &RunnerContext[any, *RateLimitPipe, any, any]{
 		Name: "请求限速",
 		Key:  "request_rate",
-		call: func(ctx iris.Context, origin any, params *RateLimitPipe, db any, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *RateLimitPipe, db any, more ...any) *RunResp[any] {
 
 			if params == nil {
 				return newPipeErr[any](PipePackParamsError)

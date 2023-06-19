@@ -15,7 +15,7 @@ var (
 	SchemaValid = &RunnerContext[any, *SchemaValidConfig, any, map[string]any]{
 		Name: "schema验证器",
 		Key:  "schema_valid",
-		call: func(ctx iris.Context, origin any, params *SchemaValidConfig, db any, more ...any) *PipeRunResp[map[string]any] {
+		call: func(ctx iris.Context, origin any, params *SchemaValidConfig, db any, more ...any) *RunResp[map[string]any] {
 			// schema 验证
 			if params == nil {
 				return newPipeErr[map[string]any](PipePackParamsError)

@@ -11,7 +11,7 @@ var (
 	TextSafe = &RunnerContext[string, any, any, bool]{
 		Name: "文字安全验证",
 		Key:  "text_safe",
-		call: func(ctx iris.Context, origin string, params any, db any, more ...any) *PipeRunResp[bool] {
+		call: func(ctx iris.Context, origin string, params any, db any, more ...any) *RunResp[bool] {
 
 			value := origin
 			if len(value) > 1 {

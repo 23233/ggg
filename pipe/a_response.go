@@ -23,7 +23,7 @@ var (
 	ResponseParse = &RunnerContext[any, *ReqResponse, any, *ParseResponse]{
 		Name: "返回值解析",
 		Key:  "response_parse",
-		call: func(ctx iris.Context, origin any, params *ReqResponse, db any, more ...any) *PipeRunResp[*ParseResponse] {
+		call: func(ctx iris.Context, origin any, params *ReqResponse, db any, more ...any) *RunResp[*ParseResponse] {
 
 			if params == nil {
 				return newPipeErr[*ParseResponse](PipePackParamsError)

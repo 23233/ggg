@@ -17,7 +17,7 @@ var (
 	SmsSend = &RunnerContext[any, *SmsPipe, *SmsClient, string]{
 		Name: "短信验证码发送",
 		Key:  "sms_send",
-		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *PipeRunResp[string] {
+		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *RunResp[string] {
 			code, err := db.SendBeforeCheck(ctx, params.Mobile)
 			return newPipeResultErr(code, err)
 		},
@@ -25,7 +25,7 @@ var (
 	SmsValid = &RunnerContext[any, *SmsPipe, *SmsClient, bool]{
 		Name: "短信验证码验证",
 		Key:  "sms_valid",
-		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *PipeRunResp[bool] {
+		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *RunResp[bool] {
 
 			pass := db.Valid(ctx, params.Mobile, params.Code)
 			if !pass {

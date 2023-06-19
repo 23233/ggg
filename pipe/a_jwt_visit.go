@@ -13,7 +13,7 @@ var (
 	JwtVisit = &RunnerContext[*JwtCheckDep, any, rueidis.Client, map[string]any]{
 		Name: "jwt显示",
 		Key:  "jwt_visit",
-		call: func(ctx iris.Context, origin *JwtCheckDep, params any, db rueidis.Client, more ...any) *PipeRunResp[map[string]any] {
+		call: func(ctx iris.Context, origin *JwtCheckDep, params any, db rueidis.Client, more ...any) *RunResp[map[string]any] {
 
 			dep := origin
 			resp := JwtFlat.call(ctx, dep.Authorization, nil, db)

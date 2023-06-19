@@ -11,7 +11,7 @@ var (
 	HashGen = &RunnerContext[any, *HashGenPipe, any, string]{
 		Name: "hash生成",
 		Key:  "hash_gen",
-		call: func(ctx iris.Context, origin any, params *HashGenPipe, db any, more ...any) *PipeRunResp[string] {
+		call: func(ctx iris.Context, origin any, params *HashGenPipe, db any, more ...any) *RunResp[string] {
 
 			if len(params.Cols) < 1 {
 				return newPipeErr[string](PipePackParamsError)

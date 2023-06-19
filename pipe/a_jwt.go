@@ -35,7 +35,7 @@ var (
 	JwtGen = &RunnerContext[*PipeJwtDep, *JwtGenPipe, rueidis.Client, string]{
 		Name: "jwt生成",
 		Key:  "jwt_gen",
-		call: func(ctx iris.Context, origin *PipeJwtDep, params *JwtGenPipe, db rueidis.Client, more ...any) *PipeRunResp[string] {
+		call: func(ctx iris.Context, origin *PipeJwtDep, params *JwtGenPipe, db rueidis.Client, more ...any) *RunResp[string] {
 			if origin == nil {
 				return newPipeErr[string](PipeDepError)
 			}

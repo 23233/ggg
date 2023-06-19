@@ -26,7 +26,7 @@ var (
 	ModelAdd = &RunnerContext[any, *ModelCtxAddConfig, *qmgo.Database, any]{
 		Key:  "model_ctx_add",
 		Name: "模型json新增",
-		call: func(ctx iris.Context, origin any, params *ModelCtxAddConfig, db *qmgo.Database, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *ModelCtxAddConfig, db *qmgo.Database, more ...any) *RunResp[any] {
 			if origin == nil {
 				return newPipeErr[any](PipeDepNotFound)
 			}

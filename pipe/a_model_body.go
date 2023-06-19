@@ -141,7 +141,7 @@ var (
 	ModelMapper = &RunnerContext[any, *ModelCtxMapperPack, any, any]{
 		Key:  "model_ctx_mapper",
 		Name: "模型body取map",
-		call: func(ctx iris.Context, origin any, params *ModelCtxMapperPack, db any, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *ModelCtxMapperPack, db any, more ...any) *RunResp[any] {
 			var bodyData = origin
 			if origin == nil {
 				bodyData = make(map[string]any)

@@ -13,7 +13,7 @@ type RunnerContext[T any, P any, D any, R any] struct {
 	Key  string `json:"key,omitempty"`
 	Name string `json:"name,omitempty"`
 	Desc string `json:"desc,omitempty"`
-	call func(ctx iris.Context, origin T, params P, db D, more ...any) *PipeRunResp[R]
+	call func(ctx iris.Context, origin T, params P, db D, more ...any) *RunResp[R]
 }
 
 func (c *RunnerContext[T, P, D, R]) SetKey(key string) *RunnerContext[T, P, D, R] {
@@ -28,9 +28,9 @@ func (c *RunnerContext[T, P, D, R]) SetDesc(desc string) *RunnerContext[T, P, D,
 	c.Desc = desc
 	return c
 }
-func (c *RunnerContext[T, P, D, R]) NewPipeErr(err error) *PipeRunResp[R] {
+func (c *RunnerContext[T, P, D, R]) NewPipeErr(err error) *RunResp[R] {
 	return newPipeErr[R](err)
 }
-func (c *RunnerContext[T, P, D, R]) Run(ctx iris.Context, origin T, params P, db D, more ...any) *PipeRunResp[R] {
+func (c *RunnerContext[T, P, D, R]) Run(ctx iris.Context, origin T, params P, db D, more ...any) *RunResp[R] {
 	return c.call(ctx, origin, params, db, more...)
 }

@@ -6,20 +6,20 @@ import (
 	"time"
 )
 
-type PipeInfo struct {
+type Info struct {
 	Key  string `json:"key,omitempty"`
 	Name string `json:"name,omitempty"`
 	Desc string `json:"desc,omitempty"`
 }
 
-func NewPipeInfo(name string) *PipeInfo {
-	return &PipeInfo{
+func NewPipeInfo(name string) *Info {
+	return &Info{
 		Name: name,
 	}
 }
 
-// PipeRunResp 操作序列执行结果
-type PipeRunResp[T any] struct {
+// RunResp 操作序列执行结果
+type RunResp[T any] struct {
 	result       T     // 执行结果
 	err          error // 错误
 	reqCode      int   // 请求状态码 权重在pipeline定义的errCode之后
@@ -27,31 +27,31 @@ type PipeRunResp[T any] struct {
 	isBreak      bool  // 是否中断之后的执行
 }
 
-func (c *PipeRunResp[T]) SetBusinessCode(businessCode int) *PipeRunResp[T] {
+func (c *RunResp[T]) SetBusinessCode(businessCode int) *RunResp[T] {
 	c.businessCode = businessCode
 	return c
 }
-func (c *PipeRunResp[T]) SetReqCode(reqCode int) *PipeRunResp[T] {
+func (c *RunResp[T]) SetReqCode(reqCode int) *RunResp[T] {
 	c.reqCode = reqCode
 	return c
 }
-func (c *PipeRunResp[T]) SetBreak(b bool) *PipeRunResp[T] {
+func (c *RunResp[T]) SetBreak(b bool) *RunResp[T] {
 	c.isBreak = b
 	return c
 }
 
-func newPipeErr[T any](err error) *PipeRunResp[T] {
-	return &PipeRunResp[T]{
+func newPipeErr[T any](err error) *RunResp[T] {
+	return &RunResp[T]{
 		err: err,
 	}
 }
-func newPipeResult[T any](result T) *PipeRunResp[T] {
-	return &PipeRunResp[T]{
+func newPipeResult[T any](result T) *RunResp[T] {
+	return &RunResp[T]{
 		result: result,
 	}
 }
-func newPipeResultErr[T any](result T, err error) *PipeRunResp[T] {
-	return &PipeRunResp[T]{
+func newPipeResultErr[T any](result T, err error) *RunResp[T] {
+	return &RunResp[T]{
 		err:    err,
 		result: result,
 	}

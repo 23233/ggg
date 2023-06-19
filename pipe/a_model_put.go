@@ -47,7 +47,7 @@ var (
 	ModelPut = &RunnerContext[any, *ModelPutConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_put",
 		Name: "模型单条修改",
-		call: func(ctx iris.Context, origin any, params *ModelPutConfig, db *qmgo.Database, more ...any) *PipeRunResp[map[string]any] {
+		call: func(ctx iris.Context, origin any, params *ModelPutConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
 			bodyData := make(map[string]any)
 			err := ctx.ReadBody(&bodyData)
 			if err != nil {

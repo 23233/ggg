@@ -17,7 +17,7 @@ var (
 	RandomGen = &RunnerContext[any, *RandomPipe, any, any]{
 		Name: "随机数生成",
 		Key:  "random",
-		call: func(ctx iris.Context, origin any, params *RandomPipe, db any, more ...any) *PipeRunResp[any] {
+		call: func(ctx iris.Context, origin any, params *RandomPipe, db any, more ...any) *RunResp[any] {
 
 			var result any
 

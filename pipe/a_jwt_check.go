@@ -18,7 +18,7 @@ var (
 	JwtCheck = &RunnerContext[*JwtCheckDep, any, rueidis.Client, map[string]any]{
 		Name: "jwt交换",
 		Key:  "jwt_exchange",
-		call: func(ctx iris.Context, origin *JwtCheckDep, params any, db rueidis.Client, more ...any) *PipeRunResp[map[string]any] {
+		call: func(ctx iris.Context, origin *JwtCheckDep, params any, db rueidis.Client, more ...any) *RunResp[map[string]any] {
 			if origin == nil {
 				return newPipeErr[map[string]any](PipeDepError)
 			}

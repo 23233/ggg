@@ -9,7 +9,7 @@ var (
 	ImgSafe = &RunnerContext[string, any, any, bool]{
 		Name: "图片安全校验",
 		Key:  "img_safe",
-		call: func(ctx iris.Context, origin string, params any, db any, more ...any) *PipeRunResp[bool] {
+		call: func(ctx iris.Context, origin string, params any, db any, more ...any) *RunResp[bool] {
 
 			if len(origin) < 1 {
 				return newPipeResult[bool](false)

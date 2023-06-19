@@ -14,7 +14,7 @@ import (
 var (
 	// RequestCacheGet 请求缓存获取
 	RequestCacheGet = &RunnerContext[any, *RequestCachePipe, rueidis.Client, *ParseResponse]{
-		call: func(ctx iris.Context, origin any, params *RequestCachePipe, db rueidis.Client, more ...any) *PipeRunResp[*ParseResponse] {
+		call: func(ctx iris.Context, origin any, params *RequestCachePipe, db rueidis.Client, more ...any) *RunResp[*ParseResponse] {
 			if params == nil {
 				params = new(RequestCachePipe)
 			}
@@ -48,7 +48,7 @@ var (
 	}
 	// 请求缓存设置
 	pipeRequestCacheSet = &RunnerContext[*ParseResponse, *RequestCachePipe, rueidis.Client, *ParseResponse]{
-		call: func(ctx iris.Context, origin *ParseResponse, params *RequestCachePipe, db rueidis.Client, more ...any) *PipeRunResp[*ParseResponse] {
+		call: func(ctx iris.Context, origin *ParseResponse, params *RequestCachePipe, db rueidis.Client, more ...any) *RunResp[*ParseResponse] {
 
 			cacheKey, err := params.GetCacheKey(ctx)
 			if err != nil {

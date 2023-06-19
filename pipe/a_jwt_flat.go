@@ -11,7 +11,7 @@ var (
 	JwtFlat = &RunnerContext[string, any, rueidis.Client, map[string]any]{
 		Name: "jwt解构",
 		Key:  "jwt_flat",
-		call: func(ctx iris.Context, origin string, params any, rdb rueidis.Client, more ...any) *PipeRunResp[map[string]any] {
+		call: func(ctx iris.Context, origin string, params any, rdb rueidis.Client, more ...any) *RunResp[map[string]any] {
 
 			if len(origin) < 1 {
 				return newPipeErr[map[string]any](errors.New("获取token令牌错误"))

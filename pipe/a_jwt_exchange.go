@@ -13,7 +13,7 @@ var (
 	JwtExchange = &RunnerContext[*JwtCheckDep, *JwtGenPipe, rueidis.Client, string]{
 		Name: "jwt交换",
 		Key:  "jwt_exchange",
-		call: func(ctx iris.Context, origin *JwtCheckDep, params *JwtGenPipe, db rueidis.Client, more ...any) *PipeRunResp[string] {
+		call: func(ctx iris.Context, origin *JwtCheckDep, params *JwtGenPipe, db rueidis.Client, more ...any) *RunResp[string] {
 			if params == nil {
 				params = new(JwtGenPipe)
 			}

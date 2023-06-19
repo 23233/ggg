@@ -52,7 +52,7 @@ var (
 	RulesValid = &RunnerContext[any, *RulesValidate, any, ValidResult]{
 		Name: "规则验证",
 		Key:  "rules_valid",
-		call: func(ctx iris.Context, origin any, params *RulesValidate, db any, more ...any) *PipeRunResp[ValidResult] {
+		call: func(ctx iris.Context, origin any, params *RulesValidate, db any, more ...any) *RunResp[ValidResult] {
 			if params == nil {
 				return newPipeErr[ValidResult](PipePackParamsError)
 			}

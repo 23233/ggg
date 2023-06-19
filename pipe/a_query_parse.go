@@ -21,7 +21,7 @@ var (
 	QueryParse = &RunnerContext[any, *QueryParseConfig, any, *ut.QueryFull]{
 		Key:  "model_ctx_query",
 		Name: "模型query映射",
-		call: func(ctx iris.Context, origin any, params *QueryParseConfig, db any, more ...any) *PipeRunResp[*ut.QueryFull] {
+		call: func(ctx iris.Context, origin any, params *QueryParseConfig, db any, more ...any) *RunResp[*ut.QueryFull] {
 			qs := ut.NewPruneCtxQuery()
 			urlParams := ctx.URLParams()
 			// 解析出query and 和 or

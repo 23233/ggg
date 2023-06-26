@@ -5,13 +5,17 @@ import (
 	"reflect"
 )
 
+const (
+	GKey = "sv"
+)
+
 var (
 	GlobalFailFunc = func(err error, ctx iris.Context) {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"detail": err.Error()})
 		return
 	}
-	GlobalContextKey = "sv"
+	GlobalContextKey = GKey
 )
 
 func Run(valid interface{}) iris.Handler {
@@ -34,7 +38,7 @@ func Run(valid interface{}) iris.Handler {
 			return
 		}
 		// this is point struct
-		ctx.Values().Set(GlobalContextKey, v)
+		ctx.Values().Set(GKey, v)
 		ctx.Next()
 	}
 }

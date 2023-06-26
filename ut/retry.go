@@ -17,7 +17,10 @@ func RetryFunc(f func() error, maxRetryCount uint, interval time.Duration) error
 	)
 	for {
 		err := f()
-		if err != nil && nowCount > maxRetryCount {
+		if err == nil {
+			return nil
+		}
+		if nowCount > maxRetryCount {
 			return err
 		}
 		time.Sleep(interval)

@@ -2,10 +2,16 @@ module github.com/23233/ggg/pipe
 
 go 1.18
 
+replace (
+	github.com/23233/ggg/contentSafe => ../contentSafe
+	github.com/23233/ggg/logger => ../logger
+	github.com/23233/ggg/ut => ../ut
+)
+
 require (
-	github.com/23233/ggg/contentSafe v0.0.0-20230613090009-67ab057e845e
-	github.com/23233/ggg/logger v0.0.0-20230613090009-67ab057e845e
-	github.com/23233/ggg/ut v0.0.0-20230613090009-67ab057e845e
+	github.com/23233/ggg/contentSafe v0.0.0-00010101000000-000000000000
+	github.com/23233/ggg/logger v0.0.0-20221002105326-9e8ed7cbb14f
+	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/jsonschema v0.10.0
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
@@ -15,7 +21,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/gookit/validate v1.4.6
-	github.com/imroc/req/v3 v3.37.0
+	github.com/imroc/req/v3 v3.37.1
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/iris-contrib/middleware/jwt v0.0.0-20230531125531-980d3a09a458
 	github.com/json-iterator/go v1.1.12
@@ -52,12 +58,13 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gaukas/godicttls v0.0.3 // indirect
 	github.com/getsentry/sentry-go v0.13.0 // indirect
 	github.com/go-creed/sat v1.0.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.11.2 // indirect
+	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -85,12 +92,12 @@ require (
 	github.com/kataras/sitemap v0.0.6 // indirect
 	github.com/kataras/tunnel v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/mailgun/raymond/v2 v2.0.48 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.23 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
@@ -108,7 +115,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sanity-io/litter v1.5.5 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
-	github.com/schollz/progressbar/v3 v3.11.0 // indirect
+	github.com/schollz/progressbar/v3 v3.13.1 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/stretchr/testify v1.8.3 // indirect

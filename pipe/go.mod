@@ -12,7 +12,7 @@ require (
 	github.com/23233/ggg/contentSafe v0.0.0-00010101000000-000000000000
 	github.com/23233/ggg/logger v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
-	github.com/23233/jsonschema v0.10.0
+	github.com/23233/jsonschema v0.11.1
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
 	github.com/casbin/casbin/v2 v2.71.1
@@ -78,7 +78,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/httpexpect/v2 v2.12.1 // indirect

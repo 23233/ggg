@@ -1,7 +1,7 @@
 github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f h1:QAH/KyP7uB4nWfyzyQgo8XrryJZSErA49yDFeeUhu9M=
 github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f/go.mod h1:jTaau+N4kc3hMgZXGHc09iSW76OPlmxT2Ty8Z9+YIQE=
-github.com/23233/jsonschema v0.10.0 h1:4Q51RGPxd+lZFt0QHlDNR7LxdSmGt8xeWfsJS+zvM+o=
-github.com/23233/jsonschema v0.10.0/go.mod h1:E1PFghXzkribinGHXbQeXHQyGfVQTSHJzuM7MbAZIyI=
+github.com/23233/jsonschema v0.11.1 h1:z4K0X8KE+TdzIzJ97YCeUj7Ig1OImerNSboCayAu3B4=
+github.com/23233/jsonschema v0.11.1/go.mod h1:c0TXS9NqCRPLOohM4mrU+uqlxZoCvK266U5Nyr/nq40=
 github.com/23233/lad v0.1.3 h1:EaTvwhXdBW26A33KevJRS9fDDOF+afmPxS0kJ7FOUEo=
 github.com/23233/lad v0.1.3/go.mod h1:4eKphUZ+SC1OC0Z56OdNiMRIbVS9u7do5bs3df151IQ=
 github.com/23233/user_agent v0.1.1 h1:bSB+TiMxShGFJx9IDwKyfUw5T0nUSH9sJaFNmYaAviQ=
@@ -122,8 +122,8 @@ github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
-github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 h1:i462o439ZjprVSFSZLZxcsoAe592sZB1rci2Z8j4wdk=
-github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0/go.mod h1:N0Wam8K1arqPXNWjMo21EXnBPOPp36vB07FNRdD2geA=
+github.com/iancoleman/orderedmap v0.2.0 h1:sq1N/TFpYH++aViPcaKjys3bDClUEU7s5B+z6jq8pNA=
+github.com/iancoleman/orderedmap v0.2.0/go.mod h1:N0Wam8K1arqPXNWjMo21EXnBPOPp36vB07FNRdD2geA=
 github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHLwW0=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/imkira/go-interpol v1.1.0 h1:KIiKr0VSG2CUW1hl1jpiyuzuJeKUUpC8iM1AIE7N1Vk=
@@ -261,7 +261,6 @@ github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpE
 github.com/stretchr/testify v0.0.0-20161117074351-18a02ba4a312/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=

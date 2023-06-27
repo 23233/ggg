@@ -28,7 +28,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.7
-	github.com/redis/rueidis v1.0.9
+	github.com/redis/rueidis v1.0.10
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/shockerli/cvt v0.2.7
 	github.com/sony/sonyflake v1.1.0

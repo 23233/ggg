@@ -227,8 +227,8 @@ github.com/quic-go/qtls-go1-20 v0.2.2 h1:WLOPx6OY/hxtTxKV1Zrq20FtXtDEkeY00CGQm8G
 github.com/quic-go/qtls-go1-20 v0.2.2/go.mod h1:JKtK6mjbAVcUTN/9jZpvLbGxvdWIKS8uT7EiStoU1SM=
 github.com/quic-go/quic-go v0.35.1 h1:b0kzj6b/cQAf05cT0CkQubHM31wiA+xH3IBkxP62poo=
 github.com/quic-go/quic-go v0.35.1/go.mod h1:+4CVgVppm0FNjpG3UcX8Joi/frKOH7/ciD5yGcwOO1g=
-github.com/redis/rueidis v1.0.9 h1:y5JbiioBZ16HgwYHDkkI51vbmNvJ0uwo4A06D3ruy/s=
-github.com/redis/rueidis v1.0.9/go.mod h1:+1zDH4a8XhwIbCSlIhVGIu6Xib0ZMDoBM0qGhHXc1ew=
+github.com/redis/rueidis v1.0.10 h1:5QbYwjVoC8sGFP3LXZIqUt6eqbpNY/ZZq9nYgCTRkqk=
+github.com/redis/rueidis v1.0.10/go.mod h1:+1zDH4a8XhwIbCSlIhVGIu6Xib0ZMDoBM0qGhHXc1ew=
 github.com/refraction-networking/utls v1.3.2 h1:o+AkWB57mkcoW36ET7uJ002CpBWHu0KPxi6vzxvPnv8=
 github.com/refraction-networking/utls v1.3.2/go.mod h1:fmoaOww2bxzzEpIKOebIsnBvjQpqP7L2vcm/9KUfm/E=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=

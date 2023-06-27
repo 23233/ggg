@@ -32,7 +32,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/shockerli/cvt v0.2.7
 	github.com/sony/sonyflake v1.1.0
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.683
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.688
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.683
 	github.com/ulule/limiter/v3 v3.11.2
 	go.mongodb.org/mongo-driver v1.11.7

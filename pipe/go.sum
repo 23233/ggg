@@ -276,8 +276,9 @@ github.com/tdewolff/parse/v2 v2.6.4 h1:KCkDvNUMof10e3QExio9OPZJT8SbdKojLBumw8YZy
 github.com/tdewolff/parse/v2 v2.6.4/go.mod h1:woz0cgbLwFdtbjJu8PIKxhW05KplTFQkOdX78o+Jgrs=
 github.com/tdewolff/test v1.0.7 h1:8Vs0142DmPFW/bQeHRP3MV19m1gvndjUb1sn8yy74LM=
 github.com/tdewolff/test v1.0.7/go.mod h1:6DAvZliBAAnD7rhVgwaM7DE5/d9NMOAJ09SqYqeK4QE=
-github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.683 h1:HGTNnjSYGqG5q8sQWQ0+qqnmPPj/iRcxLlmeq2AAiOE=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.683/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.688 h1:NvpmuwSOoOASDtvz/+ZI+QS7zaWQp9FBQQxBY0p5uhA=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.688/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.683 h1:T6FbiWTA52ukhp3mLFvRa56GUf8C3YUxP/fFfxZE0KQ=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.683/go.mod h1:QomdCar2q4rW9iZt8OeS6Vhci08jLZ8AEoMsd4WfBdc=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=

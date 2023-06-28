@@ -20,40 +20,40 @@ func NewPipeInfo(name string) *Info {
 
 // RunResp 操作序列执行结果
 type RunResp[T any] struct {
-	result       T     // 执行结果
-	err          error // 错误
-	reqCode      int   // 请求状态码 权重在pipeline定义的errCode之后
-	businessCode int   // 业务code 仅在错误时有则会返回
-	isBreak      bool  // 是否中断之后的执行
+	Result       T     // 执行结果
+	Err          error // 错误
+	ReqCode      int   // 请求状态码 权重在pipeline定义的errCode之后
+	BusinessCode int   // 业务code 仅在错误时有则会返回
+	IsBreak      bool  // 是否中断之后的执行
 }
 
 func (c *RunResp[T]) SetBusinessCode(businessCode int) *RunResp[T] {
-	c.businessCode = businessCode
+	c.BusinessCode = businessCode
 	return c
 }
 func (c *RunResp[T]) SetReqCode(reqCode int) *RunResp[T] {
-	c.reqCode = reqCode
+	c.ReqCode = reqCode
 	return c
 }
 func (c *RunResp[T]) SetBreak(b bool) *RunResp[T] {
-	c.isBreak = b
+	c.IsBreak = b
 	return c
 }
 
 func newPipeErr[T any](err error) *RunResp[T] {
 	return &RunResp[T]{
-		err: err,
+		Err: err,
 	}
 }
 func newPipeResult[T any](result T) *RunResp[T] {
 	return &RunResp[T]{
-		result: result,
+		Result: result,
 	}
 }
 func newPipeResultErr[T any](result T, err error) *RunResp[T] {
 	return &RunResp[T]{
-		err:    err,
-		result: result,
+		Err:    err,
+		Result: result,
 	}
 }
 

@@ -24,6 +24,11 @@ var (
 		call: func(ctx iris.Context, origin any, params *QueryParseConfig, db any, more ...any) *RunResp[*ut.QueryFull] {
 			qs := ut.NewPruneCtxQuery()
 			urlParams := ctx.URLParams()
+
+			if params == nil {
+				params = new(QueryParseConfig)
+			}
+
 			// 解析出query and 和 or
 			query, err := qs.PruneParseQuery(urlParams, params.SearchFields, len(params.GeoKeys) >= 1)
 			if err != nil {

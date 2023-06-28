@@ -20,10 +20,10 @@ var (
 
 			// 先判断当前环境是否合规
 			resp := JwtVisit.call(ctx, origin, nil, db)
-			if resp.err != nil {
-				return newPipeErr[string](resp.err)
+			if resp.Err != nil {
+				return newPipeErr[string](resp.Err)
 			}
-			flatMap := resp.result
+			flatMap := resp.Result
 			if v, ok := flatMap["Short"]; ok {
 				if v.(bool) {
 					return newPipeErr[string](errors.New("短令牌无法生成短令牌"))

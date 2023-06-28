@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/23233/ggg/logger v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
-	github.com/23233/jsonschema v0.10.0
+	github.com/23233/jsonschema v0.11.1
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
 	github.com/casbin/casbin/v2 v2.71.1
@@ -27,12 +27,12 @@ require (
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.7
-	github.com/redis/rueidis v1.0.9
+	github.com/redis/rueidis v1.0.10
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/shockerli/cvt v0.2.7
 	github.com/sony/sonyflake v1.1.0
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.683
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.683
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.687
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.687
 	github.com/ulule/limiter/v3 v3.11.2
 	go.mongodb.org/mongo-driver v1.11.7
 	golang.org/x/net v0.11.0
@@ -78,7 +78,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/httpexpect/v2 v2.12.1 // indirect

@@ -9,7 +9,7 @@ require (
 	github.com/jxskiss/base62 v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/shockerli/cvt v0.2.7
-	go.mongodb.org/mongo-driver v1.12.0
+	go.mongodb.org/mongo-driver v1.11.6
 )
 
 require (

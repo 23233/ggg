@@ -2,7 +2,16 @@ module github.com/23233/ggg/pipe
 
 go 1.18
 
+replace (
+	github.com/23233/ggg/contentSafe => ../contentSafe
+	github.com/23233/ggg/sv => ../sv
+	github.com/23233/ggg/ut => ../ut
+)
+
 require (
+	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81
+	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6
+	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/jsonschema v0.11.1
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
@@ -12,7 +21,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/gookit/validate v1.4.6
-	github.com/imroc/req/v3 v3.37.1
+	github.com/imroc/req/v3 v3.37.2
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 	github.com/iris-contrib/middleware/jwt v0.0.0-20230531125531-980d3a09a458
 	github.com/json-iterator/go v1.1.12
@@ -23,17 +32,15 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/shockerli/cvt v0.2.7
 	github.com/sony/sonyflake v1.1.0
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.687
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.687
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.689
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.689
 	github.com/ulule/limiter/v3 v3.11.2
+	go.mongodb.org/mongo-driver v1.11.6
 	golang.org/x/net v0.11.0
 )
 
 require (
-	github.com/23233/ggg/contentSafe v0.0.0-20230627035055-4a7423d85c19 // indirect
-	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6 // indirect
 	github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f // indirect
-	github.com/23233/ggg/ut v0.0.0-20230628082929-0ead189017f6 // indirect
 	github.com/23233/lad v0.1.3 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
@@ -84,7 +91,7 @@ require (
 	github.com/kataras/pio v0.0.11 // indirect
 	github.com/kataras/sitemap v0.0.6 // indirect
 	github.com/kataras/tunnel v0.0.4 // indirect
-	github.com/klauspost/compress v1.16.6 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
@@ -128,7 +135,6 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	go.mongodb.org/mongo-driver v1.12.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect

@@ -9,7 +9,6 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/contentSafe v0.0.0-00010101000000-000000000000
 	github.com/23233/ggg/logger v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/jsonschema v0.10.0
@@ -40,6 +39,7 @@ require (
 )
 
 require (
+	github.com/23233/ggg/contentSafe v0.0.0-20230627035055-4a7423d85c19 // indirect
 	github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f // indirect
 	github.com/23233/lad v0.1.3 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect

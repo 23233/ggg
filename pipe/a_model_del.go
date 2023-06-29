@@ -8,8 +8,9 @@ import (
 )
 
 type ModelDelConfig struct {
-	ModelId string `json:"model_id,omitempty"`
-	RowId   string `json:"row_id,omitempty"`
+	QueryFilter *ut.QueryFull `json:"query_filter,omitempty"`
+	ModelId     string        `json:"model_id,omitempty"`
+	RowId       string        `json:"row_id,omitempty"`
 }
 
 var (
@@ -18,7 +19,17 @@ var (
 		Name: "模型单条删除",
 		call: func(ctx iris.Context, origin any, params *ModelDelConfig, db *qmgo.Database, more ...any) *RunResp[any] {
 			var result = make(map[string]any)
-			err := db.Collection(params.ModelId).Find(ctx, bson.M{ut.DefaultUidTag: params.RowId}).One(&result)
+
+			ft := params.QueryFilter
+			if ft == nil {
+				ft = new(ut.QueryFull)
+			}
+			ft.And = append(ft.And, &ut.Kov{
+				Key:   ut.DefaultUidTag,
+				Value: params.RowId,
+			})
+			pipeline := ut.QueryToMongoPipeline(ft)
+			err := db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {
 				return newPipeErr[any](err)
 			}

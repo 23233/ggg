@@ -1,9 +1,12 @@
 package pipe
 
 import (
+	"github.com/gookit/goutil/structs"
 	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"reflect"
 	"time"
 )
 
@@ -23,30 +26,46 @@ func DefaultModelMap() map[string]any {
 }
 
 var (
-	ModelAdd = &RunnerContext[any, *ModelCtxAddConfig, *qmgo.Database, any]{
+	// ModelAdd 模型新增origin支持struct和map的传入 对于传入struct会转换为map 通过json标签为key
+	ModelAdd = &RunnerContext[any, *ModelCtxAddConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_add",
 		Name: "模型json新增",
-		call: func(ctx iris.Context, origin any, params *ModelCtxAddConfig, db *qmgo.Database, more ...any) *RunResp[any] {
+		call: func(ctx iris.Context, origin any, params *ModelCtxAddConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
 			if origin == nil {
-				return newPipeErr[any](PipeDepNotFound)
+				return newPipeErr[map[string]any](PipeDepNotFound)
 			}
+
+			rawData := make(map[string]any)
+
+			switch reflect.Indirect(reflect.ValueOf(origin)).Kind() {
+			case reflect.Struct:
+				mp, err := structs.StructToMap(origin)
+				if err != nil {
+					return newPipeErr[map[string]any](err)
+				}
+				rawData = mp
+			case reflect.Map:
+				rawData = origin.(map[string]any)
+			default:
+				return newPipeErr[map[string]any](errors.New("origin 类型错误"))
+			}
+
 			// 注入_id
 			mp := DefaultModelMap()
 			mapper := &ModelCtxMapperPack{
 				InjectData: mp,
 			}
-			err := mapper.Process(origin)
+			err := mapper.Process(rawData)
 			if err != nil {
-				return newPipeErr[any](err)
-			}
-			// 进行数据验证?
-
-			_, err = db.Collection(params.ModelId).InsertOne(ctx, mp)
-			if err != nil {
-				return newPipeErr[any](err)
+				return newPipeErr[map[string]any](err)
 			}
 
-			return newPipeResult(origin)
+			_, err = db.Collection(params.ModelId).InsertOne(ctx, rawData)
+			if err != nil {
+				return newPipeErr[map[string]any](err)
+			}
+
+			return newPipeResult(rawData)
 		},
 	}
 )

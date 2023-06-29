@@ -12,9 +12,10 @@ import (
 )
 
 type ModelPutConfig struct {
-	ModelId    string `json:"model_id,omitempty"`
-	RowId      string `json:"row_id,omitempty"`
-	UpdateTime bool   `json:"update_time,omitempty"`
+	QueryFilter *ut.QueryFull `json:"query_filter,omitempty"`
+	ModelId     string        `json:"model_id,omitempty"`
+	RowId       string        `json:"row_id,omitempty"`
+	UpdateTime  bool          `json:"update_time,omitempty"`
 }
 
 func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData map[string]interface{}) map[string]interface{} {
@@ -42,8 +43,8 @@ func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 	return diff
 }
 
-// origin需要是一个map或struct
 var (
+	// ModelPut 模型修改 origin需要是一个map或struct 只会修改与原始条目的diff项
 	ModelPut = &RunnerContext[any, *ModelPutConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_put",
 		Name: "模型单条修改",
@@ -54,14 +55,30 @@ var (
 				return newPipeErr[map[string]any](err)
 			}
 
+			if params == nil {
+				return newPipeErr[map[string]any](PipeParamsError)
+			}
+
+			ft := params.QueryFilter
+			if ft == nil {
+				ft = new(ut.QueryFull)
+			}
+			ft.And = append(ft.And, &ut.Kov{
+				Key:   ut.DefaultUidTag,
+				Value: params.RowId,
+			})
+
+			pipeline := ut.QueryToMongoPipeline(ft)
+
 			// 获取原始那一条
 			var result = make(map[string]any)
-			err = db.Collection(params.ModelId).Find(ctx, bson.M{ut.DefaultUidTag: params.RowId}).One(&result)
+			err = db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {
 				return newPipeErr[map[string]any](err)
 			}
 
 			// 如果不传origin则直接序列化body
+			// 这里有风险 会有不相关数据被序列化
 			if origin == nil {
 				origin = bodyData
 			}
@@ -80,7 +97,7 @@ var (
 				diff["update_time"] = time.Now().Local()
 			}
 
-			err = db.Collection(params.ModelId).UpdateOne(ctx, bson.M{ut.DefaultUidTag: params.RowId}, diff)
+			err = db.Collection(params.ModelId).UpdateOne(ctx, bson.M{ut.DefaultUidTag: params.RowId}, bson.M{"$set": diff})
 			if err != nil {
 				return newPipeErr[map[string]any](err)
 			}

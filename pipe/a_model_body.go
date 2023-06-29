@@ -138,6 +138,7 @@ func (m *ModelCtxMapperPack) Process(data any) error {
 }
 
 var (
+	// ModelMapper 对body的mapper是支持struct和map的
 	ModelMapper = &RunnerContext[any, *ModelCtxMapperPack, any, any]{
 		Key:  "model_ctx_mapper",
 		Name: "模型body取map",

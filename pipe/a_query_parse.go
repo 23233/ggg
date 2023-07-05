@@ -29,29 +29,18 @@ var (
 				params = new(QueryParseConfig)
 			}
 
-			// 解析出query and 和 or
-			query, err := qs.PruneParseQuery(urlParams, params.SearchFields, len(params.GeoKeys) >= 1)
+			mapper, err := qs.PruneParse(urlParams, params.SearchFields, len(params.GeoKeys) >= 1)
 			if err != nil {
 				return newPipeErr[*ut.QueryFull](err)
 			}
-			// 解析出 page page_size
-			base, err := qs.PruneParsePage(urlParams)
-			if err != nil {
-				return newPipeErr[*ut.QueryFull](err)
-			}
-			mapper := new(ut.QueryFull)
-			mapper.BaseQuery = base
 
 			if params.InjectAnd != nil {
-				query.InsertOrReplaces("and", params.InjectAnd...)
+				mapper.QueryParse.InsertOrReplaces("and", params.InjectAnd...)
 			}
 			if params.InjectOr != nil {
-				query.InsertOrReplaces("or", params.InjectOr...)
+				mapper.QueryParse.InsertOrReplaces("or", params.InjectOr...)
 			}
-
-			mapper.QueryParse = query
 			mapper.Pks = params.Pks
-
 			return newPipeResult(mapper)
 
 		},

@@ -92,6 +92,7 @@ type QueryFull struct {
 }
 
 type PruneCtxQuery struct {
+	params          map[string]string
 	lastKey         string
 	searchKey       string
 	allowOps        []string
@@ -99,12 +100,20 @@ type PruneCtxQuery struct {
 	inlineFieldsSep string
 	orPrefix        string
 	geoKey          string
+	allEmbedKeys    []string
 }
 
 // PruneParseUrlParams 纯解析url上的参数
-func (p *PruneCtxQuery) PruneParseUrlParams(params map[string]string) (and []*Kov, or []*Kov, err error) {
-	for k, v := range params {
+func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error) {
+	for k, v := range p.params {
 		bk := k
+
+		for _, key := range p.allEmbedKeys {
+			if bk == key {
+				continue
+			}
+		}
+
 		// 如果有or的前缀 则去掉
 		if strings.HasPrefix(k, p.orPrefix) {
 			bk = strings.TrimPrefix(bk, p.orPrefix)
@@ -141,19 +150,19 @@ func (p *PruneCtxQuery) PruneParseUrlParams(params map[string]string) (and []*Ko
 			continue
 		}
 		and = append(and, kop)
-
+		delete(p.params, k)
 	}
 	return
 }
 
 // PruneParseQuery 解析出 _last geo search
-func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields []string, enableGeo bool) (*QueryParse, error) {
+func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, enableGeo bool) (*QueryParse, error) {
 	mqp := new(QueryParse)
 
 	// 解析 _last
-	lastUid, ok := params[p.lastKey]
+	lastUid, ok := p.params[p.lastKey]
 	if ok {
-		lastSort, ok := params["_lastSort"]
+		lastSort, ok := p.params["_lastSort"]
 		if !ok {
 			lastSort = "gt"
 		}
@@ -167,7 +176,7 @@ func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields [
 
 	// 解析geo
 	if enableGeo {
-		geo, ok := params[p.geoKey]
+		geo, ok := p.params[p.geoKey]
 		if ok {
 			if !strings.Contains(geo, ",") {
 				return nil, fmt.Errorf("%s 参数格式错误", p.geoKey)
@@ -189,7 +198,7 @@ func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields [
 				Lat: lat,
 			}
 
-			geoMax, ok := params["_gmax"]
+			geoMax, ok := p.params["_gmax"]
 			if ok {
 				maxInt, err := TypeChange(geoMax, "int64")
 				if err != nil {
@@ -198,7 +207,7 @@ func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields [
 				r.GeoMax = maxInt.(int64)
 			}
 
-			geoMin, ok := params["_gmin"]
+			geoMin, ok := p.params["_gmin"]
 			if ok {
 				minInt, err := TypeChange(geoMin, "int64")
 				if err != nil {
@@ -213,7 +222,7 @@ func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields [
 	}
 
 	// 解析搜索
-	search, ok := params[p.searchKey]
+	search, ok := p.params[p.searchKey]
 	if ok {
 		if searchFields == nil || len(searchFields) < 0 {
 			// 这里是否抛出错误有待商榷
@@ -242,14 +251,15 @@ func (p *PruneCtxQuery) PruneParseQuery(params map[string]string, searchFields [
 		}
 
 	}
+
 	return mqp, nil
 }
 
 // PruneParsePage 解析出 page page_size sort
-func (p *PruneCtxQuery) PruneParsePage(params map[string]string) (*BaseQuery, error) {
+func (p *PruneCtxQuery) PruneParsePage() (*BaseQuery, error) {
 	q := new(BaseQuery)
 
-	page, ok := params["page"]
+	page, ok := p.params["page"]
 	if ok {
 		pageInt, err := TypeChange(page, "int64")
 		if err == nil {
@@ -259,7 +269,7 @@ func (p *PruneCtxQuery) PruneParsePage(params map[string]string) (*BaseQuery, er
 		}
 	}
 
-	pageSize, ok := params["page_size"]
+	pageSize, ok := p.params["page_size"]
 	if ok {
 		pageSizeInt, err := TypeChange(pageSize, "int64")
 		if err == nil {
@@ -269,19 +279,50 @@ func (p *PruneCtxQuery) PruneParsePage(params map[string]string) (*BaseQuery, er
 		}
 	}
 
-	descStr, ok := params["_od"]
+	descStr, ok := p.params["_od"]
 	if ok {
 		descField := strings.Split(descStr, ",")
 		q.SortDesc = descField
 	}
 
-	ascStr, ok := params["_o"]
+	ascStr, ok := p.params["_o"]
 	if ok {
 		orderBy := strings.Split(ascStr, ",")
 		q.SortAsc = orderBy
 	}
 
 	return q, nil
+
+}
+
+func (p *PruneCtxQuery) PruneParse(params map[string]string, searchFields []string, enableGeo bool) (*QueryFull, error) {
+	p.params = params
+
+	// 解析出query and 和 or
+	query, err := p.PruneParseQuery(searchFields, enableGeo)
+	if err != nil {
+		return nil, err
+	}
+
+	// 解析字段
+	and, or, err := p.PruneParseUrlParams()
+	if err != nil {
+		return nil, err
+	}
+
+	query.And = append(query.And, and...)
+	query.Or = append(query.Or, or...)
+
+	// 解析出 page page_size
+	base, err := p.PruneParsePage()
+	if err != nil {
+		return nil, err
+	}
+	mapper := new(QueryFull)
+	mapper.BaseQuery = base
+	mapper.QueryParse = query
+
+	return mapper, nil
 
 }
 
@@ -294,5 +335,6 @@ func NewPruneCtxQuery() *PruneCtxQuery {
 		inlineFieldsSep: "__",
 		orPrefix:        "_o_",
 		geoKey:          "_g",
+		allEmbedKeys:    []string{"_last", "_s", "_g", "_od", "_gmin", "_gmax", "_lastSort", "page", "page_size"},
 	}
 }

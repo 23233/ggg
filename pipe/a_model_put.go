@@ -8,6 +8,7 @@ import (
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -20,15 +21,19 @@ type ModelPutConfig struct {
 
 func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData map[string]interface{}) map[string]interface{} {
 	diff := make(map[string]interface{})
-	v := reflect.ValueOf(origin)
+	v := reflect.Indirect(reflect.ValueOf(origin))
 
 	switch v.Kind() {
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
 			jsonTag := v.Type().Field(i).Tag.Get("json")
-			if val, ok := bodyData[jsonTag]; ok {
-				if oldVal, ok := oldData[jsonTag]; ok && !cmp.Equal(val, oldVal) {
-					diff[jsonTag] = val
+			name := strings.Split(jsonTag, ",")[0]
+			if name == "" {
+				continue
+			}
+			if val, ok := bodyData[name]; ok {
+				if oldVal, ok := oldData[name]; ok && !cmp.Equal(val, oldVal) {
+					diff[name] = val
 				}
 			}
 		}
@@ -63,7 +68,18 @@ var (
 			if ft == nil {
 				ft = new(ut.QueryFull)
 			}
-			ft.And = append(ft.And, &ut.Kov{
+
+			if ft.QueryParse == nil {
+				ft.QueryParse = new(ut.QueryParse)
+			}
+
+			if ft.QueryParse.And == nil {
+				ft.QueryParse.And = make([]*ut.Kov, 0)
+			}
+			if ft.QueryParse.Or == nil {
+				ft.QueryParse.Or = make([]*ut.Kov, 0)
+			}
+			ft.QueryParse.And = append(ft.QueryParse.And, &ut.Kov{
 				Key:   ut.DefaultUidTag,
 				Value: params.RowId,
 			})

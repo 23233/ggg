@@ -37,7 +37,12 @@ var (
 
 			rawData := make(map[string]any)
 
-			switch reflect.Indirect(reflect.ValueOf(origin)).Kind() {
+			typ := reflect.TypeOf(origin)
+			if typ.Kind() == reflect.Pointer {
+				typ = typ.Elem()
+			}
+
+			switch typ.Kind() {
 			case reflect.Struct:
 				mp, err := structs.StructToMap(origin)
 				if err != nil {

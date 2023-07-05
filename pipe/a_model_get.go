@@ -21,35 +21,39 @@ var (
 		Key:  "query_get_data",
 		Name: "query获取数据",
 		call: func(ctx iris.Context, origin *ModelGetDataDep, params *ModelGetData, db *qmgo.Database, more ...any) *RunResp[*ut.MongoFacetResult] {
-			pipeline := ut.QueryToMongoPipeline(origin.Query)
-
 			if params.Single {
 				origin.Query.Page = 1
 				origin.Query.PageSize = 1
 			}
+			origin.Query.GetCount = params.GetQueryCount
+			pipeline := ut.QueryToMongoPipeline(origin.Query)
 
 			var err error
 			var all = new(ut.MongoFacetResult)
 
-			if params.GetQueryCount && !params.Single {
-				type inlineResp struct {
-					Meta struct {
-						Count int64 `json:"count"`
-					}
-					Data []map[string]any `json:"data,omitempty"`
-				}
-				var batch = make([]inlineResp, 0)
-				err = db.Collection(origin.ModelId).Aggregate(ctx, pipeline).All(&batch)
-				if len(batch) > 0 {
-					all.Data = batch[0].Data
-					all.Count = batch[0].Meta.Count
-				}
+			if params.Single {
+				var result = make(map[string]any)
+				err = db.Collection(origin.ModelId).Aggregate(ctx, pipeline).One(&result)
+				all.Data = result
 			} else {
-				var batch = make([]map[string]any, 0)
-				err = db.Collection(origin.ModelId).Aggregate(ctx, pipeline).All(&batch)
-				all.Data = batch
-			}
+				if params.GetQueryCount {
+					type inlineResp struct {
+						Meta struct {
+							Count int64 `json:"count"`
+						}
+						Data []map[string]any `json:"data,omitempty"`
+					}
+					var batch = new(inlineResp)
+					err = db.Collection(origin.ModelId).Aggregate(ctx, pipeline).One(&batch)
+					all.Data = batch.Data
+					all.Count = batch.Meta.Count
 
+				} else {
+					var batch = make([]map[string]any, 0)
+					err = db.Collection(origin.ModelId).Aggregate(ctx, pipeline).All(&batch)
+					all.Data = batch
+				}
+			}
 			if err != nil {
 				return newPipeErr[*ut.MongoFacetResult](err)
 			}

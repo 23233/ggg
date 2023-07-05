@@ -18,8 +18,6 @@ var (
 		Key:  "model_ctx_del",
 		Name: "模型单条删除",
 		call: func(ctx iris.Context, origin any, params *ModelDelConfig, db *qmgo.Database, more ...any) *RunResp[any] {
-			var result = make(map[string]any)
-
 			ft := params.QueryFilter
 			if ft == nil {
 				ft = new(ut.QueryFull)
@@ -28,6 +26,8 @@ var (
 				Key:   ut.DefaultUidTag,
 				Value: params.RowId,
 			})
+
+			var result = make(map[string]any)
 			pipeline := ut.QueryToMongoPipeline(ft)
 			err := db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {

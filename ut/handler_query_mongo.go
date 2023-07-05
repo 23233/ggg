@@ -131,27 +131,32 @@ func fkQuery(matchQuery bson.D, parse *QueryFull) []bson.D {
 	// 解析出各种过滤 sort limit skip
 	filters := make([]bson.D, 0)
 
-	// 解析出sort 顺序在limit skip之前
-	sort := bson.D{}
-	if len(parse.SortDesc) > 0 {
-		for _, s := range parse.SortDesc {
-			sort = append(sort, bson.E{Key: s, Value: -1})
+	if parse.BaseQuery != nil {
+		// 解析出sort 顺序在limit skip之前
+		sort := bson.D{}
+		if len(parse.SortDesc) > 0 {
+			for _, s := range parse.SortDesc {
+				sort = append(sort, bson.E{Key: s, Value: -1})
+			}
 		}
-	}
-	if len(parse.SortAsc) > 0 {
-		for _, s := range parse.SortAsc {
-			sort = append(sort, bson.E{Key: s, Value: 1})
+		if len(parse.SortAsc) > 0 {
+			for _, s := range parse.SortAsc {
+				sort = append(sort, bson.E{Key: s, Value: 1})
+			}
 		}
-	}
 
-	if len(sort) > 0 {
-		filters = append(filters, bson.D{{"$sort", sort}})
+		if len(sort) > 0 {
+			filters = append(filters, bson.D{{"$sort", sort}})
+		}
+		skip := (parse.Page - 1) * parse.PageSize
+		if skip > 0 {
+			filters = append(filters, bson.D{{"$skip", skip}})
+		}
+		if parse.PageSize > 0 {
+			filters = append(filters, bson.D{{"$limit", parse.PageSize}})
+		}
+
 	}
-	skip := (parse.Page - 1) * parse.PageSize
-	if skip > 0 {
-		filters = append(filters, bson.D{{"$skip", skip}})
-	}
-	filters = append(filters, bson.D{{"$limit", parse.PageSize}})
 
 	if parse.GetCount {
 		steps = append(steps, bson.D{

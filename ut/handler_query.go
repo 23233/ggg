@@ -49,16 +49,21 @@ func (c *QueryParse) InsertOrReplaces(target string, data ...*Kov) {
 	for _, k := range data {
 		switch target {
 		case "and":
-			c.insertOrReplace(c.And, k)
+			c.And = c.insertOrReplace(c.And, k)
 		default:
-			c.insertOrReplace(c.Or, k)
+			c.Or = c.insertOrReplace(c.Or, k)
 		}
 	}
 
 }
 
-func (c *QueryParse) insertOrReplace(dataList []*Kov, now *Kov) {
+func (c *QueryParse) insertOrReplace(dataList []*Kov, now *Kov) []*Kov {
 	has := false
+	result := dataList
+	if result == nil {
+		result = make([]*Kov, 0)
+	}
+
 	for _, k := range dataList {
 		if k.Key == now.Key {
 			has = true
@@ -67,8 +72,9 @@ func (c *QueryParse) insertOrReplace(dataList []*Kov, now *Kov) {
 		}
 	}
 	if !has {
-		dataList = append(dataList, now)
+		result = append(result, now)
 	}
+	return result
 }
 
 type BaseQuery struct {

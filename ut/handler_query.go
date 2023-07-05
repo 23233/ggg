@@ -326,6 +326,10 @@ func (p *PruneCtxQuery) PruneParse(params map[string]string, searchFields []stri
 
 }
 
+func (p *PruneCtxQuery) SetParams(params map[string]string) {
+	p.params = params
+}
+
 func NewPruneCtxQuery() *PruneCtxQuery {
 	return &PruneCtxQuery{
 		lastKey:         "_last",

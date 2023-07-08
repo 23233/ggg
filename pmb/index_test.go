@@ -298,6 +298,19 @@ func TestMapper(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "geo解析",
+			query: map[string]any{
+				"_g":    "103.83797,1.46103",
+				"_gmax": 5000,
+			},
+			targets: []sm{
+				{
+					Key:    "geo",
+					Length: 2,
+				},
+			},
+		},
 	}
 
 	app := iris.New()
@@ -306,6 +319,7 @@ func TestMapper(t *testing.T) {
 	app.Get("/", func(ctx iris.Context) {
 		resp := pipe.QueryParse.Run(ctx, nil, &pipe.QueryParseConfig{
 			SearchFields: []string{"name", "age"},
+			GeoKey:       "location",
 		}, nil)
 		if resp.Err != nil {
 			IrisRespErr("", resp.Err, ctx)
@@ -336,6 +350,10 @@ func TestMapper(t *testing.T) {
 			case "search":
 				if len(mt.Or) != target.Length {
 					t.Fatalf("%s 需要%d个返回 得到%v个", tt.name, len(mt.And), target.Length)
+				}
+			case "geo":
+				if mt.Geos.Field != "location" {
+					t.Fatalf("%s 解析geoLocation失败", tt.name)
 				}
 
 			}

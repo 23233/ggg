@@ -101,6 +101,7 @@ type PruneCtxQuery struct {
 	orPrefix        string
 	geoKey          string
 	allEmbedKeys    []string
+	geoDistanceKey  string
 }
 
 // PruneParseUrlParams 纯解析url上的参数
@@ -108,10 +109,15 @@ func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error)
 	for k, v := range p.params {
 		bk := k
 
+		has := false
 		for _, key := range p.allEmbedKeys {
 			if bk == key {
-				continue
+				has = true
+				break
 			}
+		}
+		if has {
+			continue
 		}
 
 		// 如果有or的前缀 则去掉
@@ -156,7 +162,7 @@ func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error)
 }
 
 // PruneParseQuery 解析出 _last geo search
-func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, enableGeo bool) (*QueryParse, error) {
+func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, geoKey string) (*QueryParse, error) {
 	mqp := new(QueryParse)
 
 	// 解析 _last
@@ -175,7 +181,7 @@ func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, enableGeo bool) (
 	}
 
 	// 解析geo
-	if enableGeo {
+	if len(geoKey) >= 1 {
 		geo, ok := p.params[p.geoKey]
 		if ok {
 			if !strings.Contains(geo, ",") {
@@ -215,6 +221,8 @@ func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, enableGeo bool) (
 				}
 				r.GeoMin = minInt.(int64)
 			}
+			r.Field = geoKey
+			r.ToField = p.geoDistanceKey
 
 			mqp.Geos = r
 
@@ -235,6 +243,7 @@ func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, enableGeo bool) (
 
 		for _, field := range searchFields {
 			pattern := v
+
 			// 如果是前匹配
 			if strings.HasPrefix(searchVal, p.inlineFieldsSep) {
 				pattern = "^" + v
@@ -295,11 +304,11 @@ func (p *PruneCtxQuery) PruneParsePage() (*BaseQuery, error) {
 
 }
 
-func (p *PruneCtxQuery) PruneParse(params map[string]string, searchFields []string, enableGeo bool) (*QueryFull, error) {
+func (p *PruneCtxQuery) PruneParse(params map[string]string, searchFields []string, geoKey string) (*QueryFull, error) {
 	p.params = params
 
 	// 解析出query and 和 or
-	query, err := p.PruneParseQuery(searchFields, enableGeo)
+	query, err := p.PruneParseQuery(searchFields, geoKey)
 	if err != nil {
 		return nil, err
 	}
@@ -339,6 +348,7 @@ func NewPruneCtxQuery() *PruneCtxQuery {
 		inlineFieldsSep: "__",
 		orPrefix:        "_o_",
 		geoKey:          "_g",
+		geoDistanceKey:  "_distance",
 		allEmbedKeys:    []string{"_last", "_s", "_g", "_od", "_gmin", "_gmax", "_lastSort", "page", "page_size"},
 	}
 }

@@ -89,7 +89,7 @@ func fkQuery(matchQuery bson.D, parse *QueryFull) []bson.D {
 	// 这里顺序特别重要 一定不能随意变更顺序 geo存在则geo必须在前面 不存在则match在前 lookup中间
 	steps := make([]bson.D, 0)
 
-	// https://www.mongodb.com/docs/v4.4/reference/operator/aggregation/geoNear/
+	// https://www.mongodb.com/docs/v6.0/reference/operator/aggregation/geoNear/
 	if parse.Geos != nil {
 		var geo = parse.Geos
 		var near = bson.M{

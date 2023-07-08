@@ -9,7 +9,7 @@ import (
 type QueryParseConfig struct {
 	SearchFields []string  `json:"search_fields,omitempty"`
 	Pks          []*ut.Pk  `json:"pks,omitempty"`
-	GeoKeys      []string  `json:"geo_keys,omitempty"` // 开启了geo的字段
+	GeoKey       string    `json:"geo_key,omitempty"` // 开启了geo的字段
 	InjectAnd    []*ut.Kov `json:"inject_and,omitempty"`
 	InjectOr     []*ut.Kov `json:"inject_or,omitempty"`
 }
@@ -29,7 +29,7 @@ var (
 				params = new(QueryParseConfig)
 			}
 
-			mapper, err := qs.PruneParse(urlParams, params.SearchFields, len(params.GeoKeys) >= 1)
+			mapper, err := qs.PruneParse(urlParams, params.SearchFields, params.GeoKey)
 			if err != nil {
 				return newPipeErr[*ut.QueryFull](err)
 			}

@@ -48,7 +48,6 @@ func (c *SimpleUserModel) InjectDefault(mp map[string]any) error {
 func (c *SimpleUserModel) GetUid() string {
 	return c.Uid
 }
-
 func (c *SimpleUserModel) BeforeInsert(ctx context.Context) error {
 	if c.Id.IsZero() {
 		return errors.New("未注入默认数据")

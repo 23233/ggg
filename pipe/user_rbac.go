@@ -24,15 +24,13 @@ import (
 
 const (
 	// 默认代表所有域名的通配符
-	allDomainDefault = "*"
+	RbacAllDomainDefault = "*"
 	// 默认自身站点代号 可用于站点登录限制等
-	rbacSelfDomainName = "self"
-	// 前台登录
-	rbacAllowLoginObj = "login"
-	// 后台登录
-	rbacAllowLoginManageObj = "login_manage"
+	RbacSelfDomainName = "self"
+	// 登录
+	RbacAllowLoginObj = "login"
 	// 默认操作act
-	rbacNormalAct = "POST"
+	RbacNormalAct = "POST"
 )
 
 type RbacDomain struct {
@@ -40,10 +38,11 @@ type RbacDomain struct {
 	defaultDomain string
 }
 
-func NewRbacDomain() *RbacDomain {
+func NewRbacDomain(redisAddress, password string) (*RbacDomain, error) {
 	var md = new(RbacDomain)
-	md.defaultDomain = rbacSelfDomainName
-	return md
+	md.defaultDomain = RbacSelfDomainName
+	err := md.initConnect(redisAddress, password)
+	return md, err
 }
 
 func (c *RbacDomain) initConnect(address, password string) error {
@@ -105,17 +104,17 @@ func (c *RbacDomain) initConnect(address, password string) error {
 
 func (c *RbacDomain) presets() error {
 	// sub, dom, obj, act, eft
-	_, err := c.E.AddPolicy(c.allow("root", allDomainDefault, "*", "*"))
+	_, err := c.E.AddPolicy(c.allow("root", RbacAllDomainDefault, "*", "*"))
 	if err != nil {
 		return err
 	}
 	// 职工只是没有用户管理权
-	_, err = c.E.AddPolicy(c.allow("staff", allDomainDefault, "*", "*"))
+	_, err = c.E.AddPolicy(c.allow("staff", RbacAllDomainDefault, "*", "*"))
 	if err != nil {
 		return err
 	}
 	// 观摩团 仅有阅读权限
-	_, err = c.E.AddPolicy(c.allow("read", allDomainDefault, "*", "GET"))
+	_, err = c.E.AddPolicy(c.allow("read", RbacAllDomainDefault, "*", "GET"))
 	if err != nil {
 		return err
 	}
@@ -131,25 +130,7 @@ func (c *RbacDomain) presets() error {
 	}
 
 	// 不允许登录 则把用户uid加入这个组中 not_login
-	_, err = c.E.AddPolicy(c.localDenySelf("not_login", rbacAllowLoginObj, rbacNormalAct))
-	if err != nil {
-		return err
-	}
-
-	// 不允许进行后台操作 则把用户uid加入这个组中 not_login_manage
-	_, err = c.E.AddPolicy(c.localDenySelf("not_login_manage", rbacAllowLoginManageObj, rbacNormalAct))
-	if err != nil {
-		return err
-	}
-
-	// 不允许创建模型的组 not_createModel
-	_, err = c.E.AddPolicy(c.localDenySelf("not_createModel", "create_model", rbacNormalAct))
-	if err != nil {
-		return err
-	}
-
-	// 不允许创建请求的组 not_createReq
-	_, err = c.E.AddPolicy(c.localDenySelf("not_createReq", "create_req", rbacNormalAct))
+	_, err = c.E.AddPolicy(c.localDenySelf("not_login", RbacAllowLoginObj, RbacNormalAct))
 	if err != nil {
 		return err
 	}
@@ -177,26 +158,26 @@ func (c *RbacDomain) allow(sub, dom, obj, act string) []string {
 // 对于身份的设置
 
 func (c *RbacDomain) SetRoot(uid string) (bool, error) {
-	return c.E.AddRoleForUser(uid, "root", allDomainDefault)
+	return c.E.AddRoleForUser(uid, "root", RbacAllDomainDefault)
 }
 func (c *RbacDomain) DelRoot(uid string) error {
-	_, err := c.E.DeleteRoleForUserInDomain(uid, "root", allDomainDefault)
+	_, err := c.E.DeleteRoleForUserInDomain(uid, "root", RbacAllDomainDefault)
 	return err
 }
 
 func (c *RbacDomain) SetStaff(uid string) (bool, error) {
-	return c.E.AddRoleForUser(uid, "staff", allDomainDefault)
+	return c.E.AddRoleForUser(uid, "staff", RbacAllDomainDefault)
 }
 func (c *RbacDomain) DelStaff(uid string) error {
-	_, err := c.E.DeleteRoleForUserInDomain(uid, "staff", allDomainDefault)
+	_, err := c.E.DeleteRoleForUserInDomain(uid, "staff", RbacAllDomainDefault)
 	return err
 }
 
 func (c *RbacDomain) SetRead(uid string) (bool, error) {
 	// 当设置仅只读时 其他身份最好去掉
-	return c.E.AddRoleForUser(uid, "read", allDomainDefault)
+	return c.E.AddRoleForUser(uid, "read", RbacAllDomainDefault)
 }
 func (c *RbacDomain) DelRead(uid string) error {
-	_, err := c.E.DeleteRoleForUserInDomain(uid, "read", allDomainDefault)
+	_, err := c.E.DeleteRoleForUserInDomain(uid, "read", RbacAllDomainDefault)
 	return err
 }

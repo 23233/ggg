@@ -22,7 +22,7 @@ type RbacAllowPipe struct {
 }
 
 var (
-	RbacRole = &RunnerContext[any, *RbacGetRolePipe, *RbacDomain, []string]{
+	RbacRoles = &RunnerContext[any, *RbacGetRolePipe, *RbacDomain, []string]{
 		Key:  "rbac_get_role",
 		Name: "rbac权限获取",
 		call: func(ctx iris.Context, origin any, params *RbacGetRolePipe, db *RbacDomain, more ...any) *RunResp[[]string] {
@@ -46,7 +46,7 @@ var (
 			}
 			// 未传入domain 则是自身站点信息
 			if len(params.Domain) < 1 {
-				params.Domain = "self"
+				params.Domain = RbacSelfDomainName
 			}
 			// 未传入act则默认为当前请求方式
 			if len(params.Act) < 1 {

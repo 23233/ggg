@@ -306,8 +306,18 @@ func TestMapper(t *testing.T) {
 			},
 			targets: []sm{
 				{
-					Key:    "geo",
-					Length: 2,
+					Key: "geo",
+				},
+			},
+		},
+		{
+			// 外键1对1 则Unwind为true 1对多则 Unwind为false
+			// 外键属于注入类 需要先定义好
+			name:  "外键",
+			query: map[string]any{},
+			targets: []sm{
+				{
+					Key: "pk",
 				},
 			},
 		},
@@ -320,6 +330,16 @@ func TestMapper(t *testing.T) {
 		resp := pipe.QueryParse.Run(ctx, nil, &pipe.QueryParseConfig{
 			SearchFields: []string{"name", "age"},
 			GeoKey:       "location",
+			Pks: []*ut.Pk{
+				{
+					LocalKey:      "look_for",
+					RemoteModelId: "default",
+					RemoteKey:     ut.DefaultUidTag,
+					Alias:         "Singer",
+					EmptyReturn:   true,
+					Unwind:        true,
+				},
+			},
 		}, nil)
 		if resp.Err != nil {
 			IrisRespErr("", resp.Err, ctx)
@@ -353,6 +373,10 @@ func TestMapper(t *testing.T) {
 				}
 			case "geo":
 				if mt.Geos.Field != "location" {
+					t.Fatalf("%s 解析geoLocation失败", tt.name)
+				}
+			case "pk":
+				if len(mt.Pks) < 1 {
 					t.Fatalf("%s 解析geoLocation失败", tt.name)
 				}
 

@@ -11,6 +11,15 @@ import (
 	"github.com/go-playground/validator/v10/translations/zh"
 )
 
+var (
+	commentTagName = "comment"
+)
+
+func ChangeZhLabelName(newTag string) {
+	commentTagName = newTag
+	InitValidator()
+}
+
 // MyValidator 自定义验证器
 type MyValidator struct {
 	Validate *validator.Validate
@@ -33,7 +42,7 @@ func InitValidator() {
 
 	// 收集结构体中的comment标签，用于替换英文字段名称，这样返回错误就能展示中文字段名称了
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		return fld.Tag.Get("comment")
+		return fld.Tag.Get(commentTagName)
 	})
 
 	// 注册中文翻译

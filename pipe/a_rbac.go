@@ -14,11 +14,10 @@ type RbacGetRolePipe struct {
 // RbacAllowPipe 用户是否有权通过此操作
 // 谁(sub)在那个域名(domain)下进行了什么资源(obj)的什么操作(act)
 type RbacAllowPipe struct {
-	Sub       string `json:"sub,omitempty"`        // 访问对象不能为空
-	Obj       string `json:"obj,omitempty"`        // 默认当前访问路径
-	Domain    string `json:"domain,omitempty"`     // 默认自身站点名称
-	Act       string `json:"act,omitempty"`        // 默认当前请求方式
-	OnlyCheck bool   `json:"only_check,omitempty"` // 仅校验 校验结果为false也不报错
+	Sub    string `json:"sub,omitempty"`    // 访问对象不能为空
+	Obj    string `json:"obj,omitempty"`    // 默认当前访问路径
+	Domain string `json:"domain,omitempty"` // 默认自身站点名称
+	Act    string `json:"act,omitempty"`    // 默认当前请求方式
 }
 
 var (
@@ -54,9 +53,6 @@ var (
 			}
 			// 谁(sub)在那个域名(domain)下进行了什么资源(obj)的什么操作(act)
 			pass := db.E.HasPolicy(params.Sub, params.Domain, params.Obj, params.Act)
-			if !pass && !params.OnlyCheck {
-				return newPipeErr[bool](errors.New("无权进行操作"))
-			}
 			return newPipeResult(pass)
 		},
 	}

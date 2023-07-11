@@ -28,7 +28,7 @@ const (
 	// 默认自身站点代号 可用于站点登录限制等
 	RbacSelfDomainName = "self"
 	// 登录
-	RbacAllowLoginObj = "login"
+	RbacNotAllowLoginObj = "login"
 	// 默认操作act
 	RbacNormalAct = "POST"
 )
@@ -130,7 +130,7 @@ func (c *RbacDomain) presets() error {
 	}
 
 	// 不允许登录 则把用户uid加入这个组中 not_login
-	_, err = c.E.AddPolicy(c.localDenySelf("not_login", RbacAllowLoginObj, RbacNormalAct))
+	_, err = c.E.AddPolicy(c.localDenySelf("not_login", RbacNotAllowLoginObj, RbacNormalAct))
 	if err != nil {
 		return err
 	}

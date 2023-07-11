@@ -8,6 +8,7 @@ import (
 	"github.com/qiniu/qmgo"
 	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson"
+	"net/http"
 )
 
 type UserPasswordLoginReq struct {
@@ -67,14 +68,14 @@ func (c *SimpleUserModel) LoginUsePasswordHandler(db *qmgo.Database, rdb rueidis
 
 		// 正确的情况下 判断是否可以登录
 		disableLoginResp := pipe.RbacAllow.Run(ctx, nil, &pipe.RbacAllowPipe{
-			Sub:       userModel.Uid,
-			Obj:       pipe.RbacAllowLoginObj,
-			Domain:    pipe.RbacSelfDomainName,
-			Act:       pipe.RbacNormalAct,
-			OnlyCheck: true,
+			Sub:    userModel.Uid,
+			Obj:    pipe.RbacNotAllowLoginObj,
+			Domain: pipe.RbacSelfDomainName,
+			Act:    pipe.RbacNormalAct,
 		}, domain)
+
 		// 在这个组里就是不允许登录的
-		if disableLoginResp.Err != nil || disableLoginResp.Result {
+		if disableLoginResp.Result {
 			IrisRespErr("该用户被禁止登录", nil, ctx)
 			return
 		}
@@ -147,4 +148,29 @@ func (c *SimpleUserModel) RegistryUseUserNamePassword(db *qmgo.Database, rdb rue
 	}
 }
 
-// jwt相关?
+func (c *SimpleUserModel) MustLoginMiddleware(db *qmgo.Database, rdb rueidis.Client) iris.Handler {
+	return func(ctx iris.Context) {
+		// 进行jwt验证
+		resp := pipe.JwtVisit.Run(ctx, &pipe.JwtCheckDep{
+			Env:           pipe.CtxGetEnv(ctx, ""),
+			Authorization: ctx.GetHeader("Authorization"),
+		}, nil, rdb)
+		if resp.Err != nil {
+			IrisRespErr("验证登录状态失败", resp.Err, ctx, http.StatusForbidden)
+			ctx.StopExecution()
+			return
+		}
+
+		// 根据用户id 获取到用户信息
+		userModel := new(SimpleUserModel)
+		err := db.Collection(UserModelName).Find(ctx, bson.M{"uid": resp.Result.UserId}).One(&userModel)
+		if err != nil {
+			IrisRespErr("获取出用户信息失败", err, ctx)
+			return
+		}
+
+		ctx.Values().Set("_jwt", resp.Result)
+		ctx.Values().Set(UserContextKey, userModel)
+		ctx.Next()
+	}
+}

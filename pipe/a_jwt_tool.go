@@ -51,7 +51,7 @@ type JwtHelper struct {
 }
 
 // TokenExtract jwt验证
-func (c *JwtHelper) TokenExtract(token string, m *irisJwt.Middleware) (map[string]any, error) {
+func (c *JwtHelper) TokenExtract(token string, m *irisJwt.Middleware) (*JwtFlatBase, error) {
 	var tk = token
 	if strings.HasPrefix(token, JwtPrefix) {
 		tk = strings.TrimPrefix(token, JwtPrefix)
@@ -81,7 +81,11 @@ func (c *JwtHelper) TokenExtract(token string, m *irisJwt.Middleware) (map[strin
 		}
 	}
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		return claims, nil
+		var st = new(JwtFlatBase)
+		st.UserId = claims["userId"].(string)
+		st.Env = claims["env"].(string)
+		st.LoginTime = claims["loginTime"].(string)
+		return st, nil
 	}
 
 	return nil, irisJwt.ErrTokenInvalid

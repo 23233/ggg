@@ -24,15 +24,14 @@ var (
 				return newPipeErr[string](resp.Err)
 			}
 			flatMap := resp.Result
-			if v, ok := flatMap["Short"]; ok {
-				if v.(bool) {
-					return newPipeErr[string](errors.New("短令牌无法生成短令牌"))
-				}
+
+			if flatMap.IsShort() {
+				return newPipeErr[string](errors.New("短令牌无法生成短令牌"))
 			}
 
 			helper := NewJwtHelper(db)
 
-			raw := flatMap["Raw"].(string)
+			raw := flatMap.Raw
 			raw = strings.TrimPrefix(raw, JwtPrefix)
 
 			// 生成 short token

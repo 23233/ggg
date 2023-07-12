@@ -181,3 +181,21 @@ func (c *RbacDomain) DelRead(uid string) error {
 	_, err := c.E.DeleteRoleForUserInDomain(uid, "read", RbacAllDomainDefault)
 	return err
 }
+
+func (c *RbacDomain) IsStaffOrRoot(uid string) bool {
+	return c.HasRoles(uid, []string{"root", "staff"})
+}
+
+func (c *RbacDomain) HasRoles(uid string, roles []string) bool {
+	domainRoles := c.E.GetRolesForUserInDomain(uid, RbacAllDomainDefault)
+
+	for _, role := range domainRoles {
+		for _, r := range roles {
+			if r == role {
+				return true
+			}
+		}
+	}
+
+	return false
+}

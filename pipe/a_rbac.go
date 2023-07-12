@@ -15,8 +15,8 @@ type RbacGetRolePipe struct {
 // 谁(sub)在那个域名(domain)下进行了什么资源(obj)的什么操作(act)
 type RbacAllowPipe struct {
 	Sub    string `json:"sub,omitempty"`    // 访问对象不能为空
-	Obj    string `json:"obj,omitempty"`    // 默认当前访问路径
 	Domain string `json:"domain,omitempty"` // 默认自身站点名称
+	Obj    string `json:"obj,omitempty"`    // 默认当前访问路径
 	Act    string `json:"act,omitempty"`    // 默认当前请求方式
 }
 

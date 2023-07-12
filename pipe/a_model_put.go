@@ -14,6 +14,7 @@ import (
 
 type ModelPutConfig struct {
 	QueryFilter *ut.QueryFull `json:"query_filter,omitempty"`
+	DropKeys    []string      `json:"drop_keys,omitempty"` // 最后的diff还需要丢弃的key
 	ModelId     string        `json:"model_id,omitempty"`
 	RowId       string        `json:"row_id,omitempty"`
 	UpdateTime  bool          `json:"update_time,omitempty"`
@@ -100,11 +101,13 @@ var (
 			}
 
 			diff := compareAndDiff(origin, bodyData, result)
+
 			// 删除不允许变更的数据
-			delete(diff, "_id")
-			delete(diff, ut.DefaultUidTag)
-			delete(diff, "update_time")
-			delete(diff, "create_time")
+			params.DropKeys = append(params.DropKeys, "_id", ut.DefaultUidTag, "update_time", "create_time")
+
+			for _, key := range params.DropKeys {
+				delete(diff, key)
+			}
 
 			if len(diff) < 1 {
 				return newPipeErr[map[string]any](errors.New("未获取到更新项"))

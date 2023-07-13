@@ -44,10 +44,6 @@ var (
 				params = new(JwtGenPipe)
 			}
 
-			if _, ok := db.(rueidis.Client); !ok {
-				return newPipeErr[string](errors.New("获取rdb失败"))
-			}
-
 			helper := NewJwtHelper(db)
 
 			redisKey := helper.JwtRedisGenKey(origin.UserId, origin.Env)

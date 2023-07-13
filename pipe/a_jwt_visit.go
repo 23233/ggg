@@ -20,6 +20,7 @@ var (
 			if resp.Err != nil {
 				return newPipeErr[JwtFlatBase](errors.Wrap(resp.Err, "解析结构"))
 			}
+			dep.FlatMap = resp.Result
 
 			resp2 := JwtCheck.call(ctx, dep, nil, db)
 			if resp2.Err != nil {

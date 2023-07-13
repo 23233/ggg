@@ -1,6 +1,7 @@
 package pmb
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
@@ -47,10 +48,14 @@ type ActionPostPart struct {
 }
 
 type SchemaModelAction struct {
-	Name  string                                                                              `json:"name,omitempty"`  // 动作名称 需要唯一
-	Types []uint                                                                              `json:"types,omitempty"` // 0 表可用 1 行可用
-	Form  *jsonschema.Schema                                                                  `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
-	call  func(ctx iris.Context, rows []map[string]any, formData map[string]any) (any, error) // 处理方法 result 只能返回map或struct
+	Name  string                                                                                                     `json:"name,omitempty"`  // 动作名称 需要唯一
+	Types []uint                                                                                                     `json:"types,omitempty"` // 0 表可用 1 行可用
+	Form  *jsonschema.Schema                                                                                         `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
+	call  func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) // 处理方法 result 只能返回map或struct
+}
+
+func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error)) {
+	s.call = call
 }
 
 func (s *SchemaModelAction) SetForm(raw any) {
@@ -64,30 +69,35 @@ func (s *SchemaModelAction) SetForm(raw any) {
 	s.Form = ref
 }
 
+type SchemaBase struct {
+	Group    string `json:"group,omitempty"`    // 组名
+	Priority int    `json:"priority,omitempty"` // 在组下显示的优先级 越大越优先
+	EngName  string `json:"eng_name,omitempty"` // 英文名 表名
+	Alias    string `json:"alias,omitempty"`    // 别名 中文名
+}
+
 type SchemaModel[T any] struct {
-	db       *qmgo.Database
-	raw      T
-	Schema   *jsonschema.Schema   `json:"schema,omitempty"`
-	Group    string               `json:"group,omitempty"`    // 组名
-	Priority int                  `json:"priority,omitempty"` // 在组下显示的优先级 越大越优先
-	EngName  string               `json:"eng_name,omitempty"` // 英文名 表名
-	Alias    string               `json:"alias,omitempty"`    // 别名 中文名
-	Actions  []*SchemaModelAction `json:"actions,omitempty"`  // 各类操作
+	SchemaBase
+	db      *qmgo.Database
+	raw     T
+	Schema  *jsonschema.Schema   `json:"schema,omitempty"`
+	Actions []*SchemaModelAction `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
-	QueryInjects []ContextValueInject `json:"query_injects,omitempty"`
-	WriteInsert  bool                 `json:"write_insert,omitempty"` // 是否把注入内容写入新增体
-	PostMustKeys []string             `json:"post_must_keys,omitempty"`
+	queryInjects []ContextValueInject
+	WriteInsert  bool     `json:"write_insert,omitempty"` // 是否把注入内容写入新增体
+	PostMustKeys []string `json:"post_must_keys,omitempty"`
 	// 过滤参数能否通过 这里能注入和修改过滤参数和判断参数是否缺失 返回错误则抛出错误
 	filterCanPass func(ctx iris.Context, query *ut.QueryFull) error
-	uidParamsKey  string
+}
+
+func (s *SchemaModel[T]) AddQueryInject(q ContextValueInject) {
+	s.queryInjects = append(s.queryInjects, q)
 }
 
 func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	var r = &SchemaModel[T]{
-		db:           db,
-		Group:        "默认",
-		Actions:      make([]*SchemaModelAction, 0),
-		uidParamsKey: "uid",
+		db:      db,
+		Actions: make([]*SchemaModelAction, 0),
 	}
 	r.SetRaw(raw)
 	return r
@@ -123,8 +133,8 @@ func (s *SchemaModel[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, q
 }
 
 func (s *SchemaModel[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
-	result := make([]*ut.Kov, 0, len(s.QueryInjects))
-	for _, inject := range s.QueryInjects {
+	result := make([]*ut.Kov, 0, len(s.queryInjects))
+	for _, inject := range s.queryInjects {
 		value := ctx.Values().Get(inject.FromKey)
 		if value == nil && !inject.AllowEmpty {
 			return nil, errors.New(fmt.Sprintf("%s key为空", inject.FromKey))
@@ -149,12 +159,32 @@ func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
 	b.EngName = s.EngName
 	b.Schema = s.Schema
 	b.Priority = s.Priority
-	b.QueryInjects = s.QueryInjects
+	b.queryInjects = s.queryInjects
 	b.WriteInsert = s.WriteInsert
 	b.filterCanPass = s.filterCanPass
 	b.raw = s.raw
 	b.db = s.db
 	return b
+}
+func (s *SchemaModel[T]) GetAction(name string) (*SchemaModelAction, bool) {
+	for _, ac := range s.Actions {
+		if ac.Name == name {
+			return ac, true
+		}
+	}
+	return nil, false
+}
+
+func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Info    SchemaBase           `json:"info"`
+		Actions []*SchemaModelAction `json:"actions"`
+		Schema  *jsonschema.Schema   `json:"schema"`
+	}{
+		Info:    s.SchemaBase,
+		Actions: s.Actions,
+		Schema:  s.Schema,
+	})
 }
 
 // GetHandler 仅获取数据
@@ -395,7 +425,7 @@ func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig
 }
 
 func (s *SchemaModel[T]) getUid(ctx iris.Context) (string, error) {
-	uid := ctx.Params().Get(s.uidParamsKey)
+	uid := ctx.Params().Get(ut.DefaultUidTag)
 	if len(uid) < 1 {
 		return "", errors.New("获取行id失败")
 	}
@@ -441,7 +471,7 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 		}
 	}
 
-	result, err := action.call(ctx, rows, part.FormData)
+	result, err := action.call(ctx, rows, part.FormData, nil)
 	if err != nil {
 		IrisRespErr("", err, ctx)
 		return
@@ -465,6 +495,7 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	// 获取配置文件
 	p.Get("/config", func(ctx iris.Context) {
 		_ = ctx.JSON(iris.Map{
+			"info":    s.SchemaBase,
 			"schema":  s.Schema,
 			"actions": s.Actions,
 		})

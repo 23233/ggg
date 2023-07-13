@@ -6,7 +6,6 @@ import (
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/qiniu/qmgo"
-	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 )
@@ -17,16 +16,15 @@ type UserPasswordLoginReq struct {
 	Force    bool   `json:"force,omitempty" comment:"强制" `
 }
 
-func (c *SimpleUserModel) SyncIndex(ctx context.Context, db *qmgo.Database) error {
-	cl, err := db.Collection(UserModelName).CloneCollection()
+func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
+	cl, err := c.db.Collection(UserModelName).CloneCollection()
 	if err != nil {
 		return err
 	}
 	err = ut.MCreateIndex(ctx, cl, ut.MGenUnique("uid", false), ut.MGenUnique("user_name", true), ut.MGenUnique("tel_phone", true))
 	return err
 }
-
-func (c *SimpleUserModel) LoginUsePasswordHandler(db *qmgo.Database, rdb rueidis.Client, domain *pipe.RbacDomain) iris.Handler {
+func (c *SimpleUserModel) LoginUsePasswordHandler() iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -52,9 +50,8 @@ func (c *SimpleUserModel) LoginUsePasswordHandler(db *qmgo.Database, rdb rueidis
 			IrisRespErr("操作过快", rateResp.Err, ctx, rateResp.ReqCode)
 			return
 		}
-		// 判断用户是否存在
-		userModel := new(SimpleUserModel)
-		err = db.Collection(UserModelName).Find(ctx, bson.M{"user_name": body.UserName}).One(&userModel)
+
+		userModel, err := c.GetUserItem(ctx, bson.M{"user_name": body.UserName})
 		if err != nil {
 			IrisRespErr("用户名或密码有误", err, ctx)
 			return
@@ -72,7 +69,7 @@ func (c *SimpleUserModel) LoginUsePasswordHandler(db *qmgo.Database, rdb rueidis
 			Obj:    pipe.RbacNotAllowLoginObj,
 			Domain: pipe.RbacSelfDomainName,
 			Act:    pipe.RbacNormalAct,
-		}, domain)
+		}, c.rbac)
 
 		// 在这个组里就是不允许登录的
 		if disableLoginResp.Result {
@@ -80,24 +77,17 @@ func (c *SimpleUserModel) LoginUsePasswordHandler(db *qmgo.Database, rdb rueidis
 			return
 		}
 
-		// 生成token
-		jwtResp := pipe.JwtGen.Run(ctx, &pipe.PipeJwtDep{
-			Env:    pipe.CtxGetEnv(ctx),
-			UserId: userModel.Uid,
-		}, &pipe.JwtGenPipe{
-			Force: body.Force,
-		}, rdb)
-
-		if jwtResp.Err != nil {
-			IrisRespErr("生成登录令牌失败", jwtResp.Err, ctx, jwtResp.ReqCode)
+		userModel.connectInfo = c.connectInfo
+		token, err := userModel.GenJwtToken(ctx, body.Force)
+		if err != nil {
+			IrisRespErr("生成登录令牌失败", err, ctx)
 			return
 		}
 
-		ctx.JSON(iris.Map{"token": jwtResp.Result})
+		ctx.JSON(iris.Map{"token": token, "info": userModel.Masking(0)})
 	}
 }
-
-func (c *SimpleUserModel) RegistryUseUserNamePassword(db *qmgo.Database, rdb rueidis.Client) iris.Handler {
+func (c *SimpleUserModel) RegistryUseUserNamePassword() iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -105,14 +95,17 @@ func (c *SimpleUserModel) RegistryUseUserNamePassword(db *qmgo.Database, rdb rue
 			IrisRespErr("解析请求包参数错误", err, ctx)
 			return
 		}
-		// 判断用户是否存在
-		userModel := new(SimpleUserModel)
-		err = db.Collection(UserModelName).Find(ctx, bson.M{"user_name": body.UserName}).One(&userModel)
+
+		userModel, err := c.GetUserItem(ctx, bson.M{"user_name": body.UserName})
 		if err != nil {
 			if err != qmgo.ErrNoSuchDocuments {
 				IrisRespErr("用户名已存在", err, ctx)
 				return
 			}
+		}
+		if userModel != nil && !userModel.Id.IsZero() {
+			IrisRespErr("用户已存在", err, ctx)
+			return
 		}
 		userModel = new(SimpleUserModel)
 		// 进行注册
@@ -127,43 +120,35 @@ func (c *SimpleUserModel) RegistryUseUserNamePassword(db *qmgo.Database, rdb rue
 			return
 		}
 		// 插入用户
-		_, err = db.Collection(UserModelName).InsertOne(ctx, &userModel)
+		_, err = c.db.Collection(UserModelName).InsertOne(ctx, &userModel)
 		if err != nil {
 			IrisRespErr("新增用户失败", err, ctx, 500)
 			return
 		}
-
-		// 生成token
-		jwtResp := pipe.JwtGen.Run(ctx, &pipe.PipeJwtDep{
-			Env:    pipe.CtxGetEnv(ctx),
-			UserId: userModel.Uid,
-		}, &pipe.JwtGenPipe{}, rdb)
-
-		if jwtResp.Err != nil {
-			IrisRespErr("生成登录令牌失败", jwtResp.Err, ctx, jwtResp.ReqCode)
+		userModel.connectInfo = c.connectInfo
+		token, err := userModel.GenJwtToken(ctx, false)
+		if err != nil {
+			IrisRespErr("生成登录令牌失败", err, ctx)
 			return
 		}
-
-		ctx.JSON(iris.Map{"token": jwtResp.Result})
+		ctx.JSON(iris.Map{"token": token, "info": userModel.Masking(0)})
 	}
 }
-
-func (c *SimpleUserModel) MustLoginMiddleware(db *qmgo.Database, rdb rueidis.Client) iris.Handler {
+func (c *SimpleUserModel) MustLoginMiddleware() iris.Handler {
 	return func(ctx iris.Context) {
 		// 进行jwt验证
 		resp := pipe.JwtVisit.Run(ctx, &pipe.JwtCheckDep{
-			Env:           pipe.CtxGetEnv(ctx, ""),
+			Env:           pipe.CtxGetEnv(ctx),
 			Authorization: ctx.GetHeader("Authorization"),
-		}, nil, rdb)
+		}, nil, c.rdb)
 		if resp.Err != nil {
-			IrisRespErr("验证登录状态失败", resp.Err, ctx, http.StatusForbidden)
+			IrisRespErr("验证登录状态失败", resp.Err, ctx, http.StatusUnauthorized)
 			ctx.StopExecution()
 			return
 		}
 
 		// 根据用户id 获取到用户信息
-		userModel := new(SimpleUserModel)
-		err := db.Collection(UserModelName).Find(ctx, bson.M{"uid": resp.Result.UserId}).One(&userModel)
+		userModel, err := c.GetUserItem(ctx, bson.M{"uid": resp.Result.UserId})
 		if err != nil {
 			IrisRespErr("获取出用户信息失败", err, ctx)
 			return
@@ -173,4 +158,42 @@ func (c *SimpleUserModel) MustLoginMiddleware(db *qmgo.Database, rdb rueidis.Cli
 		ctx.Values().Set(UserContextKey, userModel)
 		ctx.Next()
 	}
+}
+func (c *SimpleUserModel) GetUserItem(ctx context.Context, filter bson.M) (*SimpleUserModel, error) {
+	// 判断用户是否存在
+	userModel := new(SimpleUserModel)
+	err := c.db.Collection(UserModelName).Find(ctx, filter).One(&userModel)
+	if err != nil {
+		return nil, err
+	}
+	userModel.connectInfo = c.connectInfo
+	return userModel, nil
+}
+func (c *SimpleUserModel) GenJwtToken(ctx iris.Context, force bool) (string, error) {
+	// 生成token
+	jwtResp := pipe.JwtGen.Run(ctx, &pipe.PipeJwtDep{
+		Env:    pipe.CtxGetEnv(ctx),
+		UserId: c.Uid,
+	}, &pipe.JwtGenPipe{
+		Force: force,
+	}, c.rdb)
+	return jwtResp.Result, jwtResp.Err
+}
+
+func (c *SimpleUserModel) SetRoleUseUserName(ctx context.Context, userName string, roleTarget string) error {
+	var err error
+	user, err := c.GetUserItem(ctx, bson.M{"user_name": userName})
+	if err != nil {
+		return err
+	}
+	switch roleTarget {
+	case "root":
+		_, err = c.rbac.SetRoot(user.Uid)
+	default:
+		_, err = c.rbac.SetStaff(user.Uid)
+	}
+	return err
+}
+func (c *SimpleUserModel) RemoveUser(ctx context.Context, uid string) error {
+	return c.db.Collection(UserModelName).Remove(ctx, bson.M{ut.DefaultUidTag: uid})
 }

@@ -2,7 +2,10 @@ package pmb
 
 import (
 	"context"
+	"github.com/23233/ggg/pipe"
 	"github.com/pkg/errors"
+	"github.com/qiniu/qmgo"
+	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
@@ -18,6 +21,31 @@ type UserModel interface {
 	GetUid() string
 }
 
+// 注入的连接信息
+type connectInfo struct {
+	db   *qmgo.Database
+	rdb  rueidis.Client
+	rbac *pipe.RbacDomain
+}
+
+func (c *connectInfo) AddRdb(rdb rueidis.Client) {
+	c.rdb = rdb
+}
+func (c *connectInfo) AddDb(mdb *qmgo.Database) {
+	c.db = mdb
+}
+func (c *connectInfo) AddRbacUri(redisAddress, password string) bool {
+	inst, err := pipe.NewRbacDomain(redisAddress, password)
+	if err != nil {
+		return false
+	}
+	c.rbac = inst
+	return false
+}
+func (c *connectInfo) AddRbac(rbac *pipe.RbacDomain) {
+	c.rbac = rbac
+}
+
 type SimpleUserModel struct {
 	Id        primitive.ObjectID `json:"_id" bson:"_id"`
 	Uid       string             `json:"uid" bson:"uid"`
@@ -30,6 +58,8 @@ type SimpleUserModel struct {
 	Salt      string             `json:"salt,omitempty" bson:"salt,omitempty" comment:"密码加密salt"`
 	TelPhone  string             `json:"tel_phone,omitempty" bson:"tel_phone,omitempty" comment:"电话号码"` // 电话号码
 	Balance   uint64             `json:"balance,omitempty" bson:"balance,omitempty" comment:"余额(分)" `   // 余额 单位是分
+
+	connectInfo
 }
 
 func (c *SimpleUserModel) InjectDefault(mp map[string]any) error {
@@ -62,6 +92,7 @@ func (c *SimpleUserModel) BeforeInsert(ctx context.Context) error {
 }
 
 // Masking 数据脱敏 传入level 1隐藏号码 2隐藏余额
+
 func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 	var user = new(SimpleUserModel)
 	*user = *c
@@ -70,7 +101,7 @@ func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 	user.Salt = ""
 
 	if level >= 1 {
-		// 小于2就下标错误了
+		// 若号码长度小于2就错误了
 		if len(c.TelPhone) > 2 {
 			user.TelPhone = user.TelPhone[0:1] + strings.Repeat("*", len(user.TelPhone)-2) + user.TelPhone[len(user.TelPhone)-1:]
 		}
@@ -81,4 +112,12 @@ func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 		user.Balance = 0
 	}
 	return user
+}
+
+func NewUserModel(conn ...connectInfo) *SimpleUserModel {
+	um := new(SimpleUserModel)
+	if len(conn) >= 1 {
+		um.connectInfo = conn[0]
+	}
+	return um
 }

@@ -5,8 +5,14 @@ import (
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
+	"strings"
 	"time"
 )
+
+func getTagName(tag string) string {
+	parts := strings.Split(tag, ",")
+	return parts[0]
+}
 
 // findFieldByJSONTag recursively searches for a struct field with the specified JSON tag.
 func findFieldByJSONTag(v reflect.Value, tag string) (reflect.Value, bool) {
@@ -19,7 +25,11 @@ func findFieldByJSONTag(v reflect.Value, tag string) (reflect.Value, bool) {
 
 	typ := v.Type()
 	for i := 0; i < typ.NumField(); i++ {
-		if typ.Field(i).Tag.Get("json") == tag {
+		fieldJson := getTagName(typ.Field(i).Tag.Get("json"))
+		if len(fieldJson) < 1 || fieldJson == "-" {
+			continue
+		}
+		if fieldJson == tag {
 			return v.Field(i), true
 		}
 		if v.Field(i).Kind() == reflect.Struct {
@@ -64,9 +74,8 @@ func setFieldValue(field reflect.Value, value interface{}) error {
 
 // ModelCtxMapperPack 解析body数据包 所有map key 支持 a.b.c 但是对应的是json tag标签名
 type ModelCtxMapperPack struct {
-	InjectData map[string]any        `json:"inject_data,omitempty"`                        // 注入数据 默认覆盖
-	DropKeys   []string              `json:"drop_keys,omitempty"`                          // 需要丢弃的key
-	GenKeys    map[string]*Attribute `json:"gen_keys,omitempty" bson:"gen_keys,omitempty"` // 代码生成的数据
+	InjectData map[string]any `json:"inject_data,omitempty"` // 注入数据 默认覆盖
+	DropKeys   []string       `json:"drop_keys,omitempty"`   // 需要丢弃的key
 }
 
 func (m *ModelCtxMapperPack) processStruct(data any) error {
@@ -79,21 +88,6 @@ func (m *ModelCtxMapperPack) processStruct(data any) error {
 			continue
 		}
 		field.Set(reflect.Zero(field.Type()))
-	}
-
-	// Generate keys.
-	for key, gen := range m.GenKeys {
-		field, found := findFieldByJSONTag(v, key)
-		if !found {
-			return fmt.Errorf("field with JSON tag %q not found", key)
-		}
-		genValue, err := gen.RunGen()
-		if err != nil {
-			return fmt.Errorf("error generating value for key %q: %v", key, err)
-		}
-		if err := setFieldValue(field, genValue); err != nil {
-			return err
-		}
 	}
 
 	// Inject data.
@@ -114,13 +108,7 @@ func (m *ModelCtxMapperPack) processMap(data map[string]any) error {
 	for _, key := range m.DropKeys {
 		delete(data, key)
 	}
-	for key, attr := range m.GenKeys {
-		result, err := attr.RunGen()
-		if err != nil {
-			return err
-		}
-		data[key] = result
-	}
+
 	for key, val := range m.InjectData {
 		data[key] = val
 	}

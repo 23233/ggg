@@ -9,6 +9,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/httptest"
 	"github.com/qiniu/qmgo"
+	"github.com/redis/rueidis"
 	"testing"
 )
 
@@ -47,7 +48,8 @@ type testModelStruct struct {
 		Number  float64 `json:"number,omitempty" bson:"number,omitempty"`
 		Integer uint64  `json:"integer,omitempty" bson:"integer,omitempty"`
 	} `json:"normal_inline,omitempty" bson:"normal_inline,omitempty"`
-	Fk string `json:"fk,omitempty" bson:"fk,omitempty"`
+	Fk     string `json:"fk,omitempty" bson:"fk,omitempty"`
+	UserId string `json:"user_id,omitempty" bson:"user_id,omitempty"`
 }
 
 func getMg() *qmgo.Database {
@@ -61,6 +63,27 @@ func getMg() *qmgo.Database {
 		panic(err)
 	}
 	return mgCli.Database("ttts")
+}
+func getRdbInfo() (string, string) {
+	return ut.GetEnv("RedisAddress", ""), ut.GetEnv("RedisPassword", "")
+}
+func getRdb() rueidis.Client {
+	err := godotenv.Load()
+	if err != nil {
+		panic("获取配置文件出错")
+	}
+
+	address, password := getRdbInfo()
+
+	rdb, err := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{address},
+		Password:    password,
+		SelectDB:    6,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return rdb
 }
 
 func createFullPostJson(fkUid string) *testModelStruct {
@@ -115,18 +138,20 @@ func TestNewSchemaModel(t *testing.T) {
 	action.Name = "表操作"
 	action.Types = []uint{0, 1}
 	action.Form = nil
-	action.call = func(ctx iris.Context, rows []map[string]any, formData map[string]any) (any, error) {
+	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) {
 		return nil, nil
-	}
+	})
+
 	inst.AddAction(action)
 
 	ac2 := new(SchemaModelAction)
 	ac2.Name = "行操作"
 	ac2.Types = []uint{1}
 	ac2.Form = nil
-	ac2.call = func(ctx iris.Context, rows []map[string]any, formData map[string]any) (any, error) {
+	ac2.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) {
 		return nil, nil
-	}
+	})
+
 	inst.AddAction(ac2)
 
 	prefix := "/" + inst.EngName

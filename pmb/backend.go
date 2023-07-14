@@ -14,21 +14,29 @@ type Backend struct {
 	modelContextKey string
 }
 
+func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
+	for _, model := range b.models {
+		if model.EngName == name {
+			return model, true
+		}
+	}
+	return nil, false
+}
 func (b *Backend) AddModel(m *SchemaModel[any]) {
-	_, has := b.engGetModel(m.EngName)
+	_, has := b.GetModel(m.EngName)
 	if has {
 		return
 	}
 	b.models = append(b.models, m)
 }
 func (b *Backend) RegistryRoute(party iris.Party) {
-	mustLoginMiddleware := NewUserModel(b.connectInfo).MustLoginMiddleware()
+	mustLoginMiddleware := UserInstance.MustLoginMiddleware()
 
-	// 这里必须有staff权限
 	party.Get("/self", mustLoginMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		ctx.JSON(iris.Map{"info": user.Masking(0)})
 	})
+	// 这里必须有staff权限
 	party.Get("/models", mustLoginMiddleware, b.minStaff(), func(ctx iris.Context) {
 		ctx.JSON(iris.Map{
 			"models": b.models,
@@ -36,8 +44,8 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 
 	party.Get("/config/{eng:string}",
-		b.engGetModelMiddleware,
 		mustLoginMiddleware,
+		b.engGetModelMiddleware,
 		b.minStaff(),
 		func(ctx iris.Context) {
 			model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
@@ -148,18 +156,15 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 	})
 }
-
-func (b *Backend) engGetModel(engName string) (*SchemaModel[any], bool) {
-	for _, model := range b.models {
-		if model.EngName == engName {
-			return model, true
-		}
-	}
-	return nil, false
+func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
+	m := NewSchemaModel(raw, b.db)
+	b.AddModel(m)
+	return m
 }
+
 func (b *Backend) engGetModelMiddleware(ctx iris.Context) {
 	engName := ctx.Params().GetString("eng")
-	m, has := b.engGetModel(engName)
+	m, has := b.GetModel(engName)
 	if !has {
 		IrisRespErr("获取模型失败", nil, ctx)
 		ctx.StopExecution()

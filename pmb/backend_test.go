@@ -14,19 +14,19 @@ func TestNewBackend(t *testing.T) {
 	app := iris.New()
 	app.Configure(iris.WithoutBodyConsumptionOnUnmarshal)
 
-	model := NewSchemaModel(new(testModelStruct), getMg())
-
 	bk := NewBackend()
 	bk.AddDb(getMg())
 	bk.AddRdb(getRdb())
-	bk.AddRbacUri(getRdbInfo())
+	bk.AddRbacUseUri(getRdbInfo())
 	bk.RegistryRoute(app)
 
-	bk.AddModel(model.ToAny())
+	model := bk.AddModelAny(new(testModelStruct))
 
-	userModel := NewUserModel(bk.connectInfo)
-	app.Post("/reg", userModel.RegistryUseUserNamePassword())
-	app.Post("/login", userModel.LoginUsePasswordHandler())
+	UserInstance.connectInfo = bk.connectInfo
+	_ = UserInstance.SyncIndex(context.TODO())
+
+	app.Post("/reg", UserInstance.RegistryUseUserNamePassword())
+	app.Post("/login", UserInstance.LoginUsePasswordHandler())
 
 	var userId string
 	var token string
@@ -60,7 +60,7 @@ func TestNewBackend(t *testing.T) {
 	})
 
 	t.Run("设置为root", func(t *testing.T) {
-		err := userModel.SetRoleUseUserName(context.TODO(), loginBody["user_name"].(string), "root")
+		err := UserInstance.SetRoleUseUserName(context.TODO(), loginBody["user_name"].(string), "root")
 		assert.Equal(t, nil, err)
 	})
 
@@ -70,6 +70,10 @@ func TestNewBackend(t *testing.T) {
 	headers := map[string]string{
 		"Authorization": "Bearer " + token,
 	}
+
+	t.Run("未携带请求头抛出错误", func(t *testing.T) {
+		e.GET(prefix).Expect().Status(http.StatusUnauthorized)
+	})
 
 	t.Run("新增数据", func(t *testing.T) {
 		fullPost := createFullPostJson("")
@@ -147,7 +151,7 @@ func TestNewBackend(t *testing.T) {
 	})
 
 	t.Run("移除用户权限", func(t *testing.T) {
-		err := userModel.rbac.DelRoot(userId)
+		err := UserInstance.rbac.DelRoot(userId)
 		assert.Equal(t, nil, err)
 	})
 
@@ -156,7 +160,7 @@ func TestNewBackend(t *testing.T) {
 	})
 
 	t.Run("删除用户", func(t *testing.T) {
-		err := userModel.RemoveUser(context.TODO(), userId)
+		err := UserInstance.RemoveUser(context.TODO(), userId)
 		assert.Equal(t, nil, err)
 	})
 }

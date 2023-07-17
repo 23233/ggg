@@ -34,7 +34,7 @@ type SimpleUserModel struct {
 	Salt      string             `json:"salt,omitempty" bson:"salt,omitempty" comment:"密码加密salt"`
 	TelPhone  string             `json:"tel_phone,omitempty" bson:"tel_phone,omitempty" comment:"电话号码"` // 电话号码
 	Balance   uint64             `json:"balance,omitempty" bson:"balance,omitempty" comment:"余额(分)" `   // 余额 单位是分
-
+	Email     string             `json:"email,omitempty" bson:"email,omitempty" comment:"邮箱地址"`
 	connectInfo
 }
 
@@ -68,7 +68,6 @@ func (c *SimpleUserModel) BeforeInsert(ctx context.Context) error {
 }
 
 // Masking 数据脱敏 传入level 1隐藏号码 2隐藏余额
-
 func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 	var user = new(SimpleUserModel)
 	*user = *c

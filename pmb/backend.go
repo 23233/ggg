@@ -193,6 +193,6 @@ func (b *Backend) minRoot() iris.Handler {
 
 func NewBackend() *Backend {
 	b := new(Backend)
-	b.modelContextKey = "user_id"
+	b.modelContextKey = "now_model"
 	return b
 }

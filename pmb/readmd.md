@@ -7,6 +7,7 @@
 
 * 用户表
 * 权限表
+    * 使用redis
 
 ### 本地表
 
@@ -30,7 +31,7 @@
 
 * mongodb
 * redis
-* gcache
+* ~~gcache~~
 * casbin
 * iris
 * schema
@@ -38,27 +39,34 @@
 ## 行为
 
 * 登录注册
-    * 手机号
-        * 发送验证码
-            * 必须过滑块验证
-    * 用户名密码
+    * 用户名和密码
+    * 邮箱和密码登录
     * 判断登录环境是否允许登录
+
 * 滑块验证码
     * 获取
     * 验证
 
 * 获取模型
     * 增
+        * root
     * 删
+        * root
     * 改
+        * root
     * 查
+        * staff
     * 自定义action
         * 表级
         * 行级
         * form
             * schema
     * 获取模型定义
+        * staff
 
 ## 前端
 
-* 基于json schema的表格 表单 
+* 基于json schema
+    * 表格
+        * 自定义组件
+    * 表单

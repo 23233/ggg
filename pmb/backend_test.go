@@ -25,8 +25,8 @@ func TestNewBackend(t *testing.T) {
 	UserInstance.connectInfo = bk.connectInfo
 	_ = UserInstance.SyncIndex(context.TODO())
 
-	app.Post("/reg", UserInstance.RegistryUseUserNamePassword())
-	app.Post("/login", UserInstance.LoginUsePasswordHandler())
+	app.Post("/reg", UserInstance.RegistryUseUserNameHandler())
+	app.Post("/login", UserInstance.LoginUseUserNameHandler())
 
 	var userId string
 	var token string

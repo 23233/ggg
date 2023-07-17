@@ -13,7 +13,13 @@ import (
 type UserPasswordLoginReq struct {
 	UserName string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
 	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
-	Force    bool   `json:"force,omitempty" comment:"强制" `
+	Force    bool   `json:"force,omitempty" comment:"强制"`
+}
+
+type EmailPasswordLoginReq struct {
+	Email    string `json:"email,omitempty" comment:"邮箱号码" validate:"required,email"`
+	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
+	Force    bool   `json:"force,omitempty" comment:"强制"`
 }
 
 func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
@@ -21,10 +27,15 @@ func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = ut.MCreateIndex(ctx, cl, ut.MGenUnique("uid", false), ut.MGenUnique("user_name", true), ut.MGenUnique("tel_phone", true))
+	err = ut.MCreateIndex(ctx, cl,
+		ut.MGenUnique("uid", false),
+		ut.MGenUnique("user_name", true),
+		ut.MGenUnique("tel_phone", true),
+		ut.MGenUnique("email", true),
+	)
 	return err
 }
-func (c *SimpleUserModel) LoginUsePasswordHandler() iris.Handler {
+func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -57,37 +68,77 @@ func (c *SimpleUserModel) LoginUsePasswordHandler() iris.Handler {
 			return
 		}
 
-		// 验证密码是否正确
-		if !validPassword(body.Password, userModel.Salt, userModel.Password) {
-			IrisRespErr("用户名或密码错误", nil, ctx)
-			return
-		}
-
-		// 正确的情况下 判断是否可以登录
-		disableLoginResp := pipe.RbacAllow.Run(ctx, nil, &pipe.RbacAllowPipe{
-			Sub:    userModel.Uid,
-			Obj:    pipe.RbacNotAllowLoginObj,
-			Domain: pipe.RbacSelfDomainName,
-			Act:    pipe.RbacNormalAct,
-		}, c.rbac)
-
-		// 在这个组里就是不允许登录的
-		if disableLoginResp.Result {
-			IrisRespErr("该用户被禁止登录", nil, ctx)
-			return
-		}
-
-		userModel.connectInfo = c.connectInfo
-		token, err := userModel.GenJwtToken(ctx, body.Force)
-		if err != nil {
-			IrisRespErr("生成登录令牌失败", err, ctx)
-			return
-		}
-
-		ctx.JSON(iris.Map{"token": token, "info": userModel.Masking(0)})
+		c.passwordLogin(ctx, "用户名", userModel, body.Password, body.Force)
 	}
 }
-func (c *SimpleUserModel) RegistryUseUserNamePassword() iris.Handler {
+func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
+	return func(ctx iris.Context) {
+		var body = new(EmailPasswordLoginReq)
+		err := ctx.ReadBody(&body)
+		if err != nil {
+			IrisRespErr("解析请求包参数错误", err, ctx)
+			return
+		}
+
+		rateResp := pipe.RequestRate.Run(ctx, nil, &pipe.RateLimitPipe{
+			RatePeriod: "5-M",
+			KeyGen: &pipe.StrExpand{
+				Key: "lf:${un}",
+				KeyMap: []pipe.StrTemplate{
+					{
+						VarName: "un",
+						Value:   body.Email,
+					},
+				},
+			},
+			WriteHeader: false,
+		}, nil)
+		if rateResp.Err != nil {
+			IrisRespErr("操作过快", rateResp.Err, ctx, rateResp.ReqCode)
+			return
+		}
+
+		userModel, err := c.GetUserItem(ctx, bson.M{"email": body.Email})
+		if err != nil {
+			IrisRespErr("邮箱错误", err, ctx)
+			return
+		}
+
+		c.passwordLogin(ctx, "邮箱", userModel, body.Password, body.Force)
+
+	}
+}
+func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *SimpleUserModel, password string, force bool) {
+
+	// 验证密码是否正确
+	if !validPassword(password, user.Salt, user.Password) {
+		IrisRespErr(event+"或密码错误", nil, ctx)
+		return
+	}
+
+	// 正确的情况下 判断是否可以登录
+	disableLoginResp := pipe.RbacAllow.Run(ctx, nil, &pipe.RbacAllowPipe{
+		Sub:    user.Uid,
+		Obj:    pipe.RbacNotAllowLoginObj,
+		Domain: pipe.RbacSelfDomainName,
+		Act:    pipe.RbacNormalAct,
+	}, c.rbac)
+
+	// 在这个组里就是不允许登录的
+	if disableLoginResp.Result {
+		IrisRespErr("该用户被禁止登录", nil, ctx)
+		return
+	}
+
+	token, err := user.GenJwtToken(ctx, force)
+	if err != nil {
+		IrisRespErr("生成登录令牌失败", err, ctx)
+		return
+	}
+
+	ctx.JSON(iris.Map{"token": token, "info": user.Masking(0)})
+}
+func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -181,8 +232,19 @@ func (c *SimpleUserModel) GenJwtToken(ctx iris.Context, force bool) (string, err
 }
 
 func (c *SimpleUserModel) SetRoleUseUserName(ctx context.Context, userName string, roleTarget string) error {
-	var err error
-	user, err := c.GetUserItem(ctx, bson.M{"user_name": userName})
+	return c.SetRole(ctx, bson.M{"user_name": userName}, roleTarget)
+}
+func (c *SimpleUserModel) SetRoleUseEmail(ctx context.Context, email string, roleTarget string) error {
+	return c.SetRole(ctx, bson.M{"email": email}, roleTarget)
+}
+func (c *SimpleUserModel) SetRoleUsePhone(ctx context.Context, phone string, roleTarget string) error {
+	return c.SetRole(ctx, bson.M{"tel_phone": phone}, roleTarget)
+}
+func (c *SimpleUserModel) SetRoleUseUid(ctx context.Context, uid string, roleTarget string) error {
+	return c.SetRole(ctx, bson.M{"uid": uid}, roleTarget)
+}
+func (c *SimpleUserModel) SetRole(ctx context.Context, filters bson.M, roleTarget string) error {
+	user, err := c.GetUserItem(ctx, filters)
 	if err != nil {
 		return err
 	}
@@ -194,6 +256,7 @@ func (c *SimpleUserModel) SetRoleUseUserName(ctx context.Context, userName strin
 	}
 	return err
 }
+
 func (c *SimpleUserModel) RemoveUser(ctx context.Context, uid string) error {
 	return c.db.Collection(UserModelName).Remove(ctx, bson.M{ut.DefaultUidTag: uid})
 }

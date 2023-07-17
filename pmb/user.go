@@ -22,6 +22,14 @@ type UserModel interface {
 	GetUid() string
 }
 
+type Platform struct {
+	Name      string `json:"name,omitempty" bson:"name,omitempty" comment:"平台名称"`
+	Id        string `json:"id,omitempty" bson:"id,omitempty" comment:"平台唯一ID"`
+	NickName  string `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"平台昵称"`
+	AvatarUrl string `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"平台头像"`
+	Data      string `json:"data,omitempty" bson:"data,omitempty" comment:"平台数据"`
+}
+
 type SimpleUserModel struct {
 	Id        primitive.ObjectID `json:"_id" bson:"_id"`
 	Uid       string             `json:"uid" bson:"uid"`
@@ -35,6 +43,7 @@ type SimpleUserModel struct {
 	TelPhone  string             `json:"tel_phone,omitempty" bson:"tel_phone,omitempty" comment:"电话号码"` // 电话号码
 	Balance   uint64             `json:"balance,omitempty" bson:"balance,omitempty" comment:"余额(分)" `   // 余额 单位是分
 	Email     string             `json:"email,omitempty" bson:"email,omitempty" comment:"邮箱地址"`
+	Platforms []Platform         `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
 	connectInfo
 }
 

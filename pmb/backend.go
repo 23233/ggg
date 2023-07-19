@@ -1,12 +1,17 @@
 package pmb
 
 import (
+	"embed"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
+	"path"
 )
+
+//go:embed template/*
+var embedWeb embed.FS
 
 type Backend struct {
 	connectInfo
@@ -30,6 +35,7 @@ func (b *Backend) AddModel(m *SchemaModel[any]) {
 	b.models = append(b.models, m)
 }
 func (b *Backend) RegistryRoute(party iris.Party) {
+
 	mustLoginMiddleware := UserInstance.MustLoginMiddleware()
 
 	party.Get("/self", mustLoginMiddleware, func(ctx iris.Context) {
@@ -155,6 +161,27 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
+}
+func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
+	fsys := iris.PrefixDir("template", http.FS(embedWeb))
+	party.RegisterView(iris.Blocks(fsys, ".html"))
+	party.Get("/login", func(ctx iris.Context) {
+		loginPath := path.Join(party.GetRelPath(), "login")
+
+		ctx.ViewData("post_address", loginPath)
+		ctx.ViewData("allow_reg", allowReg)
+		ctx.ViewData("reg_path", path.Join(party.GetRelPath(), "reg"))
+		_ = ctx.View("login")
+	})
+	if allowReg {
+		party.Get("/reg", func(ctx iris.Context) {
+			regPath := path.Join(party.GetRelPath(), "reg")
+
+			ctx.ViewData("login_path", path.Join(party.GetRelPath(), "login"))
+			ctx.ViewData("post_address", regPath)
+			_ = ctx.View("reg")
+		})
+	}
 }
 func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
 	m := NewSchemaModel(raw, b.db)

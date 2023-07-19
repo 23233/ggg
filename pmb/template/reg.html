@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"/>
+    <meta name="referrer" content="always">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="format-detection" content="telphone=no, email=no"/>
+    <meta name="renderer" content="webkit">
+    <meta name="force-rendering" content="webkit"/>
+    <link rel="icon" href="data:image/ico;base64,aWNv">
+    <title>登录</title>
+
+    <style>
+        body {
+            backdrop-filter: blur(5px);
+            background: linear-gradient(to bottom, #0683ad, #e6f2ff);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            width: 400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #eeeeee;
+
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        label {
+            font-size: 16px;
+        }
+
+        input {
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 16px;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-left: 8px;
+        }
+
+
+        button {
+            padding: 10px 30px;
+            background: #00bfff;
+            text-gradient: linear-gradient(#fff, #00bfff);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+
+        }
+
+        .error-msg {
+            color: red;
+            margin-top: 10px;
+            min-height: 20px;
+            min-width: 1px;
+        }
+
+        .input-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        a{
+            font-size: 14px;
+            color: #797979;
+            text-decoration: none;
+        }
+
+
+    </style>
+</head>
+
+<body>
+<div class="login-container">
+    <h2>账户注册</h2>
+
+    <div class="input-wrap">
+        <label>
+            账号:
+            <input type="text" id="account" placeholder="请输入用户名">
+        </label>
+    </div>
+
+    <div class="input-wrap">
+        <label>
+            密码:
+            <input type="password" id="password" placeholder="请输入密码">
+        </label>
+    </div>
+
+
+    <div class="input-wrap">
+        <label>
+            再次:
+            <input type="password" id="repassword" placeholder="请再次输入密码">
+        </label>
+    </div>
+
+
+    <button id="login-btn" title="注册">注册</button>
+
+    <p><a href="{{.login_path}}" title="去登录" >去登录</a></p>
+
+
+    <div id="error-msg" class="error-msg"></div>
+</div>
+
+<script type="module">
+    async function post(url, data) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
+    }
+
+    const loginBtn = document.getElementById('login-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const repassword = document.getElementById('repassword');
+
+    repassword.addEventListener('input', () => {
+        errorMsg.innerText = '';
+    })
+
+    loginBtn.addEventListener('click', async () => {
+        const account = document.getElementById('account').value;
+        const password = document.getElementById('password').value;
+        let rep = document.getElementById('repassword').value;
+
+        if (!account || !password) {
+            errorMsg.textContent = '账号和密码不能为空';
+            return;
+        }
+        // 在提交登录时校验
+        if (password !== rep) {
+            errorMsg.textContent = '两次输入密码不一致';
+            return;
+        }
+
+        errorMsg.textContent = '';
+
+        const result = await post('{{.post_address}}', {user_name: account, password});
+        console.log("result", result)
+        if (result?.detail) {
+            errorMsg.textContent = result?.detail;
+            setTimeout(() => {
+                errorMsg.textContent = '';
+            }, 10000);
+            return;
+        }
+
+        const {token, info} = result;
+
+        sessionStorage.setItem('ttb_token', token);
+        sessionStorage.setItem('ttb_info', JSON.stringify(info));
+
+        let nextUrl = new URLSearchParams(location.search).get('next_url');
+        if (!nextUrl) {
+            nextUrl = window.NextUrl || '/';
+        }
+
+        location.href = nextUrl;
+    });
+</script>
+
+</body>
+</html>

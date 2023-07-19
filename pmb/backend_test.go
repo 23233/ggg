@@ -22,7 +22,7 @@ func TestNewBackend(t *testing.T) {
 
 	model := bk.AddModelAny(new(testModelStruct))
 
-	UserInstance.connectInfo = bk.connectInfo
+	UserInstance.SetConn(bk.CloneConn())
 	_ = UserInstance.SyncIndex(context.TODO())
 
 	app.Post("/reg", UserInstance.RegistryUseUserNameHandler())

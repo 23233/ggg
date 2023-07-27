@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"/>
+    <meta name="referrer" content="always">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="format-detection" content="telphone=no, email=no"/>
+    <meta name="renderer" content="webkit">
+    <meta name="force-rendering" content="webkit"/>
+    <link rel="icon" href="data:image/ico;base64,aWNv">
+    <title>role设置</title>
+    <style>
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input, select {
+            padding: 10px;
+            margin: 5px;
+            width: 200px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<div class="center">
+    <form id="myForm" autocomplete="off">
+        <input type="text" id="id" name="id" placeholder="请输入ID" required maxlength="50">
+        <input type="text" id="secret" name="secret" placeholder="请输入秘钥" required maxlength="50">
+        <select id="role" name="role" required>
+            <option value="staff" selected>Staff</option>
+            <option value="root">Root</option>
+        </select>
+        <button type="submit">提交</button>
+    </form>
+</div>
+<script>
+    document.getElementById('myForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const id = document.getElementById('id').value;
+        const secret = document.getElementById('secret').value;
+        const role = document.getElementById('role').value;
+
+        if (!id || !secret || !role || id.length > 50 || secret.length > 50) {
+            alert('请确保所有字段都已填写且不超过50个字符');
+            return;
+        }
+
+        const response = await fetch('{{.post_address}}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({id, secret, role})
+        });
+        const data = await response.json();
+        if (data.detail) {
+            confirm(data.detail);
+        } else {
+            alert('完成');
+            document.getElementById('myForm').reset();
+        }
+    });
+</script>
+</body>
+</html>

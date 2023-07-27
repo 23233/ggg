@@ -13,6 +13,10 @@ type connectInfo struct {
 	rbac *pipe.RbacDomain
 }
 
+func (c *connectInfo) Db() *qmgo.Database {
+	return c.db
+}
+
 func (c *connectInfo) AddRdb(rdb rueidis.Client) {
 	c.rdb = rdb
 }
@@ -30,13 +34,13 @@ func (c *connectInfo) AddRbacUseUri(redisAddress, password string) bool {
 func (c *connectInfo) AddRbac(rbac *pipe.RbacDomain) {
 	c.rbac = rbac
 }
-func (c *connectInfo) SetConn(conn connectInfo) {
+func (c *connectInfo) SetConn(conn *connectInfo) {
 	c.db = conn.db
 	c.rdb = conn.rdb
 	c.rbac = conn.rbac
 }
-func (c *connectInfo) CloneConn() connectInfo {
-	return connectInfo{
+func (c *connectInfo) CloneConn() *connectInfo {
+	return &connectInfo{
 		db:   c.db,
 		rdb:  c.rdb,
 		rbac: c.rbac,

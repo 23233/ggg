@@ -195,7 +195,7 @@ func TestNewSchemaModel(t *testing.T) {
 		resp := e.PUT(prefix + "/" + uid).WithJSON(fullPut).Expect().Status(iris.StatusOK)
 		respObj := resp.JSON().Object()
 		respObj.NotContainsKey("desc")
-		respObj.ContainsKey("update_time")
+		respObj.ContainsKey("update_at")
 		respObj.ContainsKey("name")
 		respObj.ContainsKey("age")
 		respObj.ContainsKey("tips")
@@ -205,7 +205,7 @@ func TestNewSchemaModel(t *testing.T) {
 	})
 
 	t.Run("获取单条", func(t *testing.T) {
-		e.GET(prefix + "/" + uid).Expect().Status(iris.StatusOK).JSON().Object().ContainsKey("update_time")
+		e.GET(prefix + "/" + uid).Expect().Status(iris.StatusOK).JSON().Object().ContainsKey("update_at")
 	})
 
 	t.Run("获取所有", func(t *testing.T) {

@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"context"
 	"github.com/23233/ggg/logger"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
@@ -42,7 +43,7 @@ var (
 				shortRedisKey := helper.JwtShortRedisGenKey(shortToken)
 				expireSec := int64(time.Hour.Seconds())
 				// 仅当新到期时间大于当前到期时间时设置到期时间
-				err := rdb.Do(ctx, rdb.B().Expire().Key(shortRedisKey).Seconds(expireSec).Gt().Build()).Error()
+				err := rdb.Do(context.TODO(), rdb.B().Expire().Key(shortRedisKey).Seconds(expireSec).Gt().Build()).Error()
 				if err != nil {
 					logger.J.ErrorE(err, "续期short token失败 %s ", shortToken)
 				}
@@ -53,7 +54,7 @@ var (
 				// 仅当新到期时间大于当前到期时间时设置到期时间
 				expireSec := int64(new(JwtGenPipe).GetExpire().Seconds())
 				cmdList := rdb.B().Expire().Key(redisKey).Seconds(expireSec).Gt().Build()
-				err := rdb.Do(ctx, cmdList).Error()
+				err := rdb.Do(context.TODO(), cmdList).Error()
 				if err != nil {
 					logger.J.ErrorE(err, "续期token失败 %s %s", pack.UserId, pack.Env)
 				}

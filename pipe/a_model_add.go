@@ -1,7 +1,7 @@
 package pipe
 
 import (
-	"github.com/gookit/goutil/structs"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
@@ -25,6 +25,32 @@ func DefaultModelMap() map[string]any {
 	return m
 }
 
+func StructToMap(s any) (map[string]any, error) {
+	data, err := jsoniter.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	var m map[string]any
+	err = jsoniter.Unmarshal(data, &m)
+	if err != nil {
+		return nil, err
+	}
+	// 遍历map，删除值为nil或空map的键值对
+	for k, v := range m {
+		if v == nil {
+			delete(m, k)
+		} else if reflect.TypeOf(v).Kind() == reflect.Map {
+			subMap, ok := v.(map[string]interface{})
+			if ok && len(subMap) == 0 {
+				delete(m, k)
+			}
+		}
+	}
+
+	return m, nil
+}
+
 var (
 	// ModelAdd 模型新增origin支持struct和map的传入 对于传入struct会转换为map 通过json标签为key
 	ModelAdd = &RunnerContext[any, *ModelCtxAddConfig, *qmgo.Database, map[string]any]{
@@ -44,7 +70,7 @@ var (
 
 			switch typ.Kind() {
 			case reflect.Struct:
-				mp, err := structs.StructToMap(origin)
+				mp, err := StructToMap(origin)
 				if err != nil {
 					return newPipeErr[map[string]any](err)
 				}

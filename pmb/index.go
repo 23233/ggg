@@ -32,6 +32,7 @@ type SchemaGetResp struct {
 	*ut.MongoFacetResult
 	Page     int64          `json:"page,omitempty"`
 	PageSize int64          `json:"page_size,omitempty"`
+	Sorts    *ut.BaseSort   `json:"sorts,omitempty"`
 	Filters  *ut.QueryParse `json:"filters,omitempty"`
 }
 
@@ -48,10 +49,12 @@ type ActionPostPart struct {
 }
 
 type SchemaModelAction struct {
-	Name  string                                                                                                     `json:"name,omitempty"`  // 动作名称 需要唯一
-	Types []uint                                                                                                     `json:"types,omitempty"` // 0 表可用 1 行可用
-	Form  *jsonschema.Schema                                                                                         `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
-	call  func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) // 处理方法 result 只能返回map或struct
+	Name       string             `json:"name,omitempty"`  // 动作名称 需要唯一
+	Types      []uint             `json:"types,omitempty"` // 0 表可用 1 行可用
+	Form       *jsonschema.Schema `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
+	MustSelect bool               `json:"must_select,omitempty"`
+	//
+	call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) // 处理方法 result 只能返回map或struct
 }
 
 func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error)) {
@@ -187,6 +190,10 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (s *SchemaModel[T]) GetCollection() *qmgo.Collection {
+	return s.db.Collection(s.EngName)
+}
+
 // GetHandler 仅获取数据
 func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryParseConfig, getParams pipe.ModelGetData, uid string) error {
 	injectQuery, err := s.ParseInject(ctx)
@@ -239,9 +246,13 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 			resp.Result.PageSize = 100
 		}
 		// 默认按照更新时间倒序
-		if resp.Result.SortDesc == nil {
-			resp.Result.SortDesc = append(resp.Result.SortDesc, "update_time")
+		if resp.Result.SortAsc == nil && resp.Result.SortDesc == nil {
+			resp.Result.SortDesc = append(resp.Result.SortDesc, "update_at")
 		}
+		if len(resp.Result.SortAsc) < 1 && len(resp.Result.SortDesc) < 1 {
+			resp.Result.SortDesc = append(resp.Result.SortDesc, "update_at")
+		}
+
 	}
 
 	// 获取数据
@@ -253,7 +264,12 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 		&getParams,
 		s.db)
 	if dataResp.Err != nil {
-		return dataResp.Err
+		if getParams.Single {
+			return dataResp.Err
+		}
+		if dataResp.Err != qmgo.ErrNoSuchDocuments {
+			return dataResp.Err
+		}
 	}
 
 	if getParams.Single {
@@ -271,7 +287,7 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	result.Page = resp.Result.Page
 	result.PageSize = resp.Result.PageSize
 	result.Filters = resp.Result.QueryParse
-
+	result.Sorts = resp.Result.BaseSort
 	ctx.JSON(result)
 	return nil
 
@@ -464,7 +480,7 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 	rows := make([]map[string]any, 0, len(part.Rows))
 	if len(part.Rows) >= 1 {
 		// 去获取出最新的这一批数据
-		err = s.db.Collection(s.EngName).Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
+		err = s.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
 		if err != nil {
 			IrisRespErr("获取对应行列表失败", err, ctx)
 			return

@@ -19,14 +19,12 @@ func TestNewBackend(t *testing.T) {
 	bk.AddRdb(getRdb())
 	bk.AddRbacUseUri(getRdbInfo())
 	bk.RegistryRoute(app)
+	bk.RegistryLoginRegRoute(app, true)
 
 	model := bk.AddModelAny(new(testModelStruct))
 
 	UserInstance.SetConn(bk.CloneConn())
 	_ = UserInstance.SyncIndex(context.TODO())
-
-	app.Post("/reg", UserInstance.RegistryUseUserNameHandler())
-	app.Post("/login", UserInstance.LoginUseUserNameHandler())
 
 	var userId string
 	var token string
@@ -111,7 +109,7 @@ func TestNewBackend(t *testing.T) {
 		resp := e.PUT(prefix + "/" + uid).WithHeaders(headers).WithJSON(fullPut).Expect().Status(iris.StatusOK)
 		respObj := resp.JSON().Object()
 		respObj.NotContainsKey("desc")
-		respObj.ContainsKey("update_time")
+		respObj.ContainsKey("update_at")
 		respObj.ContainsKey("name")
 		respObj.ContainsKey("age")
 		respObj.ContainsKey("tips")
@@ -120,7 +118,7 @@ func TestNewBackend(t *testing.T) {
 		t.Log("获取单条" + uid)
 	})
 	t.Run("获取单条", func(t *testing.T) {
-		e.GET(prefix + "/" + uid).WithHeaders(headers).Expect().Status(iris.StatusOK).JSON().Object().ContainsKey("update_time")
+		e.GET(prefix + "/" + uid).WithHeaders(headers).Expect().Status(iris.StatusOK).JSON().Object().ContainsKey("update_at")
 
 	})
 	t.Run("获取所有", func(t *testing.T) {

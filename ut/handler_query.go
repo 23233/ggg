@@ -77,11 +77,19 @@ func (c *QueryParse) insertOrReplace(dataList []*Kov, now *Kov) []*Kov {
 	return result
 }
 
-type BaseQuery struct {
+type BasePage struct {
+	Page     int64 `json:"page,omitempty"`
+	PageSize int64 `json:"page_size,omitempty"`
+}
+
+type BaseSort struct {
 	SortDesc []string `json:"sort_desc,omitempty"`
 	SortAsc  []string `json:"sort_asc,omitempty"`
-	Page     int64    `json:"page,omitempty"`
-	PageSize int64    `json:"page_size,omitempty"`
+}
+
+type BaseQuery struct {
+	*BasePage
+	*BaseSort
 }
 
 type QueryFull struct {
@@ -102,10 +110,16 @@ type PruneCtxQuery struct {
 	geoKey          string
 	allEmbedKeys    []string
 	geoDistanceKey  string
+
+	minLength int
+	maxLength int
 }
 
 // PruneParseUrlParams 纯解析url上的参数
 func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error) {
+	if p.maxLength < 1 {
+		p.init()
+	}
 	for k, v := range p.params {
 		bk := k
 
@@ -128,7 +142,8 @@ func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error)
 		opIndex := strings.LastIndex(bk, p.opSuffix)
 		var op = ""
 		// 如果操作符存在去找到对应的操作
-		if (len(k)-3) == opIndex || (len(k)-4) == opIndex {
+		var lenK = len(k)
+		if opIndex >= lenK-p.maxLength && opIndex <= lenK-p.minLength {
 			for _, allowOp := range p.allowOps {
 				// 组合成 _op
 				suffix := p.opSuffix + allowOp
@@ -267,6 +282,8 @@ func (p *PruneCtxQuery) PruneParseQuery(searchFields []string, geoKey string) (*
 // PruneParsePage 解析出 page page_size sort
 func (p *PruneCtxQuery) PruneParsePage() (*BaseQuery, error) {
 	q := new(BaseQuery)
+	q.BasePage = new(BasePage)
+	q.BaseSort = new(BaseSort)
 
 	page, ok := p.params["page"]
 	if ok {
@@ -339,16 +356,37 @@ func (p *PruneCtxQuery) SetParams(params map[string]string) {
 	p.params = params
 }
 
+func (p *PruneCtxQuery) init() {
+	// 初始化最小值和最大值为第一个字符串的长度
+	minLength := len(p.allowOps[0])
+	maxLength := len(p.allowOps[0])
+	// 遍历切片，更新最小值和最大值
+	for _, op := range p.allowOps {
+		opLength := len(op)
+		if opLength < minLength {
+			minLength = opLength
+		}
+		if opLength > maxLength {
+			maxLength = opLength
+		}
+	}
+	// 加符号的位置
+	p.minLength = minLength + 1
+	p.maxLength = maxLength + 1
+}
+
 func NewPruneCtxQuery() *PruneCtxQuery {
-	return &PruneCtxQuery{
+	m := &PruneCtxQuery{
 		lastKey:         "_last",
 		searchKey:       "_s",
-		allowOps:        []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin"},
+		allowOps:        []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin", OpRegex},
 		opSuffix:        "_",
 		inlineFieldsSep: "__",
 		orPrefix:        "_o_",
 		geoKey:          "_g",
 		geoDistanceKey:  "_distance",
-		allEmbedKeys:    []string{"_last", "_s", "_g", "_od", "_gmin", "_gmax", "_lastSort", "page", "page_size"},
+		allEmbedKeys:    []string{"_last", "_s", "_g", "_od", "_o", "_gmin", "_gmax", "_lastSort", "page", "page_size"},
 	}
+	m.init()
+	return m
 }

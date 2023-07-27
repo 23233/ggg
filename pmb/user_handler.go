@@ -3,6 +3,7 @@ package pmb
 import (
 	"context"
 	"github.com/23233/ggg/pipe"
+	"github.com/23233/ggg/sv"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/qiniu/qmgo"
@@ -20,6 +21,12 @@ type EmailPasswordLoginReq struct {
 	Email    string `json:"email,omitempty" comment:"邮箱号码" validate:"required,email"`
 	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
 	Force    bool   `json:"force,omitempty" comment:"强制"`
+}
+
+type RoleUpLoginReq struct {
+	Id     string `json:"id" comment:"id" validate:"required,max=50"`
+	Secret string `json:"secret" comment:"秘钥" validate:"required,max=50"`
+	Role   string `json:"role" comment:"权限" validate:"required,max=50"`
 }
 
 func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
@@ -43,7 +50,11 @@ func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
 			IrisRespErr("解析请求包参数错误", err, ctx)
 			return
 		}
-
+		err = sv.GlobalValidator.Check(body)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
 		rateResp := pipe.RequestRate.Run(ctx, nil, &pipe.RateLimitPipe{
 			RatePeriod: "5-M",
 			KeyGen: &pipe.StrExpand{
@@ -79,7 +90,11 @@ func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
 			IrisRespErr("解析请求包参数错误", err, ctx)
 			return
 		}
-
+		err = sv.GlobalValidator.Check(body)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
 		rateResp := pipe.RequestRate.Run(ctx, nil, &pipe.RateLimitPipe{
 			RatePeriod: "5-M",
 			KeyGen: &pipe.StrExpand{
@@ -106,6 +121,47 @@ func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
 
 		c.passwordLogin(ctx, "邮箱", userModel, body.Password, body.Force)
 
+	}
+}
+func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
+	return func(ctx iris.Context) {
+		var body = new(RoleUpLoginReq)
+		err := ctx.ReadBody(&body)
+		if err != nil {
+			IrisRespErr("解析请求包参数错误", err, ctx)
+			return
+		}
+		err = sv.GlobalValidator.Check(body)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
+		// 判断秘钥是否一致
+		if body.Secret != "999888" {
+			IrisRespErr("秘钥错误", err, ctx)
+			return
+		}
+		// 判断role是否支持
+		allRole := []string{"root", "staff"}
+		pass := false
+		for _, s := range allRole {
+			if body.Role == s {
+				pass = true
+				break
+			}
+		}
+		if !pass {
+			IrisRespErr("未被支持的role", err, ctx)
+			return
+		}
+
+		err = c.SetRoleUseUid(ctx, body.Id, body.Role)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
+		ctx.JSON(iris.Map{})
+		return
 	}
 }
 func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *SimpleUserModel, password string, force bool) {

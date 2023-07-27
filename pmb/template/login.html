@@ -75,7 +75,7 @@
             margin-bottom: 8px;
         }
 
-        a{
+        a {
             font-size: 14px;
             color: #797979;
             text-decoration: none;
@@ -104,7 +104,7 @@
     </div>
     <button id="login-btn" title="登录">登录</button>
     {{ if .allow_reg }}
-    <p><a href="{{.reg_path}}" title="去注册" >去注册</a></p>
+    <p><a href="{{.reg_path}}" title="去注册">去注册</a></p>
     {{ end }}
 
     <div id="error-msg" class="error-msg"></div>
@@ -153,7 +153,7 @@
 
         let nextUrl = new URLSearchParams(location.search).get('next_url');
         if (!nextUrl) {
-            nextUrl = window.NextUrl || '/';
+            nextUrl = "{{.rel_path}}" || '/';
         }
 
         location.href = nextUrl;

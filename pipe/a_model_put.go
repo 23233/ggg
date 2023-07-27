@@ -33,16 +33,32 @@ func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 				continue
 			}
 			if val, ok := bodyData[name]; ok {
-				if oldVal, ok := oldData[name]; ok && !cmp.Equal(val, oldVal) {
+				oldVal, ok := oldData[name]
+				// 原始数据中存在这个条目
+				if ok {
+					// 判断原始数据的条目值和当前是否一致 不一致则加入diff
+					if !cmp.Equal(val, oldVal) {
+						diff[name] = val
+					}
+				} else {
+					// 原始数据中不存在 那么就新增
 					diff[name] = val
 				}
 			}
 		}
 	case reflect.Map:
 		for key, val := range bodyData {
-			if oldVal, ok := oldData[key]; ok && !cmp.Equal(val, oldVal) {
+
+			oldVal, ok := oldData[key]
+			if ok {
+				if !cmp.Equal(val, oldVal) {
+					diff[key] = val
+				}
+			} else {
+				// 原始数据中不存在 那么就新增
 				diff[key] = val
 			}
+
 		}
 	}
 
@@ -103,17 +119,19 @@ var (
 			diff := compareAndDiff(origin, bodyData, result)
 
 			// 删除不允许变更的数据
-			params.DropKeys = append(params.DropKeys, "_id", ut.DefaultUidTag, "update_time", "create_time")
+			params.DropKeys = append(params.DropKeys, "_id", ut.DefaultUidTag, "update_at", "create_at")
 
 			for _, key := range params.DropKeys {
-				delete(diff, key)
+				if _, ok := diff[key]; ok {
+					delete(diff, key)
+				}
 			}
 
 			if len(diff) < 1 {
 				return newPipeErr[map[string]any](errors.New("未获取到更新项"))
 			}
 			if params.UpdateTime {
-				diff["update_time"] = time.Now().Local()
+				diff["update_at"] = time.Now().Local()
 			}
 
 			err = db.Collection(params.ModelId).UpdateOne(ctx, bson.M{ut.DefaultUidTag: params.RowId}, bson.M{"$set": diff})

@@ -5,6 +5,7 @@ import (
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/core/router"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"path"
@@ -35,6 +36,29 @@ func (b *Backend) AddModel(m *SchemaModel[any]) {
 	b.models = append(b.models, m)
 }
 func (b *Backend) RegistryRoute(party iris.Party) {
+	fsys := iris.PrefixDir("template", http.FS(embedWeb))
+	party.RegisterView(iris.Blocks(fsys, ".html"))
+
+	party.HandleDir("/manager", fsys, iris.DirOptions{
+		Cache:    router.DirCacheOptions{},
+		Compress: true,
+	}) // ./manager/assets/index-3fa15531.js
+
+	party.Get("/", func(ctx iris.Context) {
+		loginPath := path.Join(party.GetRelPath(), "login")
+
+		ctx.ViewData("token_key", "ttb_token")
+		ctx.ViewData("info_key", "ttb_info")
+		ctx.ViewData("login_url", loginPath)
+		ctx.ViewData("req_prefix", party.GetRelPath())
+
+		prefix := party.GetRelPath()
+		if prefix == "/" {
+			prefix = ""
+		}
+		ctx.ViewData("prefix", prefix)
+		_ = ctx.View("index")
+	})
 
 	mustLoginMiddleware := UserInstance.MustLoginMiddleware()
 
@@ -80,10 +104,21 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 
+		// 进行验证
+		if action.Form != nil {
+			resp := pipe.SchemaValid.Run(ctx, part.FormData, &pipe.SchemaValidConfig{
+				Schema: action.Form,
+			}, nil)
+			if resp.Err != nil {
+				IrisRespErr("", resp.Err, ctx)
+				return
+			}
+		}
+
 		rows := make([]map[string]any, 0, len(part.Rows))
 		if len(part.Rows) >= 1 {
 			// 去获取出最新的这一批数据
-			err = model.db.Collection(model.EngName).Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
+			err = model.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
 			if err != nil {
 				IrisRespErr("获取对应行列表失败", err, ctx)
 				return
@@ -163,25 +198,37 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 }
 func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
-	fsys := iris.PrefixDir("template", http.FS(embedWeb))
-	party.RegisterView(iris.Blocks(fsys, ".html"))
+
 	party.Get("/login", func(ctx iris.Context) {
 		loginPath := path.Join(party.GetRelPath(), "login")
 
 		ctx.ViewData("post_address", loginPath)
 		ctx.ViewData("allow_reg", allowReg)
 		ctx.ViewData("reg_path", path.Join(party.GetRelPath(), "reg"))
+		ctx.ViewData("rel_path", party.GetRelPath())
 		_ = ctx.View("login")
 	})
+	party.Post("/login", UserInstance.LoginUseUserNameHandler())
+	party.Get("/set_role", func(ctx iris.Context) {
+		p := path.Join(party.GetRelPath(), "set_role")
+		ctx.ViewData("post_address", p)
+		_ = ctx.View("role")
+	})
+	party.Post("/set_role", UserInstance.RoleSetHandler())
+
 	if allowReg {
 		party.Get("/reg", func(ctx iris.Context) {
 			regPath := path.Join(party.GetRelPath(), "reg")
 
 			ctx.ViewData("login_path", path.Join(party.GetRelPath(), "login"))
 			ctx.ViewData("post_address", regPath)
+			ctx.ViewData("rel_path", party.GetRelPath())
 			_ = ctx.View("reg")
 		})
+		party.Post("/reg", UserInstance.RegistryUseUserNameHandler())
+
 	}
+
 }
 func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
 	m := NewSchemaModel(raw, b.db)

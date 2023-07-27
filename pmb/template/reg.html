@@ -174,7 +174,7 @@
 
         let nextUrl = new URLSearchParams(location.search).get('next_url');
         if (!nextUrl) {
-            nextUrl = window.NextUrl || '/';
+            nextUrl = "{{.rel_path}}" || '/';
         }
 
         location.href = nextUrl;

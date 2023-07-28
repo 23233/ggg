@@ -1,11 +1,16 @@
 package pmb
 
 import (
+	"context"
 	"embed"
+	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/core/router"
+	"github.com/pkg/errors"
+	"github.com/qiniu/qmgo"
+	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"path"
@@ -269,4 +274,40 @@ func NewBackend() *Backend {
 	b := new(Backend)
 	b.modelContextKey = "now_model"
 	return b
+}
+
+func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress string, redisPassword string, redisDb int) (*Backend, error) {
+	rdb, err := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{redisAddress},
+		Password:    redisPassword,
+		SelectDB:    redisDb,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = rdb.Do(context.TODO(), rdb.B().Ping().Build()).Error()
+	if err != nil {
+		return nil, err
+	}
+
+	if mongodb == nil {
+		return nil, errors.New("mongodb未找到连接")
+	}
+
+	bk := NewBackend()
+	bk.AddDb(mongodb)
+	bk.AddRdb(rdb)
+	bk.AddRbacUseUri(redisAddress, redisPassword)
+	bk.RegistryRoute(party)
+	bk.RegistryLoginRegRoute(party, true)
+	UserInstance.SetConn(bk.CloneConn())
+	err = UserInstance.SyncIndex(context.TODO())
+	if err != nil {
+		logger.J.ErrorE(err, "同步用户模型索引失败")
+		return nil, err
+	}
+
+	return bk, nil
+
 }

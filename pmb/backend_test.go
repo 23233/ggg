@@ -14,17 +14,15 @@ func TestNewBackend(t *testing.T) {
 	app := iris.New()
 	app.Configure(iris.WithoutBodyConsumptionOnUnmarshal)
 
-	bk := NewBackend()
-	bk.AddDb(getMg())
-	bk.AddRdb(getRdb())
-	bk.AddRbacUseUri(getRdbInfo())
-	bk.RegistryRoute(app)
-	bk.RegistryLoginRegRoute(app, true)
+	mg := getMg()
+	address, password := getRdbInfo()
+	bk, err := NewFullBackend(app, mg, address, password, 6)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	model := bk.AddModelAny(new(testModelStruct))
-
-	UserInstance.SetConn(bk.CloneConn())
-	_ = UserInstance.SyncIndex(context.TODO())
 
 	var userId string
 	var token string

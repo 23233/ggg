@@ -68,10 +68,7 @@ func main() {
 	// 还可以测试action
 	model := pmb.NewSchemaModel[any](new(testModelStruct), bk.CloneConn().Db())
 
-	var action = new(pmb.SchemaModelAction)
-	action.Name = "设置desc为新的"
-	action.Types = []uint{0, 1}
-	action.SetForm(new(testActionDesc))
+	var action = pmb.NewAction("设置desc为新的", new(testActionDesc))
 	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel) (any, error) {
 		// 批量变更
 		ids := make([]string, 0, len(rows))

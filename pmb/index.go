@@ -60,7 +60,6 @@ type SchemaModelAction struct {
 func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error)) {
 	s.call = call
 }
-
 func (s *SchemaModelAction) SetForm(raw any) {
 	schema := new(jsonschema.Reflector)
 	// 默认为true是所有存在的字段均会被标记到required
@@ -70,6 +69,28 @@ func (s *SchemaModelAction) SetForm(raw any) {
 	schema.ExpandedStruct = true
 	ref := schema.Reflect(raw)
 	s.Form = ref
+}
+func NewRowAction(name string, form any) *SchemaModelAction {
+	inst := &SchemaModelAction{
+		Types: []uint{1},
+	}
+	inst.Name = name
+	if form != nil {
+		inst.SetForm(form)
+	}
+	return inst
+}
+func NewTableAction(name string, form any) *SchemaModelAction {
+	inst := NewRowAction(name, form)
+	inst.Types = []uint{1}
+	return inst
+}
+
+// NewAction action的名称必填 form没有可传nil
+func NewAction(name string, form any) *SchemaModelAction {
+	inst := NewRowAction(name, form)
+	inst.Types = []uint{0, 1}
+	return inst
 }
 
 type SchemaBase struct {

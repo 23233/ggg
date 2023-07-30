@@ -137,7 +137,7 @@ func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
 			return
 		}
 		// 判断秘钥是否一致
-		if body.Secret != "999888" {
+		if body.Secret != c.RoleSecret() {
 			IrisRespErr("秘钥错误", err, ctx)
 			return
 		}
@@ -155,7 +155,12 @@ func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
 			return
 		}
 
-		err = c.SetRoleUseUid(ctx, body.Id, body.Role)
+		err = c.SetRole(ctx, bson.M{
+			"$or": bson.A{
+				bson.D{{"user_name", body.Id}},
+				bson.D{{"uid", body.Id}},
+			},
+		}, body.Role)
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return

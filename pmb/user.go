@@ -44,7 +44,20 @@ type SimpleUserModel struct {
 	Balance   uint64             `json:"balance,omitempty" bson:"balance,omitempty" comment:"余额(分)" `   // 余额 单位是分
 	Email     string             `json:"email,omitempty" bson:"email,omitempty" comment:"邮箱地址"`
 	Platforms []Platform         `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
+
+	roleSecret string
 	connectInfo
+}
+
+func (c *SimpleUserModel) RoleSecret() string {
+	if len(c.roleSecret) > 0 {
+		return c.roleSecret
+	}
+	return "999888"
+}
+
+func (c *SimpleUserModel) SetRoleSecret(roleSecret string) {
+	c.roleSecret = roleSecret
 }
 
 func (c *SimpleUserModel) InjectDefault(mp map[string]any) error {

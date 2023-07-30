@@ -28,8 +28,8 @@ func TestNewBackend(t *testing.T) {
 	var token string
 
 	loginBody := map[string]any{
-		"user_name": "test123",
-		"password":  "test321321",
+		"user_name": ut.RandomStr(6),
+		"password":  ut.RandomStr(10),
 	}
 
 	e := httptest.New(t, app)
@@ -44,11 +44,11 @@ func TestNewBackend(t *testing.T) {
 	})
 	t.Run("用户登录", func(t *testing.T) {
 		t.Run("登录失败", func(t *testing.T) {
-			body := map[string]any{
-				"user_name": "test123",
-				"password":  "test321123",
+			login := map[string]any{
+				"user_name": loginBody["user_name"],
 			}
-			e.POST("/login").WithJSON(body).Expect().Status(http.StatusBadRequest)
+			login["password"] = ut.RandomStr(10)
+			e.POST("/login").WithJSON(login).Expect().Status(http.StatusBadRequest)
 		})
 		t.Run("登录成功", func(t *testing.T) {
 			e.POST("/login").WithJSON(loginBody).Expect().Status(http.StatusOK)
@@ -60,7 +60,7 @@ func TestNewBackend(t *testing.T) {
 		assert.Equal(t, nil, err)
 	})
 
-	prefix := "/" + model.EngName
+	prefix := app.GetRelPath() + model.EngName
 	var uid string
 
 	headers := map[string]string{

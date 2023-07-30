@@ -226,11 +226,8 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 		userModel.Password = password
 		userModel.Salt = salt
 		userModel.NickName = ut.RandomStr(12)
-		err = userModel.InjectDefault(pipe.DefaultModelMap())
-		if err != nil {
-			IrisRespErr("写入默认信息失败", err, ctx, 500)
-			return
-		}
+		_ = userModel.BeforeInsert(ctx)
+
 		// 插入用户
 		_, err = c.db.Collection(UserModelName).InsertOne(ctx, &userModel)
 		if err != nil {

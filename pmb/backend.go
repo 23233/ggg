@@ -299,8 +299,8 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 	bk.AddDb(mongodb)
 	bk.AddRdb(rdb)
 	bk.AddRbacUseUri(redisAddress, redisPassword)
-	bk.RegistryRoute(party)
 	bk.RegistryLoginRegRoute(party, true)
+	bk.RegistryRoute(party)
 	UserInstance.SetConn(bk.CloneConn())
 	err = UserInstance.SyncIndex(context.TODO())
 	if err != nil {

@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"context"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
@@ -14,6 +15,29 @@ import (
 
 type ModelCtxAddConfig struct {
 	ModelId string `json:"model_id,omitempty"`
+}
+
+type ModelBase struct {
+	Id       primitive.ObjectID `json:"_id,omitempty" bson:"id"`
+	Uid      string             `json:"uid,omitempty" bson:"uid,omitempty"`
+	UpdateAt time.Time          `json:"update_at,omitempty" bson:"update_at,omitempty"`
+	CreateAt time.Time          `json:"create_at,omitempty" bson:"create_at,omitempty"`
+}
+
+func (c *ModelBase) BeforeInsert(ctx context.Context) error {
+	if c.Id.IsZero() {
+		c.Id = primitive.NewObjectID()
+	}
+	if len(c.Uid) < 1 {
+		c.Uid = SfNextId()
+	}
+	if c.UpdateAt.IsZero() {
+		c.UpdateAt = time.Now().Local()
+	}
+	if c.CreateAt.IsZero() {
+		c.CreateAt = time.Now().Local()
+	}
+	return nil
 }
 
 func DefaultModelMap() map[string]any {

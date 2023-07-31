@@ -16,6 +16,10 @@ import (
 	"path"
 )
 
+var (
+	BkInst *Backend
+)
+
 //go:embed template/*
 var embedWeb embed.FS
 
@@ -33,6 +37,7 @@ func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
 	}
 	return nil, false
 }
+
 func (b *Backend) AddModel(m *SchemaModel[any]) {
 	_, has := b.GetModel(m.EngName)
 	if has {
@@ -40,6 +45,12 @@ func (b *Backend) AddModel(m *SchemaModel[any]) {
 	}
 	b.models = append(b.models, m)
 }
+func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
+	m := NewSchemaModel(raw, b.db)
+	b.AddModel(m)
+	return m
+}
+
 func (b *Backend) RegistryRoute(party iris.Party) {
 	fsys := iris.PrefixDir("template", http.FS(embedWeb))
 	party.RegisterView(iris.Blocks(fsys, ".html"))
@@ -235,11 +246,6 @@ func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
 	}
 
 }
-func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
-	m := NewSchemaModel(raw, b.db)
-	b.AddModel(m)
-	return m
-}
 
 func (b *Backend) engGetModelMiddleware(ctx iris.Context) {
 	engName := ctx.Params().GetString("eng")
@@ -273,6 +279,7 @@ func (b *Backend) minRoot() iris.Handler {
 func NewBackend() *Backend {
 	b := new(Backend)
 	b.modelContextKey = "now_model"
+	BkInst = b
 	return b
 }
 

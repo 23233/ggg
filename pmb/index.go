@@ -54,10 +54,10 @@ type SchemaModelAction struct {
 	Form       *jsonschema.Schema `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
 	MustSelect bool               `json:"must_select,omitempty"`
 	//
-	call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) // 处理方法 result 只能返回map或struct
+	call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error) // 处理方法 result 只能返回map或struct
 }
 
-func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error)) {
+func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error)) {
 	s.call = call
 }
 func (s *SchemaModelAction) SetForm(raw any) {
@@ -508,7 +508,7 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 		}
 	}
 
-	result, err := action.call(ctx, rows, part.FormData, nil)
+	result, err := action.call(ctx, rows, part.FormData, nil, s.ToAny())
 	if err != nil {
 		IrisRespErr("", err, ctx)
 		return
@@ -516,9 +516,9 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 
 	if result != nil {
 		_ = ctx.JSON(result)
-	} else {
-		_, _ = ctx.WriteString("ok")
+		return
 	}
+	_, _ = ctx.WriteString("ok")
 
 }
 

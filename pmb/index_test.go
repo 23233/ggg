@@ -138,7 +138,7 @@ func TestNewSchemaModel(t *testing.T) {
 	action.Name = "表操作"
 	action.Types = []uint{0, 1}
 	action.Form = nil
-	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) {
+	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error) {
 		return nil, nil
 	})
 
@@ -148,7 +148,7 @@ func TestNewSchemaModel(t *testing.T) {
 	ac2.Name = "行操作"
 	ac2.Types = []uint{1}
 	ac2.Form = nil
-	ac2.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel) (any, error) {
+	ac2.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error) {
 		return nil, nil
 	})
 

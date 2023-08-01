@@ -49,11 +49,12 @@ type ActionPostPart struct {
 }
 
 type SchemaModelAction struct {
-	Name       string             `json:"name,omitempty"`  // 动作名称 需要唯一
-	Types      []uint             `json:"types,omitempty"` // 0 表可用 1 行可用
-	Form       *jsonschema.Schema `json:"form,omitempty"`  // 若form为nil 则不会弹出表单填写
-	MustSelect bool               `json:"must_select,omitempty"`
-	//
+	Name       string             `json:"name,omitempty"`        // 动作名称 需要唯一
+	Types      []uint             `json:"types,omitempty"`       // 0 表可用 1 行可用
+	Form       *jsonschema.Schema `json:"form,omitempty"`        // 若form为nil 则不会弹出表单填写
+	MustSelect bool               `json:"must_select,omitempty"` // 必须有所选择表选择适用 行是必须选一行
+	Conditions []ut.Kov           `json:"conditions,omitempty"`  // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
+
 	call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error) // 处理方法 result 只能返回map或struct
 }
 
@@ -78,6 +79,7 @@ func NewRowAction(name string, form any) *SchemaModelAction {
 	if form != nil {
 		inst.SetForm(form)
 	}
+	inst.Conditions = make([]ut.Kov, 0)
 	return inst
 }
 func NewTableAction(name string, form any) *SchemaModelAction {

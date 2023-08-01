@@ -54,7 +54,7 @@ func main() {
 	app.Logger().SetLevel("debug")
 	app.Configure(iris.WithoutBodyConsumptionOnUnmarshal)
 
-	party := app.Party("/bk")
+	party := app.Party("/")
 
 	bk := pmb.NewBackend()
 	bk.AddDb(getMg())
@@ -69,7 +69,7 @@ func main() {
 	model := pmb.NewSchemaModel[any](new(testModelStruct), bk.CloneConn().Db())
 
 	var action = pmb.NewAction("设置desc为新的", new(testActionDesc))
-	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel) (any, error) {
+	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
 		// 批量变更
 		ids := make([]string, 0, len(rows))
 		for _, row := range rows {
@@ -84,8 +84,30 @@ func main() {
 		println(result.ModifiedCount)
 		return iris.Map{}, nil
 	})
-
 	model.AddAction(action)
+
+	// 执行条件
+	var action2 = pmb.NewAction("判断执行条件", nil)
+	action2.Conditions = append(action2.Conditions, ut.Kov{
+		Key:   "desc",
+		Op:    "ne",
+		Value: nil,
+	})
+	action2.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
+		return iris.Map{}, nil
+	})
+	model.AddAction(action2)
+
+	var action3 = pmb.NewAction("desc必须为323423423", nil)
+	action3.Conditions = append(action2.Conditions, ut.Kov{
+		Key:   "desc",
+		Op:    "eq",
+		Value: "323423423",
+	})
+	action3.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
+		return iris.Map{}, nil
+	})
+	model.AddAction(action3)
 
 	bk.AddModel(model)
 	bk.AddModelAny(new(testModelTwo))

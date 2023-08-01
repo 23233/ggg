@@ -3,6 +3,7 @@ package pmb
 import (
 	"context"
 	"embed"
+	"fmt"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
@@ -131,6 +132,14 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			}
 		}
 
+		// 判断在纯表选择的情况下 是否没有选中任何数据
+		if len(action.Types) == 1 && action.Types[0] == 0 {
+			if len(part.Rows) < 1 && action.MustSelect {
+				IrisRespErr("请选择一条数据后重试", nil, ctx)
+				return
+			}
+		}
+
 		rows := make([]map[string]any, 0, len(part.Rows))
 		if len(part.Rows) >= 1 {
 			// 去获取出最新的这一批数据
@@ -138,6 +147,21 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			if err != nil {
 				IrisRespErr("获取对应行列表失败", err, ctx)
 				return
+			}
+		}
+
+		// 对验证器进行验证
+		if action.Conditions != nil {
+			if len(rows) < 1 {
+				IrisRespErr("有验证器但未选择任何数据", nil, ctx)
+				return
+			}
+			for _, row := range rows {
+				pass, msg := CheckConditions(row, action.Conditions)
+				if !pass {
+					IrisRespErr(fmt.Sprintf("%s 行校验错误:%s", row[ut.DefaultUidTag].(string), msg), nil, ctx)
+					return
+				}
 			}
 		}
 

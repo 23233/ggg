@@ -10,13 +10,15 @@ import (
 const OpRegex = "regex"
 const DefaultUidTag = "uid"
 
+var AllowOps = []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin", OpRegex}
+
 var (
 	NotEnableGlobalSearch = errors.New("未启用全局搜索")
 )
 
 type Kov struct {
 	Key   string `json:"key,omitempty"` // 格式是 "abc.die.ede"
-	Op    string `json:"op,omitempty"`
+	Op    string `json:"op,omitempty"`  // 格式为英文 看 AllowOps
 	Value any    `json:"value,omitempty"`
 }
 
@@ -379,7 +381,7 @@ func NewPruneCtxQuery() *PruneCtxQuery {
 	m := &PruneCtxQuery{
 		lastKey:         "_last",
 		searchKey:       "_s",
-		allowOps:        []string{"eq", "gt", "gte", "lt", "lte", "ne", "in", "nin", OpRegex},
+		allowOps:        AllowOps,
 		opSuffix:        "_",
 		inlineFieldsSep: "__",
 		orPrefix:        "_o_",

@@ -50,6 +50,7 @@ type ActionPostPart struct {
 
 type SchemaModelAction struct {
 	Name       string             `json:"name,omitempty"`        // 动作名称 需要唯一
+	Prefix     string             `json:"prefix,omitempty"`      // 前缀标识 仅展示用
 	Types      []uint             `json:"types,omitempty"`       // 0 表可用 1 行可用
 	Form       *jsonschema.Schema `json:"form,omitempty"`        // 若form为nil 则不会弹出表单填写
 	MustSelect bool               `json:"must_select,omitempty"` // 必须有所选择表选择适用 行是必须选一行
@@ -71,6 +72,10 @@ func (s *SchemaModelAction) SetForm(raw any) {
 	ref := schema.Reflect(raw)
 	s.Form = ref
 }
+func (s *SchemaModelAction) AddCondition(cond ut.Kov) {
+	s.Conditions = append(s.Conditions, cond)
+}
+
 func NewRowAction(name string, form any) *SchemaModelAction {
 	inst := &SchemaModelAction{
 		Types: []uint{1},

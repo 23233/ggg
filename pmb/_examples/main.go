@@ -69,6 +69,7 @@ func main() {
 	model := pmb.NewSchemaModel[any](new(testModelStruct), bk.CloneConn().Db())
 
 	var action = pmb.NewAction("设置desc为新的", new(testActionDesc))
+	action.Prefix = "前缀测试"
 	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
 		// 批量变更
 		ids := make([]string, 0, len(rows))

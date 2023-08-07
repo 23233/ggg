@@ -206,10 +206,15 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	curd.Post("/", b.minRoot(), func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+
+		// 这个模型必须包含了 UserIdFieldName 字段才注入 否则不注入
+		injectData := make(map[string]any)
+		if model.HaveUserKey() {
+			injectData[UserIdFieldName] = user.Uid
+		}
+
 		err := model.PostHandler(ctx, pipe.ModelCtxMapperPack{
-			InjectData: map[string]any{
-				"user_id": user.Uid,
-			},
+			InjectData: injectData,
 		})
 		if err != nil {
 			IrisRespErr("", err, ctx)
@@ -219,9 +224,9 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	curd.Put("/{uid:string}", b.minRoot(), func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.PutHandler(ctx, pipe.ModelPutConfig{
-			// 是不是需要注入用户的id?
 			UpdateTime: true,
-			DropKeys:   []string{"user_id"},
+			// 这里虽然没有判断就注入了用户id 但是因为drop 未找到是跳过 所以无所谓
+			DropKeys: []string{UserIdFieldName},
 		})
 		if err != nil {
 			IrisRespErr("", err, ctx)

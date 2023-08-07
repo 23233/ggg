@@ -11,7 +11,8 @@ const (
 )
 
 var (
-	UserInstance = NewUserModel()
+	UserInstance    = NewUserModel()
+	UserIdFieldName = "user_id"
 )
 
 type UserModel interface {

@@ -10,7 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
+	"time"
 )
 
 func IrisRespErr(msg string, err error, ctx iris.Context, code ...int) {
@@ -139,8 +141,41 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 	// 默认为true是所有存在的字段均会被标记到required
 	// 只要为标记为omitempty的都会进入required
 	schema.RequiredFromJSONSchemaTags = false
+	// 用真实的[]uint8 别去mock去一个 string base64出来
+	schema.DoNotBase64 = true
 	// 为true 则会写入Properties 对于object会写入$defs 生成$ref引用
 	schema.ExpandedStruct = true
+	schema.Mapper = func(r reflect.Type) *jsonschema.Schema {
+		switch r {
+		case reflect.TypeOf(primitive.ObjectID{}):
+			return &jsonschema.Schema{
+				Type:   "string",
+				Format: "objectId",
+			}
+		case reflect.TypeOf(time.Time{}):
+			return &jsonschema.Schema{
+				Type:   "string",
+				Format: "date-time",
+			}
+		}
+
+		return nil
+	}
+
+	// 映射comment为Title
+	schema.AddTagSetMapper("comment", "Title")
+
+	// 还应该跳过_id 和uid 不让改
+	schema.Intercept = func(field reflect.StructField) bool {
+		if field.Name == "Id" && field.Type == reflect.TypeOf(primitive.ObjectID{}) {
+			return false
+		}
+		if field.Name == "Uid" && field.Type == reflect.TypeOf("") {
+			return false
+		}
+		return true
+	}
+
 	ref := schema.Reflect(raw)
 	s.raw = raw
 	s.Schema = ref
@@ -182,6 +217,11 @@ func (s *SchemaModel[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
 	return result, nil
 }
 
+func (s *SchemaModel[T]) HaveUserKey() bool {
+	_, ok := s.Schema.Properties.Get(UserIdFieldName)
+	return ok
+}
+
 func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
 	var b = new(SchemaModel[any])
 	b.Group = s.Group
@@ -207,7 +247,7 @@ func (s *SchemaModel[T]) GetAction(name string) (*SchemaModelAction, bool) {
 }
 
 func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+	inline := struct {
 		Info    SchemaBase           `json:"info"`
 		Actions []*SchemaModelAction `json:"actions"`
 		Schema  *jsonschema.Schema   `json:"schema"`
@@ -215,7 +255,9 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 		Info:    s.SchemaBase,
 		Actions: s.Actions,
 		Schema:  s.Schema,
-	})
+	}
+	inline.Schema.Title = s.SchemaBase.Alias
+	return json.Marshal(inline)
 }
 
 func (s *SchemaModel[T]) GetCollection() *qmgo.Collection {

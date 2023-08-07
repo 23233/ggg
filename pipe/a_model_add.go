@@ -20,8 +20,8 @@ type ModelCtxAddConfig struct {
 type ModelBase struct {
 	Id       primitive.ObjectID `json:"_id,omitempty" bson:"_id"`
 	Uid      string             `json:"uid,omitempty" bson:"uid,omitempty"`
-	UpdateAt time.Time          `json:"update_at,omitempty" bson:"update_at,omitempty"`
-	CreateAt time.Time          `json:"create_at,omitempty" bson:"create_at,omitempty"`
+	UpdateAt time.Time          `json:"update_at,omitempty" bson:"update_at,omitempty" comment:"更新时间"`
+	CreateAt time.Time          `json:"create_at,omitempty" bson:"create_at,omitempty" comment:"创建时间"`
 }
 
 func (c *ModelBase) BeforeInsert(ctx context.Context) error {

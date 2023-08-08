@@ -18,6 +18,7 @@ type ModelPutConfig struct {
 	ModelId     string        `json:"model_id,omitempty"`
 	RowId       string        `json:"row_id,omitempty"`
 	UpdateTime  bool          `json:"update_time,omitempty"`
+	UpdateForce bool          `json:"update_force,omitempty"` // 强行覆盖
 }
 
 func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData map[string]interface{}) map[string]interface{} {
@@ -131,7 +132,10 @@ var (
 				return newPipeErr[map[string]any](errors.New("未获取到更新项"))
 			}
 			if params.UpdateTime {
-				diff["update_at"] = time.Now().Local()
+				_, ok := diff["update_at"]
+				if params.UpdateForce || !ok {
+					diff["update_at"] = time.Now().Local()
+				}
 			}
 
 			err = db.Collection(params.ModelId).UpdateOne(ctx, bson.M{ut.DefaultUidTag: params.RowId}, bson.M{"$set": diff})

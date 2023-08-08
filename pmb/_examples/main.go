@@ -53,7 +53,6 @@ func main() {
 	app := iris.New()
 	app.Logger().SetLevel("debug")
 	app.Configure(iris.WithoutBodyConsumptionOnUnmarshal)
-
 	party := app.Party("/")
 
 	bk := pmb.NewBackend()

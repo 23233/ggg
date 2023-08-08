@@ -8,6 +8,7 @@ import (
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/apps"
 	"github.com/kataras/iris/v12/core/router"
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
@@ -52,7 +53,16 @@ func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
 	return m
 }
 
+func recordBodyMiddleware(ctx iris.Context) {
+	if !ctx.IsRecordingBody() {
+		ctx.RecordRequestBody(true)
+	}
+	ctx.Next()
+}
+
 func (b *Backend) RegistryRoute(party iris.Party) {
+	apps.Get().Configure(iris.WithoutBodyConsumptionOnUnmarshal)
+
 	fsys := iris.PrefixDir("template", http.FS(embedWeb))
 	party.RegisterView(iris.Blocks(fsys, ".html"))
 
@@ -99,7 +109,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			_ = ctx.JSON(model)
 			return
 		})
-	party.Post("/action/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.minRoot(), func(ctx iris.Context) {
+	party.Post("/action/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 
@@ -203,7 +213,8 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
-	curd.Post("/", b.minRoot(), func(ctx iris.Context) {
+	curd.Post("/", b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
+
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 
@@ -221,7 +232,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
-	curd.Put("/{uid:string}", b.minRoot(), func(ctx iris.Context) {
+	curd.Put("/{uid:string}", b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.PutHandler(ctx, pipe.ModelPutConfig{
 			UpdateTime: true,
@@ -242,6 +253,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 	})
 }
+
 func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
 
 	party.Get("/login", func(ctx iris.Context) {
@@ -253,7 +265,7 @@ func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
 		ctx.ViewData("rel_path", party.GetRelPath())
 		_ = ctx.View("login")
 	})
-	party.Post("/login", UserInstance.LoginUseUserNameHandler())
+	party.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler())
 	party.Get("/set_role", func(ctx iris.Context) {
 		p := path.Join(party.GetRelPath(), "set_role")
 		ctx.ViewData("post_address", p)

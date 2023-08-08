@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/pmb"
 	"github.com/23233/ggg/ut"
 	"github.com/joho/godotenv"
@@ -157,6 +158,8 @@ type testModelStruct struct {
 }
 
 type testModelTwo struct {
+	pipe.ModelBase `bson:",inline"`
+
 	Name string `json:"name,omitempty" bson:"name,omitempty"`
 	Age  uint   `json:"age,omitempty" bson:"age,omitempty"`
 	Desc string `json:"desc,omitempty" bson:"desc,omitempty"`
@@ -164,7 +167,8 @@ type testModelTwo struct {
 }
 
 type testModelThree struct {
-	Address struct {
+	pipe.ModelBase `bson:",inline"`
+	Address        struct {
 		Position string `json:"position,omitempty" bson:"position,omitempty"`
 	} `json:"address,omitempty" bson:"address,omitempty"`
 	TestInline struct {

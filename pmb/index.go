@@ -65,14 +65,7 @@ func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[strin
 	s.call = call
 }
 func (s *SchemaModelAction) SetForm(raw any) {
-	schema := new(jsonschema.Reflector)
-	// 默认为true是所有存在的字段均会被标记到required
-	// 只要为标记为omitempty的都会进入required
-	schema.RequiredFromJSONSchemaTags = false
-	// 为true 则会写入Properties 对于object会写入$defs 生成$ref引用
-	schema.ExpandedStruct = true
-	ref := schema.Reflect(raw)
-	s.Form = ref
+	s.Form = ToJsonSchema(raw)
 }
 func (s *SchemaModelAction) AddCondition(cond ut.Kov) {
 	s.Conditions = append(s.Conditions, cond)
@@ -136,10 +129,10 @@ func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	return r
 }
 
-func (s *SchemaModel[T]) SetRaw(raw T) {
+func ToJsonSchema[T any](origin T) *jsonschema.Schema {
 	schema := new(jsonschema.Reflector)
 	// 只要为标记为omitempty的都会进入required
-	schema.RequiredFromJSONSchemaTags = true
+	//schema.RequiredFromJSONSchemaTags = true
 	// 用真实的[]uint8 别去mock去一个 string base64出来
 	schema.DoNotBase64 = true
 	// 为true 则会写入Properties 对于object会写入$defs 生成$ref引用
@@ -175,9 +168,14 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 		return true
 	}
 
-	ref := schema.Reflect(raw)
+	ref := schema.Reflect(origin)
+	return ref
+}
+
+func (s *SchemaModel[T]) SetRaw(raw T) {
+
 	s.raw = raw
-	s.Schema = ref
+	s.Schema = ToJsonSchema(raw)
 	// 通过反射获取struct的名称 不包含包名
 
 	typ := reflect.TypeOf(raw)

@@ -140,7 +140,7 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 	schema := new(jsonschema.Reflector)
 	// 默认为true是所有存在的字段均会被标记到required
 	// 只要为标记为omitempty的都会进入required
-	schema.RequiredFromJSONSchemaTags = false
+	schema.RequiredFromJSONSchemaTags = true
 	// 用真实的[]uint8 别去mock去一个 string base64出来
 	schema.DoNotBase64 = true
 	// 为true 则会写入Properties 对于object会写入$defs 生成$ref引用

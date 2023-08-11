@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
+	github.com/google/go-cmp v0.5.2
 	github.com/iancoleman/strcase v0.2.0
 	github.com/itchyny/base58-go v0.2.1
 	github.com/jxskiss/base62 v1.1.0

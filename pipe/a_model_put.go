@@ -40,7 +40,8 @@ func parseToTime(val interface{}) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData map[string]interface{}) map[string]interface{} {
+// CompareAndDiff 对比不同 逻辑是出现在bodyData中的 然后origin与oldData不一致的 则返回一个diff Map
+func CompareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData map[string]interface{}, tagName string) map[string]interface{} {
 	diff := make(map[string]interface{})
 	v := reflect.Indirect(reflect.ValueOf(origin))
 
@@ -49,12 +50,12 @@ func compareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Type().Field(i)
 			if field.Type == reflect.TypeOf(ModelBase{}) {
-				subDiff := compareAndDiff(v.Field(i).Interface(), bodyData, oldData)
+				subDiff := CompareAndDiff(v.Field(i).Interface(), bodyData, oldData, tagName)
 				for k, v := range subDiff {
 					diff[k] = v
 				}
 			}
-			jsonTag := field.Tag.Get("json")
+			jsonTag := field.Tag.Get(tagName)
 			name := strings.Split(jsonTag, ",")[0]
 			if name == "" {
 				continue
@@ -150,7 +151,7 @@ var (
 				origin = bodyData
 			}
 
-			diff := compareAndDiff(origin, bodyData, result)
+			diff := CompareAndDiff(origin, bodyData, result, "json")
 
 			// 删除不允许变更的数据
 			params.DropKeys = append(params.DropKeys, "_id", ut.DefaultUidTag)

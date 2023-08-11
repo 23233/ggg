@@ -7,16 +7,37 @@ import (
 	"testing"
 )
 
-type Address struct {
+type InnerOne struct {
 	City string `bson:"city"`
-	Zip  string `bson:"zip"`
 }
 
-type User struct {
-	ID      primitive.ObjectID `bson:"_id"`
-	Name    string             `bson:"name"`
-	Age     int                `bson:"age"`
-	Address Address            `bson:"address"`
+type InnerAnonymous struct {
+	Name     string `bson:"name"`
+	NickName string `bson:"nick_name"`
+}
+
+type Inline struct {
+	Desc  string             `bson:"desc"`
+	ObjId primitive.ObjectID `bson:"obj_id"`
+}
+
+type InlineName struct {
+	InName string `bson:"in_name"`
+	Desc   string `bson:"desc"`
+}
+
+type MainTypes struct {
+	Inline `bson:",inline"`
+	InnerAnonymous
+	InlineName `bson:"inline_name,inline"`
+	InnerOne   `bson:"inner_one"`
+	Avatar     string `bson:"avatar"`
+	NoBsonTag  string
+	Anonymous  struct {
+		Inline `bson:",inline"`
+		InnerAnonymous
+		InlineName `bson:"inline_name,inline"`
+	} `bson:"anonymous"`
 }
 
 func TestStructToBsonM(t *testing.T) {
@@ -25,159 +46,188 @@ func TestStructToBsonM(t *testing.T) {
 		return v.Interface() == primitive.NilObjectID
 	})
 
-	user := User{Name: "Alice", Age: 30, Address: Address{City: "New York", Zip: "10001"}}
-	result, _ := converter.StructToBsonM(user)
-	if result["_id"] != nil {
-		t.Errorf("Expected _id to be nil, got %v", result["_id"])
-	}
-	if result["name"] != "Alice" {
-		t.Errorf("Expected name to be Alice, got %v", result["name"])
-	}
-	if result["age"] != 30 {
-		t.Errorf("Expected age to be 30, got %v", result["age"])
-	}
-
-	freeze := []string{"name", "address.city"}
-	resultWithFreeze, _ := converter.StructToBsonM(user, freeze...)
-	if resultWithFreeze["name"] != nil {
-		t.Errorf("Expected name to be nil, got %v", resultWithFreeze["name"])
-	}
-	address, ok := resultWithFreeze["address"].(bson.M)
-	if !ok || address["city"] != nil {
-		t.Errorf("Expected address.city to be nil, got %v", address["city"])
-	}
-}
-
-type InnerAddress struct {
-	Street string `bson:"street"`
-}
-
-type NestedAddress struct {
-	City   string       `bson:"city"`
-	Street InnerAddress `bson:"street,inline"`
-}
-
-type NestedUser struct {
-	Name    string        `bson:"name"`
-	Age     int           `bson:"age"`
-	Address NestedAddress `bson:"address"`
-}
-
-func TestStructToBsonMWithNestedStruct(t *testing.T) {
-	converter := &StructConverter{}
-
-	user := NestedUser{Name: "Alice", Age: 30, Address: NestedAddress{City: "New York", Street: InnerAddress{Street: "123 Main St"}}}
-	result, _ := converter.StructToBsonM(user)
-	if result["name"] != "Alice" || result["age"] != 30 {
-		t.Errorf("Unexpected values for name or age")
-	}
-	address, ok := result["address"].(bson.M)
-	if !ok || address["city"] != "New York" || address["street"] != "123 Main St" {
-		t.Errorf("Unexpected values for address")
+	objID := primitive.NewObjectID()
+	main := MainTypes{
+		Inline: Inline{
+			Desc:  "description",
+			ObjId: objID,
+		},
+		InnerAnonymous: InnerAnonymous{
+			Name:     "Alice",
+			NickName: "A",
+		},
+		InlineName: InlineName{
+			InName: "Inner Name",
+			Desc:   "Inner Description",
+		},
+		InnerOne: InnerOne{
+			City: "New York",
+		},
+		Avatar:    "avatar.png",
+		NoBsonTag: "no bson tag",
+		Anonymous: struct {
+			Inline `bson:",inline"`
+			InnerAnonymous
+			InlineName `bson:"inline_name,inline"`
+		}{
+			Inline: Inline{
+				Desc:  "anonymous description",
+				ObjId: objID,
+			},
+			InnerAnonymous: InnerAnonymous{
+				Name:     "Anonymous Alice",
+				NickName: "AA",
+			},
+			InlineName: InlineName{
+				InName: "Anonymous Inner Name",
+				Desc:   "Anonymous Inner Description",
+			},
+		},
 	}
 
-	freeze := []string{"name", "address.street"}
-	resultWithFreeze, _ := converter.StructToBsonM(user, freeze...)
-	if resultWithFreeze["name"] != nil {
-		t.Errorf("Expected name to be nil, got %v", resultWithFreeze["name"])
+	result, _ := converter.StructToBsonM(main)
+
+	// 验证主要字段
+	// 因为InlineName有inline标签 但是他排在Inline结构的后面有相同的desc字段 应该覆盖前面的desc字段
+	if result["desc"] != "Inner Description" || result["obj_id"] != objID {
+		t.Errorf("Unexpected values for inline fields")
 	}
-	addressWithFreeze, ok := resultWithFreeze["address"].(bson.M)
-	if !ok || addressWithFreeze["city"] != "New York" || addressWithFreeze["street"] != nil {
-		t.Errorf("Unexpected values for address with freeze")
+	if result["name"] != "Alice" || result["nick_name"] != "A" {
+		t.Errorf("Unexpected values for InnerAnonymous fields")
+	}
+	if result["avatar"] != "avatar.png" {
+		t.Errorf("Unexpected value for Avatar field")
+	}
+	if result["NoBsonTag"] != "no bson tag" {
+		t.Errorf("Unexpected value for NoBsonTag field")
 	}
 
-	freezeAll := []string{"name", "address.city", "address.street"}
-	resultWithFreezeAll, _ := converter.StructToBsonM(user, freezeAll...)
-	if resultWithFreezeAll["name"] != nil || resultWithFreezeAll["address"] != nil {
-		t.Errorf("Expected name and address to be nil, got %v and %v", resultWithFreezeAll["name"], resultWithFreezeAll["address"])
+	// 因为inline_name有inline标签 他不应该出现
+	inlineName, ok := result["inline_name"].(bson.M)
+	if ok || inlineName != nil {
+		t.Errorf("inline标签解析失败 未提取到上一级中")
 	}
 
-	// 测试没有标签的纯内联结构体
-	type PureInlinePerson struct {
-		Person
-		Email string `bson:"email"`
+	// 验证内部字段
+	innerOne, ok := result["inner_one"].(bson.M)
+	if !ok || innerOne["city"] != "New York" {
+		t.Errorf("Unexpected values for InnerOne fields")
 	}
-	originalPerson := Person{Name: "Alice", Age: 25, Location: Location{City: "New York"}}
-	pureInlinePerson := PureInlinePerson{Person: originalPerson, Email: "alice@example.com"}
-	resultPureInline, _ := converter.StructToBsonM(pureInlinePerson)
-	if resultPureInline["name"] != "Alice" || resultPureInline["age"] != 25 || resultPureInline["city"] != "New York" || resultPureInline["email"] != "alice@example.com" {
-		t.Errorf("Unexpected values for pure inline person")
+
+	// 验证匿名字段
+	anonymous, ok := result["anonymous"].(bson.M)
+	if !ok {
+		t.Errorf("Unexpected values for anonymous fields")
 	}
-}
+	if anonymous["obj_id"] != objID || anonymous["desc"] != main.Anonymous.InlineName.Desc || anonymous["nick_name"] != main.Anonymous.InnerAnonymous.NickName {
+		t.Errorf("Unexpected values for anonymous fields")
+	}
 
-type Location struct {
-	City   string `bson:"city"`
-	Street string `bson:"street"`
-}
-
-type Person struct {
-	Name     string   `bson:"name"`
-	Age      int      `bson:"age"`
-	Location Location `bson:"location,inline"`
 }
 
 func TestDiffToBsonM(t *testing.T) {
-	converter := new(StructConverter)
+	converter := &StructConverter{}
+	converter.AddCustomIsZero(new(primitive.ObjectID), func(v reflect.Value, field reflect.StructField) bool {
+		return v.Interface() == primitive.NilObjectID
+	})
 
-	// 测试基本字段的差异
-	original := Person{Name: "Alice", Age: 25}
-	current := Person{Name: "Alice", Age: 30}
-	diff, err := converter.DiffToBsonM(original, current)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff["age"] != 30 {
-		t.Errorf("Expected age to be 30, got %v", diff["age"])
-	}
-
-	// 测试内联结构体的差异
-	original = Person{Name: "Alice", Location: Location{City: "New York"}}
-	current = Person{Name: "Alice", Location: Location{City: "Los Angeles"}}
-	diff, err = converter.DiffToBsonM(original, current)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff["city"] != "Los Angeles" {
-		t.Errorf("Expected city to be Los Angeles, got %v", diff["city"])
-	}
-
-	// 测试冻结字段
-	original = Person{Name: "Alice", Age: 25}
-	current = Person{Name: "Bob", Age: 30}
-	diff, err = converter.DiffToBsonM(original, current, "name")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := diff["name"]; ok {
-		t.Errorf("Expected name to be frozen, but it was included in the diff")
+	objID := primitive.NewObjectID()
+	mainOriginal := MainTypes{
+		Inline: Inline{
+			Desc:  "original description",
+			ObjId: objID,
+		},
+		InnerAnonymous: InnerAnonymous{
+			Name:     "Original Alice",
+			NickName: "OA",
+		},
+		InlineName: InlineName{
+			InName: "Original Inner Name",
+			Desc:   "Original Inner Description",
+		},
+		InnerOne: InnerOne{
+			City: "Original City",
+		},
+		Avatar:    "original_avatar.png",
+		NoBsonTag: "original no bson tag",
 	}
 
-	// 测试内联结构体的冻结字段
-	original = Person{Name: "Alice", Location: Location{City: "New York"}}
-	current = Person{Name: "Alice", Location: Location{City: "Los Angeles"}}
-	diff, err = converter.DiffToBsonM(original, current, "location.city")
-	if err != nil {
-		t.Fatal(err)
+	mainCurrent := MainTypes{
+		Inline: Inline{
+			Desc:  "current description",
+			ObjId: objID,
+		},
+		InnerAnonymous: InnerAnonymous{
+			Name:     "Current Alice",
+			NickName: "CA",
+		},
+		InlineName: InlineName{
+			InName: "Current Inner Name",
+			Desc:   "Current Inner Description",
+		},
+		InnerOne: InnerOne{
+			City: "Current City",
+		},
+		Avatar:    "current_avatar.png",
+		NoBsonTag: "current no bson tag",
 	}
-	if _, ok := diff["city"]; ok {
-		t.Errorf("Expected city to be frozen, but it was included in the diff")
+
+	partCurrent := MainTypes{
+		InlineName: InlineName{
+			InName: "part Inner Name",
+			Desc:   "part Inner Description",
+		},
 	}
 
 	// 测试多层内联结构体
-	type ExtendedPerson struct {
-		Person
-		Email string `bson:"email"`
-	}
-	originalExtended := ExtendedPerson{Person: original, Email: "alice@example.com"}
-	currentExtended := ExtendedPerson{Person: current, Email: "bob@example.com"}
-	diff, err = converter.DiffToBsonM(originalExtended, currentExtended)
+	result, err := converter.DiffToBsonM(mainOriginal, mainCurrent)
 	if err != nil {
-		t.Fatal(err)
+		t.Errorf("Error in DiffToBsonM: %v", err)
 	}
-	if diff["email"] != "bob@example.com" {
-		t.Errorf("Expected email to be bob@example.com, got %v", diff["email"])
+	if result["desc"] != "Current Inner Description" || result["in_name"] != "Current Inner Name" {
+		t.Errorf("Unexpected values for diff fields")
 	}
-	if diff["city"] != "Los Angeles" {
-		t.Errorf("Expected city to be Los Angeles, got %v", diff["city"])
+
+	result, err = converter.DiffToBsonM(mainOriginal, partCurrent)
+	if err != nil {
+		t.Errorf("Error in DiffToBsonM: %v", err)
+	}
+
+	// 测试内联结构体的冻结字段
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, "name")
+	if err != nil {
+		t.Errorf("Error in DiffToBsonM with freeze: %v", err)
+	}
+	if _, ok := result["name"]; ok {
+		t.Errorf("Unexpected diff for frozen inline field")
+	}
+
+	// 测试冻结字段
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, "avatar")
+	if err != nil {
+		t.Errorf("Error in DiffToBsonM with freeze: %v", err)
+	}
+	if _, ok := result["avatar"]; ok {
+		t.Errorf("Unexpected diff for frozen field")
+	}
+
+	// 测试内联结构体的差异
+	mainCurrent.InlineName.InName = "Original Inner Name" // 使内联结构体的一个字段与原始值相同
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent)
+	if err != nil {
+		t.Errorf("Error in DiffToBsonM: %v", err)
+	}
+	if _, ok := result["in_name"]; ok {
+		t.Errorf("与内联结构原始值一致了则不应该出现")
+	}
+
+	// 测试基本字段的差异
+	mainCurrent.Avatar = "original_avatar.png" // 使基本字段与原始值相同
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent)
+	if err != nil {
+		t.Errorf("Error in DiffToBsonM: %v", err)
+	}
+	if _, ok := result["avatar"]; ok {
+		t.Errorf("Unexpected diff for unchanged basic field")
 	}
 }

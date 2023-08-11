@@ -75,8 +75,21 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 		bsonTagParts := strings.Split(bsonTag, ",")
 		bsonTag = bsonTagParts[0]
 
-		isInline := len(bsonTagParts) > 1 && bsonTagParts[1] == "inline"
-		isAnonymous := fieldType.Anonymous
+		// 有inline则为内联
+		// 没有名称也视为内联
+
+		isInline := false
+		if fieldVal.Kind() == reflect.Struct || fieldVal.Kind() == reflect.Map {
+			if strings.Contains(bsonTag, "inline") {
+				isInline = true
+			} else if bsonTag == "" {
+				isInline = true
+			}
+		}
+
+		if !isInline && bsonTag == "" {
+			bsonTag = fieldType.Name // 使用字段名称作为键，如果没有Bson标签
+		}
 
 		fullPath := prefix + bsonTag
 
@@ -84,13 +97,13 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 			continue
 		}
 
-		if isInline || isAnonymous {
+		if isInline {
 			if fieldVal.Kind() == reflect.Struct {
-				inlinePrefix := fullPath
-				if isAnonymous {
-					inlinePrefix = prefix // 对于匿名字段，我们不添加额外的前缀
+				inlinePrefix := prefix
+				if bsonTag != "" {
+					inlinePrefix += bsonTag + "."
 				}
-				inlineMap := sc.structToMap(fieldVal, freezeMap, inlinePrefix+".")
+				inlineMap := sc.structToMap(fieldVal, freezeMap, inlinePrefix)
 				for k, v := range inlineMap {
 					result[k] = v
 				}
@@ -145,10 +158,19 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 			continue
 		}
 
-		bsonTagParts := strings.Split(bsonTag, ",")
-		bsonTag = bsonTagParts[0]
+		fieldVal := originalVal.Field(i)
+		isInline := false
+		if fieldVal.Kind() == reflect.Struct || fieldVal.Kind() == reflect.Map {
+			if strings.Contains(bsonTag, "inline") {
+				isInline = true
+			} else if bsonTag == "" {
+				isInline = true
+			}
+		}
 
-		isInline := len(bsonTagParts) > 1 && bsonTagParts[1] == "inline" || fieldType.Type.Kind() == reflect.Struct
+		if !isInline && bsonTag == "" {
+			bsonTag = fieldType.Name // 使用字段名称作为键，如果没有Bson标签
+		}
 
 		fullPath := prefix + bsonTag
 
@@ -160,13 +182,15 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 		currentFieldVal := currentVal.Field(i)
 
 		if isInline {
-			if originalFieldVal.Kind() == reflect.Struct && currentFieldVal.Kind() == reflect.Struct {
-				inlineMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, freezeMap, fullPath+".")
-				for k, v := range inlineMap {
-					result[k] = v
-				}
-				continue
+			inlinePrefix := prefix
+			if bsonTag != "" {
+				inlinePrefix += bsonTag + "."
 			}
+			inlineMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, freezeMap, inlinePrefix)
+			for k, v := range inlineMap {
+				result[k] = v
+			}
+			continue
 		}
 
 		if !cmp.Equal(originalFieldVal.Interface(), currentFieldVal.Interface()) {

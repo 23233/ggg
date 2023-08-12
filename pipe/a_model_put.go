@@ -87,13 +87,31 @@ func CompareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 	case reflect.Map:
 		for key, val := range bodyData {
 			oldVal, ok := oldData[key]
+			valTime, ok1 := parseToTime(val)
+			oldValTime, ok2 := parseToTime(oldVal)
 			if ok {
+				// 即使在map中对于time.Time也需要单独处理
+				if ok1 && ok2 {
+					valTime = valTime.Truncate(time.Second)
+					oldValTime = oldValTime.Truncate(time.Second)
+					if !valTime.Equal(oldValTime) {
+						diff[key] = val
+						continue // 跳过此键的后续处理
+					}
+				}
+				// 判断是否一致
 				if !cmp.Equal(val, oldVal) {
 					diff[key] = val
 				}
-			} else {
-				diff[key] = val
+				continue
 			}
+			// 如果原始中不存在则直接加入 但是如果是时间则重制类型为 time.Time
+			if ok1 {
+				diff[key] = valTime
+				continue
+			}
+			diff[key] = val
+
 		}
 	}
 

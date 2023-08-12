@@ -26,6 +26,7 @@ import (
 // 特点是会自动去除0值的字段最后只保留有值的产出bson.M
 // 那在某些情况下 会从db中取出存储的哪一行 然后跟当前的进行对比
 // 这时候就使用 diff 的模式 对比两个struct中的不同项进行变更
+// 还有某些情况下 需要从body中取出更新项 需要使用 pipe里的diff算法
 type StructConverter struct {
 	CustomIsZero map[reflect.Type]func(reflect.Value, reflect.StructField) bool
 	SpecialTypes []reflect.Type // 特殊结构体类型列表

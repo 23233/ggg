@@ -84,7 +84,7 @@ func NewRowAction(name string, form any) *SchemaModelAction {
 }
 func NewTableAction(name string, form any) *SchemaModelAction {
 	inst := NewRowAction(name, form)
-	inst.Types = []uint{1}
+	inst.Types = []uint{0}
 	return inst
 }
 

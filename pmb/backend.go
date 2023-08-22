@@ -161,7 +161,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 
 		// 对验证器进行验证
-		if action.Conditions != nil {
+		if action.Conditions != nil && len(action.Conditions) >= 1 {
 			if len(rows) < 1 {
 				IrisRespErr("有验证器但未选择任何数据", nil, ctx)
 				return

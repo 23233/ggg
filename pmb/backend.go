@@ -174,8 +174,12 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 				}
 			}
 		}
-
-		result, err := action.call(ctx, rows, part.FormData, user, model)
+		args := new(ActionPostArgs)
+		args.Rows = rows
+		args.FormData = part.FormData
+		args.User = user
+		args.Model = model
+		result, err := action.call(ctx, args)
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return

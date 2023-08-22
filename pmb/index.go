@@ -50,6 +50,13 @@ type ActionPostPart struct {
 	FormData map[string]any `json:"form_data,omitempty"` // 表单填写的值
 }
 
+type ActionPostArgs struct {
+	Rows     []map[string]any  `json:"rows"`
+	FormData map[string]any    `json:"form_data"`
+	User     *SimpleUserModel  `json:"user"`
+	Model    *SchemaModel[any] `json:"model"`
+}
+
 type SchemaModelAction struct {
 	Name       string             `json:"name,omitempty"`        // 动作名称 需要唯一
 	Prefix     string             `json:"prefix,omitempty"`      // 前缀标识 仅展示用
@@ -58,10 +65,10 @@ type SchemaModelAction struct {
 	MustSelect bool               `json:"must_select,omitempty"` // 必须有所选择表选择适用 行是必须选一行
 	Conditions []ut.Kov           `json:"conditions,omitempty"`  // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
 
-	call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error) // 处理方法 result 只能返回map或struct
+	call func(ctx iris.Context, args *ActionPostArgs) (responseInfo any, err error) // 处理方法 result 只能返回map或struct
 }
 
-func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *SimpleUserModel, model *SchemaModel[any]) (any, error)) {
+func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, args *ActionPostArgs) (any, error)) {
 	s.call = call
 }
 func (s *SchemaModelAction) SetForm(raw any) {
@@ -553,8 +560,12 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 			return
 		}
 	}
-
-	result, err := action.call(ctx, rows, part.FormData, nil, s.ToAny())
+	args := new(ActionPostArgs)
+	args.Rows = rows
+	args.FormData = part.FormData
+	args.User = nil
+	args.Model = s.ToAny()
+	result, err := action.call(ctx, args)
 	if err != nil {
 		IrisRespErr("", err, ctx)
 		return

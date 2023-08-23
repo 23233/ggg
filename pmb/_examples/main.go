@@ -64,6 +64,8 @@ func main() {
 	bk.RegistryRoute(party)
 	bk.RegistryLoginRegRoute(party, true)
 
+	bk.InsertLogModel()
+
 	pmb.UserInstance.SetConn(bk.CloneConn())
 
 	// 还可以测试action

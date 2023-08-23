@@ -19,7 +19,7 @@ var (
 type Kov struct {
 	Key   string `json:"key,omitempty" bson:"key,omitempty"` // 格式是 "abc.die.ede"
 	Op    string `json:"op,omitempty" bson:"op,omitempty"`   // 格式为英文 看 AllowOps
-	Value any    `json:"value,omitempty" bson:"value,omitempty"`
+	Value any    `json:"value,omitempty" bson:"value,omitempty" jsonschema:"type=string"`
 }
 
 type GeoItem struct {

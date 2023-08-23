@@ -318,11 +318,17 @@ func (b *Backend) minStaff() iris.Handler {
 func (b *Backend) minRoot() iris.Handler {
 	return b.gtRoleMiddleware([]string{"root"})
 }
-
+func (b *Backend) InsertLogModel() {
+	m := NewSchemaModel(new(OperationLog), b.db)
+	m.Alias = "操作日志"
+	m.EngName = "operation_log"
+	b.AddModel(m.ToAny())
+}
 func NewBackend() *Backend {
 	b := new(Backend)
 	b.modelContextKey = "now_model"
 	BkInst = b
+
 	return b
 }
 
@@ -357,6 +363,9 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 		logger.J.ErrorE(err, "同步用户模型索引失败")
 		return nil, err
 	}
+
+	// 新增操作日志
+	bk.InsertLogModel()
 
 	// 日志也需要索引
 	go func() {

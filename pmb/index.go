@@ -164,7 +164,13 @@ func NewRowAction[T any, F any](name string, form F) ISchemaAction {
 	inst := NewSchemaModelAction[T, F]()
 	inst.Types = []uint{1}
 	inst.Name = name
-	if !reflect.ValueOf(form).IsZero() {
+
+	val := reflect.ValueOf(form)
+	if val.Kind() == reflect.Ptr {
+		if !val.IsNil() {
+			inst.SetForm(form)
+		}
+	} else if val.IsValid() && !val.IsZero() {
 		inst.SetForm(form)
 	}
 	inst.Conditions = make([]ut.Kov, 0)

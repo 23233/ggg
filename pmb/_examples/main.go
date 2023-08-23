@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/pmb"
 	"github.com/23233/ggg/ut"
@@ -68,44 +69,47 @@ func main() {
 	// 还可以测试action
 	model := pmb.NewSchemaModel[any](new(testModelStruct), bk.CloneConn().Db())
 
-	var action = pmb.NewAction("设置desc为新的", new(testActionDesc))
-	action.Prefix = "前缀测试"
-	action.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
+	var action = pmb.NewAction[map[string]any, *testActionDesc]("设置desc为新的", new(testActionDesc))
+	action.GetBase().Prefix = "前缀测试"
+	action.SetCall(func(ctx iris.Context, args any) (any, error) {
+
+		// 这里没办法跟上面对齐 主要是F没有地方透传 所以只能是map
+		part := args.(*pmb.ActionPostArgs[map[string]any, map[string]any])
+
 		// 批量变更
-		ids := make([]string, 0, len(rows))
-		for _, row := range rows {
+		ids := make([]string, 0, len(part.Rows))
+		for _, row := range part.Rows {
 			ids = append(ids, row[ut.DefaultUidTag].(string))
 		}
 		result, err := model.GetCollection().UpdateAll(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": ids}}, bson.M{
-			"$set": bson.M(formData),
+			"$set": bson.M(part.FormData),
 		})
 		if err != nil {
 			return nil, err
 		}
-		println(result.ModifiedCount)
-		return iris.Map{}, nil
+		return iris.Map{"detail": fmt.Sprintf("设置成功%d条", result.ModifiedCount)}, nil
 	})
 	model.AddAction(action)
 
 	// 执行条件
-	var action2 = pmb.NewAction("判断执行条件", nil)
-	action2.Conditions = append(action2.Conditions, ut.Kov{
+	var action2 = pmb.NewAction[map[string]any, map[string]any]("判断执行条件", nil)
+	action2.GetBase().AddCondition(ut.Kov{
 		Key:   "desc",
 		Op:    "ne",
 		Value: nil,
 	})
-	action2.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
+	action2.SetCall(func(ctx iris.Context, args any) (any, error) {
 		return iris.Map{}, nil
 	})
 	model.AddAction(action2)
 
-	var action3 = pmb.NewAction("desc必须为323423423", nil)
-	action3.Conditions = append(action2.Conditions, ut.Kov{
+	var action3 = pmb.NewAction[map[string]any, map[string]any]("desc必须为323423423", nil)
+	action3.GetBase().AddCondition(ut.Kov{
 		Key:   "desc",
 		Op:    "eq",
 		Value: "323423423",
 	})
-	action3.SetCall(func(ctx iris.Context, rows []map[string]any, formData map[string]any, user *pmb.SimpleUserModel, model *pmb.SchemaModel[any]) (any, error) {
+	action3.SetCall(func(ctx iris.Context, args any) (any, error) {
 		return iris.Map{}, nil
 	})
 	model.AddAction(action3)

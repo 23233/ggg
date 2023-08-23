@@ -134,21 +134,14 @@ func TestNewSchemaModel(t *testing.T) {
 	inst := NewSchemaModel(new(testModelStruct), getMg())
 	inst.Registry(app)
 
-	action := new(SchemaModelAction)
-	action.Name = "表操作"
-	action.Types = []uint{0, 1}
-	action.Form = nil
-	action.SetCall(func(ctx iris.Context, args *ActionPostArgs) (any, error) {
+	action := NewAction[map[string]any, map[string]any]("表操作", nil)
+	action.SetCall(func(ctx iris.Context, args any) (any, error) {
 		return nil, nil
 	})
-
 	inst.AddAction(action)
 
-	ac2 := new(SchemaModelAction)
-	ac2.Name = "行操作"
-	ac2.Types = []uint{1}
-	ac2.Form = nil
-	ac2.SetCall(func(ctx iris.Context, args *ActionPostArgs) (any, error) {
+	ac2 := NewRowAction[map[string]any, map[string]any]("行操作", nil)
+	ac2.SetCall(func(ctx iris.Context, args any) (any, error) {
 		return nil, nil
 	})
 

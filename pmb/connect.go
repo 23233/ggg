@@ -46,3 +46,6 @@ func (c *connectInfo) CloneConn() *connectInfo {
 		rbac: c.rbac,
 	}
 }
+func (c *connectInfo) OpLog() *qmgo.Collection {
+	return c.db.Collection("operation_log")
+}

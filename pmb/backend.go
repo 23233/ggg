@@ -114,7 +114,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 
 		// 必须为post
-		part := new(ActionPostPart)
+		part := new(ActionPostPart[map[string]any])
 		err := ctx.ReadBody(&part)
 		if err != nil {
 			IrisRespErr("解构action参数包失败", err, ctx)
@@ -126,15 +126,11 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			IrisRespErr("未找到对应action", nil, ctx)
 			return
 		}
-		if action.call == nil {
-			IrisRespErr("action未设置执行方法", nil, ctx)
-			return
-		}
 
 		// 进行验证
-		if action.Form != nil {
+		if action.GetBase().Form != nil {
 			resp := pipe.SchemaValid.Run(ctx, part.FormData, &pipe.SchemaValidConfig{
-				Schema: action.Form,
+				Schema: action.GetBase().Form,
 			}, nil)
 			if resp.Err != nil {
 				IrisRespErr("", resp.Err, ctx)
@@ -143,8 +139,8 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 
 		// 判断在纯表选择的情况下 是否没有选中任何数据
-		if len(action.Types) == 1 && action.Types[0] == 0 {
-			if len(part.Rows) < 1 && action.MustSelect {
+		if len(action.GetBase().Types) == 1 && action.GetBase().Types[0] == 0 {
+			if len(part.Rows) < 1 && action.GetBase().MustSelect {
 				IrisRespErr("请选择一条数据后重试", nil, ctx)
 				return
 			}
@@ -161,25 +157,25 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 
 		// 对验证器进行验证
-		if action.Conditions != nil && len(action.Conditions) >= 1 {
+		if action.GetBase().Conditions != nil && len(action.GetBase().Conditions) >= 1 {
 			if len(rows) < 1 {
 				IrisRespErr("有验证器但未选择任何数据", nil, ctx)
 				return
 			}
 			for _, row := range rows {
-				pass, msg := CheckConditions(row, action.Conditions)
+				pass, msg := CheckConditions(row, action.GetBase().Conditions)
 				if !pass {
 					IrisRespErr(fmt.Sprintf("%s 行校验错误:%s", row[ut.DefaultUidTag].(string), msg), nil, ctx)
 					return
 				}
 			}
 		}
-		args := new(ActionPostArgs)
+		args := new(ActionPostArgs[map[string]any, map[string]any])
 		args.Rows = rows
 		args.FormData = part.FormData
 		args.User = user
 		args.Model = model
-		result, err := action.call(ctx, args)
+		result, err := action.Execute(ctx, args)
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return
@@ -235,6 +231,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			IrisRespErr("", err, ctx)
 			return
 		}
+
 	})
 	curd.Put("/{uid:string}", b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
@@ -247,6 +244,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			IrisRespErr("", err, ctx)
 			return
 		}
+
 	})
 	curd.Delete("/{uid:string}", b.minRoot(), func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
@@ -359,6 +357,14 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 		logger.J.ErrorE(err, "同步用户模型索引失败")
 		return nil, err
 	}
+
+	// 日志也需要索引
+	go func() {
+		err := OpLogSyncIndex(context.TODO(), bk.OpLog())
+		if err != nil {
+			logger.J.ErrorE(err, "创建操作日志索引失败")
+		}
+	}()
 
 	return bk, nil
 

@@ -44,61 +44,142 @@ type ContextValueInject struct {
 	AllowEmpty bool   `json:"allow_empty,omitempty"`
 }
 
-type ActionPostPart struct {
-	Name     string         `json:"name"`                // action名称
-	Rows     []string       `json:"rows,omitempty"`      // 选中的行id
-	FormData map[string]any `json:"form_data,omitempty"` // 表单填写的值
+type ActionPostPart[F any] struct {
+	Name     string   `json:"name"`                // action名称
+	Rows     []string `json:"rows,omitempty"`      // 选中的行id
+	FormData F        `json:"form_data,omitempty"` // 表单填写的值
 }
 
-type ActionPostArgs struct {
-	Rows     []map[string]any  `json:"rows"`
-	FormData map[string]any    `json:"form_data"`
+// ActionPostArgs T是行数据 F是表单数据
+type ActionPostArgs[T, F any] struct {
+	Rows     []T               `json:"rows"`
+	FormData F                 `json:"form_data"`
 	User     *SimpleUserModel  `json:"user"`
 	Model    *SchemaModel[any] `json:"model"`
 }
 
-type SchemaModelAction struct {
+type SchemaActionBase struct {
 	Name       string             `json:"name,omitempty"`        // 动作名称 需要唯一
 	Prefix     string             `json:"prefix,omitempty"`      // 前缀标识 仅展示用
 	Types      []uint             `json:"types,omitempty"`       // 0 表可用 1 行可用
 	Form       *jsonschema.Schema `json:"form,omitempty"`        // 若form为nil 则不会弹出表单填写
 	MustSelect bool               `json:"must_select,omitempty"` // 必须有所选择表选择适用 行是必须选一行
 	Conditions []ut.Kov           `json:"conditions,omitempty"`  // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
-
-	call func(ctx iris.Context, args *ActionPostArgs) (responseInfo any, err error) // 处理方法 result 只能返回map或struct
 }
 
-func (s *SchemaModelAction) SetCall(call func(ctx iris.Context, args *ActionPostArgs) (any, error)) {
-	s.call = call
+func (s *SchemaActionBase) SetType(tp []uint) {
+	s.Types = tp
 }
-func (s *SchemaModelAction) SetForm(raw any) {
+func (s *SchemaActionBase) SetForm(raw any) {
 	s.Form = ToJsonSchema(raw)
 }
-func (s *SchemaModelAction) AddCondition(cond ut.Kov) {
+func (s *SchemaActionBase) AddCondition(cond ut.Kov) {
 	s.Conditions = append(s.Conditions, cond)
 }
 
-func NewRowAction(name string, form any) *SchemaModelAction {
-	inst := &SchemaModelAction{
-		Types: []uint{1},
+type ISchemaAction interface {
+	Execute(ctx iris.Context, args any) (responseInfo any, err error)
+	GetBase() *SchemaActionBase
+	SetCall(func(ctx iris.Context, args any) (responseInfo any, err error))
+}
+
+func ActionParseArgs[T any, F any](ctx iris.Context, model *SchemaModel[any]) (*ActionPostPart[F], []T, ISchemaAction, error) {
+	// 必须为post
+	part := new(ActionPostPart[F])
+	err := ctx.ReadBody(&part)
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "解构action参数包失败")
 	}
+
+	var action ISchemaAction
+	for _, ac := range model.Actions {
+		if ac.GetBase().Name == part.Name {
+			action = ac
+			break
+		}
+	}
+
+	if action == nil {
+		return nil, nil, nil, errors.Wrap(err, "未找到对应action")
+	}
+
+	rows := make([]T, 0, len(part.Rows))
+	if len(part.Rows) >= 1 {
+		// 去获取出最新的这一批数据
+		err = model.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
+		if err != nil {
+			return nil, nil, nil, errors.Wrap(err, "获取对应行列表失败")
+		}
+	}
+	return part, rows, action, nil
+}
+
+func ActionRun[T any, F any](ctx iris.Context, model *SchemaModel[any], user *SimpleUserModel) {
+	part, rows, action, err := ActionParseArgs[T, F](ctx, model)
+	args := new(ActionPostArgs[T, F])
+	args.Rows = rows
+	args.FormData = part.FormData
+	args.User = user
+	args.Model = model
+
+	result, err := action.Execute(ctx, args)
+	if err != nil {
+		IrisRespErr("", err, ctx)
+		return
+	}
+
+	if result != nil {
+		_ = ctx.JSON(result)
+		return
+	}
+	_, _ = ctx.WriteString("ok")
+
+}
+
+// SchemaModelAction 模型action T是模型数据 F是表单数据
+type SchemaModelAction[T, F any] struct {
+	SchemaActionBase
+	call func(ctx iris.Context, args any) (responseInfo any, err error)
+}
+
+func (s *SchemaModelAction[T, F]) GetBase() *SchemaActionBase {
+	return &s.SchemaActionBase
+}
+func (s *SchemaModelAction[T, F]) Execute(ctx iris.Context, args any) (responseInfo any, err error) {
+	if s.call == nil {
+		return nil, errors.New("action未定义默认执行函数")
+	}
+	return s.call(ctx, args)
+}
+func (s *SchemaModelAction[T, F]) SetCall(call func(ctx iris.Context, args any) (responseInfo any, err error)) {
+	s.call = call
+}
+
+func NewSchemaModelAction[T, F any]() *SchemaModelAction[T, F] {
+	inst := new(SchemaModelAction[T, F])
+	return inst
+}
+
+func NewRowAction[T any, F any](name string, form F) ISchemaAction {
+	inst := NewSchemaModelAction[T, F]()
+	inst.Types = []uint{1}
 	inst.Name = name
-	if form != nil {
+	if !reflect.ValueOf(form).IsZero() {
 		inst.SetForm(form)
 	}
 	inst.Conditions = make([]ut.Kov, 0)
 	return inst
 }
-func NewTableAction(name string, form any) *SchemaModelAction {
-	inst := NewRowAction(name, form)
-	inst.Types = []uint{0}
+func NewTableAction[T any, F any](name string, form F) ISchemaAction {
+	inst := NewRowAction[T, F](name, form)
+	inst.GetBase().SetType([]uint{0})
 	return inst
 }
 
 // NewAction action的名称必填 form没有可传nil
-func NewAction(name string, form any) *SchemaModelAction {
-	inst := NewRowAction(name, form)
-	inst.Types = []uint{0, 1}
+func NewAction[T any, F any](name string, form F) ISchemaAction {
+	inst := NewRowAction[T, F](name, form)
+	inst.GetBase().SetType([]uint{0, 1})
 	return inst
 }
 
@@ -113,8 +194,8 @@ type SchemaModel[T any] struct {
 	SchemaBase
 	db      *qmgo.Database
 	raw     T
-	Schema  *jsonschema.Schema   `json:"schema,omitempty"`
-	Actions []*SchemaModelAction `json:"actions,omitempty"` // 各类操作
+	Schema  *jsonschema.Schema `json:"schema,omitempty"`
+	Actions []ISchemaAction    `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryInjects []ContextValueInject
 	WriteInsert  bool     `json:"write_insert,omitempty"` // 是否把注入内容写入新增体
@@ -127,10 +208,18 @@ func (s *SchemaModel[T]) AddQueryInject(q ContextValueInject) {
 	s.queryInjects = append(s.queryInjects, q)
 }
 
+func (s *SchemaModel[T]) GetContextUser(ctx iris.Context) *SimpleUserModel {
+	var user *SimpleUserModel = nil
+	if ctx.Values().Exists(UserContextKey) {
+		user = ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+	}
+	return user
+}
+
 func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	var r = &SchemaModel[T]{
 		db:      db,
-		Actions: make([]*SchemaModelAction, 0),
+		Actions: make([]ISchemaAction, 0),
 	}
 	r.SetRaw(raw)
 	return r
@@ -194,7 +283,7 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 	s.EngName = name
 }
 
-func (s *SchemaModel[T]) AddAction(action *SchemaModelAction) {
+func (s *SchemaModel[T]) AddAction(action ISchemaAction) {
 	s.Actions = append(s.Actions, action)
 }
 
@@ -241,9 +330,9 @@ func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
 	b.db = s.db
 	return b
 }
-func (s *SchemaModel[T]) GetAction(name string) (*SchemaModelAction, bool) {
+func (s *SchemaModel[T]) GetAction(name string) (ISchemaAction, bool) {
 	for _, ac := range s.Actions {
-		if ac.Name == name {
+		if ac.GetBase().Name == name {
 			return ac, true
 		}
 	}
@@ -252,9 +341,9 @@ func (s *SchemaModel[T]) GetAction(name string) (*SchemaModelAction, bool) {
 
 func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 	inline := struct {
-		Info    SchemaBase           `json:"info"`
-		Actions []*SchemaModelAction `json:"actions"`
-		Schema  *jsonschema.Schema   `json:"schema"`
+		Info    SchemaBase         `json:"info"`
+		Actions []ISchemaAction    `json:"actions"`
+		Schema  *jsonschema.Schema `json:"schema"`
 	}{
 		Info:    s.SchemaBase,
 		Actions: s.Actions,
@@ -443,6 +532,13 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 
 	ctx.JSON(insertResult.Result)
 
+	user := s.GetContextUser(ctx)
+	go func() {
+		uid := insertResult.Result[ut.DefaultUidTag]
+		uidStr, _ := uid.(string)
+		MustOpLog(s.db.Collection("operation_log"), "post", user, s.EngName, "新增一行", uidStr, nil)
+	}()
+
 	return nil
 }
 
@@ -478,6 +574,19 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 		return resp.Err
 	}
 	ctx.JSON(resp.Result)
+
+	user := s.GetContextUser(ctx)
+	go func() {
+		var fields = make([]ut.Kov, 0, len(resp.Result))
+		for k, v := range resp.Result {
+			fields = append(fields, ut.Kov{
+				Key:   k,
+				Value: v,
+			})
+		}
+		MustOpLog(s.db.Collection("operation_log"), "put", user, s.EngName, "修改行", params.RowId, fields)
+	}()
+
 	return nil
 }
 
@@ -511,6 +620,12 @@ func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig
 		return resp.Err
 	}
 	_, _ = ctx.WriteString(resp.Result.(string))
+
+	user := s.GetContextUser(ctx)
+	go func() {
+		MustOpLog(s.db.Collection("operation_log"), "del", user, s.EngName, "删除行", params.RowId, nil)
+	}()
+
 	return nil
 }
 
@@ -526,57 +641,8 @@ func (s *SchemaModel[T]) getUid(ctx iris.Context) (string, error) {
 }
 
 func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
-	// 必须为post
-	part := new(ActionPostPart)
-	err := ctx.ReadBody(&part)
-	if err != nil {
-		IrisRespErr("解构action参数包失败", err, ctx)
-		return
-	}
-
-	var action *SchemaModelAction
-	for _, ac := range s.Actions {
-		if ac.Name == part.Name {
-			action = ac
-			break
-		}
-	}
-
-	if action == nil {
-		IrisRespErr("未找到对应action", nil, ctx)
-		return
-	}
-	if action.call == nil {
-		IrisRespErr("action未设置执行方法", nil, ctx)
-		return
-	}
-
-	rows := make([]map[string]any, 0, len(part.Rows))
-	if len(part.Rows) >= 1 {
-		// 去获取出最新的这一批数据
-		err = s.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
-		if err != nil {
-			IrisRespErr("获取对应行列表失败", err, ctx)
-			return
-		}
-	}
-	args := new(ActionPostArgs)
-	args.Rows = rows
-	args.FormData = part.FormData
-	args.User = nil
-	args.Model = s.ToAny()
-	result, err := action.call(ctx, args)
-	if err != nil {
-		IrisRespErr("", err, ctx)
-		return
-	}
-
-	if result != nil {
-		_ = ctx.JSON(result)
-		return
-	}
-	_, _ = ctx.WriteString("ok")
-
+	ActionRun[T, map[string]any](ctx, s.ToAny(), nil)
+	return
 }
 
 func (s *SchemaModel[T]) Registry(part iris.Party) {

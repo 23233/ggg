@@ -167,7 +167,7 @@ func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
 		}
 		ctx.JSON(iris.Map{})
 
-		MustOpLog(c.OpLog(), "role", nil, "role", "设置权限", body.Id, []ut.Kov{{Key: "role", Value: body.Role}})
+		MustOpLog(c.OpLog(), "role", nil, "role", "设置权限", body.Id, []ut.Kov{{Key: "role", Value: body.Role}, {Key: "ua", Value: ctx.GetHeader("User-Agent")}, {Key: "ip", Value: ctx.RemoteAddr()}})
 
 		return
 	}
@@ -203,7 +203,7 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 	ctx.JSON(iris.Map{"token": token, "info": user.Masking(0)})
 
 	// 写入日志
-	MustOpLog(c.OpLog(), "login", user, "user", event+"登录成功", "", nil)
+	MustOpLog(c.OpLog(), "login", user, "user", event+"登录成功", "", []ut.Kov{{Key: "ua", Value: ctx.GetHeader("User-Agent")}, {Key: "ip", Value: ctx.RemoteAddr()}})
 
 }
 func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
@@ -249,7 +249,7 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 		}
 		ctx.JSON(iris.Map{"token": token, "info": userModel.Masking(0)})
 
-		MustOpLog(c.OpLog(), "reg", userModel, "user", "用户名密码注册", "", nil)
+		MustOpLog(c.OpLog(), "reg", userModel, "user", "用户名密码注册", "", []ut.Kov{{Key: "ua", Value: ctx.GetHeader("User-Agent")}, {Key: "ip", Value: ctx.RemoteAddr()}})
 
 	}
 }

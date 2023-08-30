@@ -5,6 +5,8 @@ import (
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
+	"github.com/kataras/iris/v12"
+	"github.com/kataras/realip"
 	"github.com/qiniu/qmgo"
 )
 
@@ -24,13 +26,27 @@ type OperationLog struct {
 	Msg      string   `json:"msg,omitempty" bson:"msg,omitempty" comment:"消息"`
 }
 
-func MustOpLog(db *qmgo.Collection, method string, user *SimpleUserModel, sheet string, msg string, rowId string, toFields []ut.Kov) {
+func MustOpLog(ctx iris.Context, db *qmgo.Collection, method string, user *SimpleUserModel, sheet string, msg string, rowId string, toFields []ut.Kov) {
 	var inst = new(OperationLog)
 	inst.Method = method
 	if user != nil {
 		inst.UserId = user.Uid
 		inst.UserName = user.NickName
 	}
+
+	if toFields == nil {
+		toFields = make([]ut.Kov, 0)
+	}
+	// 加入操作者设备信息
+	toFields = append(toFields, ut.Kov{
+		Key:   "ua",
+		Value: ctx.GetHeader("User-Agent"),
+	})
+	toFields = append(toFields, ut.Kov{
+		Key:   "ip",
+		Value: realip.Get(ctx.Request()),
+	})
+
 	inst.ToSheet = sheet
 	inst.ToRowId = rowId
 	inst.ToFields = toFields

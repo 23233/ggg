@@ -29,6 +29,7 @@ type Backend struct {
 	connectInfo
 	models          []*SchemaModel[any]
 	modelContextKey string
+	msg             *MessageQueue
 }
 
 func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
@@ -99,6 +100,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			"models": b.models,
 		})
 	})
+	party.Get("/message", mustLoginMiddleware, b.GetMsgHandler)
 
 	party.Get("/config/{eng:string}",
 		mustLoginMiddleware,
@@ -324,9 +326,29 @@ func (b *Backend) InsertLogModel() {
 	m.EngName = "operation_log"
 	b.AddModel(m.ToAny())
 }
+
+func (b *Backend) SendMsg(ctx context.Context, uid, content string) {
+	user, err := UserInstance.FuzzGetUser(ctx, uid)
+	if err != nil {
+		logger.J.ErrorE(err, "[%s]未找到用户 发送的消息是%s ", uid, content)
+		return
+	}
+	b.msg.Put(user.Uid, content)
+}
+func (b *Backend) GetMsgHandler(ctx iris.Context) {
+	user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+	msg, has := b.msg.Consume(user.GetUid(), ctx.GetHeader("User-Agent"))
+	if !has {
+		IrisRespErr("未获取到消息", nil, ctx)
+		return
+	}
+	ctx.JSON(msg)
+}
+
 func NewBackend() *Backend {
 	b := new(Backend)
 	b.modelContextKey = "now_model"
+	b.msg = NewMessageQueue()
 	BkInst = b
 
 	return b

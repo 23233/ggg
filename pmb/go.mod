@@ -19,6 +19,8 @@ require (
 	go.mongodb.org/mongo-driver v1.11.7
 )
 
+require github.com/kataras/realip v0.0.2 // indirect
+
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81 // indirect
 	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6 // indirect

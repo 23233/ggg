@@ -158,6 +158,8 @@ github.com/kataras/iris/v12 v12.2.0 h1:WzDY5nGuW/LgVaFS5BtTkW3crdSKJ/FEgWnxPnIVV
 github.com/kataras/iris/v12 v12.2.0/go.mod h1:BLzBpEunc41GbE68OUaQlqX4jzi791mx5HU04uPb90Y=
 github.com/kataras/pio v0.0.11 h1:kqreJ5KOEXGMwHAWHDwIl+mjfNCPhAwZPa8gK7MKlyw=
 github.com/kataras/pio v0.0.11/go.mod h1:38hH6SWH6m4DKSYmRhlrCJ5WItwWgCVrTNU62XZyUvI=
+github.com/kataras/realip v0.0.2 h1:IO4XFXfr3K+nXXa7w1YQMAyoghINvOEEQbmFk955uws=
+github.com/kataras/realip v0.0.2/go.mod h1:G0P4uepaE4wTsg19sVdh19l9TCsiFZyhNn7eJr6TlWY=
 github.com/kataras/sitemap v0.0.6 h1:w71CRMMKYMJh6LR2wTgnk5hSgjVNB9KL60n5e2KHvLY=
 github.com/kataras/sitemap v0.0.6/go.mod h1:dW4dOCNs896OR1HmG+dMLdT7JjDk7mYBzoIRwuj5jA4=
 github.com/kataras/tunnel v0.0.4 h1:sCAqWuJV7nPzGrlb0os3j49lk2JhILT0rID38NHNLpA=

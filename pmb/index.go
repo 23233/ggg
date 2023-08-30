@@ -539,11 +539,9 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 	ctx.JSON(insertResult.Result)
 
 	user := s.GetContextUser(ctx)
-	go func() {
-		uid := insertResult.Result[ut.DefaultUidTag]
-		uidStr, _ := uid.(string)
-		MustOpLog(s.db.Collection("operation_log"), "post", user, s.EngName, "新增一行", uidStr, nil)
-	}()
+	uid := insertResult.Result[ut.DefaultUidTag]
+	uidStr, _ := uid.(string)
+	MustOpLog(ctx, s.db.Collection("operation_log"), "post", user, s.EngName, "新增一行", uidStr, nil)
 
 	return nil
 }
@@ -582,16 +580,14 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 	ctx.JSON(resp.Result)
 
 	user := s.GetContextUser(ctx)
-	go func() {
-		var fields = make([]ut.Kov, 0, len(resp.Result))
-		for k, v := range resp.Result {
-			fields = append(fields, ut.Kov{
-				Key:   k,
-				Value: v,
-			})
-		}
-		MustOpLog(s.db.Collection("operation_log"), "put", user, s.EngName, "修改行", params.RowId, fields)
-	}()
+	var fields = make([]ut.Kov, 0, len(resp.Result))
+	for k, v := range resp.Result {
+		fields = append(fields, ut.Kov{
+			Key:   k,
+			Value: v,
+		})
+	}
+	MustOpLog(ctx, s.db.Collection("operation_log"), "put", user, s.EngName, "修改行", params.RowId, fields)
 
 	return nil
 }
@@ -628,9 +624,7 @@ func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig
 	_, _ = ctx.WriteString(resp.Result.(string))
 
 	user := s.GetContextUser(ctx)
-	go func() {
-		MustOpLog(s.db.Collection("operation_log"), "del", user, s.EngName, "删除行", params.RowId, nil)
-	}()
+	MustOpLog(ctx, s.db.Collection("operation_log"), "del", user, s.EngName, "删除行", params.RowId, nil)
 
 	return nil
 }

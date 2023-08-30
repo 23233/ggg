@@ -11,6 +11,7 @@ import (
 	"github.com/qiniu/qmgo"
 	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson"
+	"time"
 )
 
 func getMg() *qmgo.Database {
@@ -119,6 +120,12 @@ func main() {
 	bk.AddModel(model)
 	bk.AddModelAny(new(testModelTwo))
 	bk.AddModelAny(new(testModelThree))
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			bk.SendMsg(context.TODO(), "123123", "测试一下消息1")
+		}
+	}()
 
 	_ = app.Listen(":8080")
 

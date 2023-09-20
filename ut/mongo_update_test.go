@@ -46,6 +46,8 @@ type MainTypes struct {
 	Tm        time.Time   `bson:"tm"`
 	SliceStr  []string    `bson:"slice_str"`
 	SliceTime []time.Time `bson:"slice_time"`
+	KeepBool  bool        `bson:"keep_bool"`
+	OmitStr   string      `bson:"omit_str"`
 }
 
 func TestStructToBsonM(t *testing.T) {
@@ -102,7 +104,7 @@ func TestStructToBsonM(t *testing.T) {
 		SliceTime: []time.Time{time.Now()},
 	}
 
-	result, _ := converter.StructToBsonM(main)
+	result, _ := converter.StructToBsonM(main, []string{"omit_str"}, []string{"keep_bool"})
 
 	expectBson := bson.M{
 		"desc":           "Inner Description",
@@ -125,6 +127,7 @@ func TestStructToBsonM(t *testing.T) {
 			"slice_str":  main.Anonymous.SliceStr,
 			"slice_time": main.Anonymous.SliceTime,
 		},
+		"keep_bool": false,
 	}
 
 	for k, v := range expectBson {
@@ -234,7 +237,7 @@ func TestDiffToBsonM(t *testing.T) {
 	}
 
 	// 测试多层内联结构体
-	result, err := converter.DiffToBsonM(mainOriginal, mainCurrent)
+	result, err := converter.DiffToBsonM(mainOriginal, mainCurrent, nil, nil)
 	if err != nil {
 		t.Errorf("Error in DiffToBsonM: %v", err)
 	}
@@ -247,7 +250,7 @@ func TestDiffToBsonM(t *testing.T) {
 		}
 	}
 
-	result, err = converter.DiffToBsonM(mainOriginal, partCurrent)
+	result, err = converter.DiffToBsonM(mainOriginal, partCurrent, nil, nil)
 	if err != nil {
 		t.Errorf("Error in DiffToBsonM: %v", err)
 	}
@@ -255,19 +258,19 @@ func TestDiffToBsonM(t *testing.T) {
 		t.Errorf("内联修改获取失败")
 	}
 
-	// 测试内联结构体的冻结字段
-	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, "name")
+	// 测试内联结构体的跳过字段
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, []string{"name"}, nil)
 	if err != nil {
-		t.Errorf("Error in DiffToBsonM with freeze: %v", err)
+		t.Errorf("Error in DiffToBsonM with skip: %v", err)
 	}
 	if _, ok := result["name"]; ok {
 		t.Errorf("Unexpected diff for frozen inline field")
 	}
 
-	// 测试冻结字段
-	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, "avatar")
+	// 测试跳过字段
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, []string{"avatar"}, nil)
 	if err != nil {
-		t.Errorf("Error in DiffToBsonM with freeze: %v", err)
+		t.Errorf("Error in DiffToBsonM with skip: %v", err)
 	}
 	if _, ok := result["avatar"]; ok {
 		t.Errorf("Unexpected diff for frozen field")
@@ -275,7 +278,7 @@ func TestDiffToBsonM(t *testing.T) {
 
 	// 测试内联结构体的差异
 	mainCurrent.InlineName.InName = "Original Inner Name" // 使内联结构体的一个字段与原始值相同
-	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent)
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, nil, nil)
 	if err != nil {
 		t.Errorf("Error in DiffToBsonM: %v", err)
 	}
@@ -285,7 +288,7 @@ func TestDiffToBsonM(t *testing.T) {
 
 	// 测试基本字段的差异
 	mainCurrent.Avatar = "original_avatar.png" // 使基本字段与原始值相同
-	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent)
+	result, err = converter.DiffToBsonM(mainOriginal, mainCurrent, nil, nil)
 	if err != nil {
 		t.Errorf("Error in DiffToBsonM: %v", err)
 	}

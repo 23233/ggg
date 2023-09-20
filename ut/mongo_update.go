@@ -88,7 +88,7 @@ func (sc *StructConverter) AddCustomIsZero(value interface{}, fn func(reflect.Va
 	sc.CustomIsZero[typ] = fn
 }
 
-func (sc *StructConverter) StructToBsonM(v interface{}, freeze ...string) (bson.M, error) {
+func (sc *StructConverter) StructToBsonM(v interface{}, skips []string, keeps []string) (bson.M, error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
@@ -98,15 +98,18 @@ func (sc *StructConverter) StructToBsonM(v interface{}, freeze ...string) (bson.
 		return nil, errors.New("输入必须是结构体或结构体指针")
 	}
 
-	freezeMap := make(map[string]bool)
-	for _, path := range freeze {
-		freezeMap[path] = true
+	skipMap := make(map[string]bool)
+	for _, path := range skips {
+		skipMap[path] = true
 	}
-
-	return sc.structToMap(val, freezeMap, ""), nil
+	keepMap := make(map[string]bool)
+	for _, path := range keeps {
+		keepMap[path] = true
+	}
+	return sc.structToMap(val, skipMap, keepMap, ""), nil
 }
 
-func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]bool, prefix string) bson.M {
+func (sc *StructConverter) structToMap(val reflect.Value, skipMap map[string]bool, keepMap map[string]bool, prefix string) bson.M {
 	result := bson.M{}
 	typ := val.Type()
 	for i := 0; i < val.NumField(); i++ {
@@ -114,10 +117,6 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 		fieldType := typ.Field(i)
 		// 如果字段未导出，则跳过
 		if !fieldType.IsExported() {
-			continue
-		}
-
-		if sc.IsZero(fieldVal, fieldType) {
 			continue
 		}
 
@@ -141,7 +140,14 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 
 		fullPath := prefix + bsonTag
 
-		if freezeMap[fullPath] {
+		if skipMap[fullPath] {
+			continue
+		}
+		if keepMap[fullPath] {
+			result[fullPath] = fieldVal.Interface()
+			continue
+		}
+		if sc.IsZero(fieldVal, fieldType) {
 			continue
 		}
 
@@ -156,7 +162,7 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 			if !isInline {
 				inlinePrefix += bsonTag + "."
 			}
-			inlineMap := sc.structToMap(fieldVal, freezeMap, inlinePrefix)
+			inlineMap := sc.structToMap(fieldVal, skipMap, keepMap, inlinePrefix)
 			for k, v := range inlineMap {
 				result[k] = v
 			}
@@ -171,7 +177,7 @@ func (sc *StructConverter) structToMap(val reflect.Value, freezeMap map[string]b
 
 // DiffToBsonM 缺点在于如果有内联的struct 如果原始数据中没有定义上层 则无法正确update
 // 比如{city:{name:"新名称"}} 如果原始数据中没有 city字段则无法通过{city.name:"新名称"}进行更新?
-func (sc *StructConverter) DiffToBsonM(original, current interface{}, freeze ...string) (bson.M, error) {
+func (sc *StructConverter) DiffToBsonM(original, current interface{}, skips []string, keeps []string) (bson.M, error) {
 	originalVal := reflect.ValueOf(original)
 	currentVal := reflect.ValueOf(current)
 
@@ -186,15 +192,19 @@ func (sc *StructConverter) DiffToBsonM(original, current interface{}, freeze ...
 		return nil, errors.New("输入必须是相同类型的结构体或结构体指针")
 	}
 
-	freezeMap := make(map[string]bool)
-	for _, path := range freeze {
-		freezeMap[path] = true
+	skipMap := make(map[string]bool)
+	for _, path := range skips {
+		skipMap[path] = true
+	}
+	keepMap := make(map[string]bool)
+	for _, path := range keeps {
+		keepMap[path] = true
 	}
 
-	return sc.diffStructToMap(originalVal, currentVal, freezeMap, ""), nil
+	return sc.diffStructToMap(originalVal, currentVal, skipMap, keepMap, ""), nil
 }
 
-func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value, freezeMap map[string]bool, prefix string) bson.M {
+func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value, skipMap map[string]bool, keepMap map[string]bool, prefix string) bson.M {
 	result := bson.M{}
 	typ := originalVal.Type()
 	for i := 0; i < originalVal.NumField(); i++ {
@@ -219,23 +229,28 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 			fullPath = prefix + bsonTag
 		}
 
-		if freezeMap[fullPath] {
+		if skipMap[fullPath] {
 			continue
 		}
 
 		originalFieldVal := originalVal.Field(i)
 		currentFieldVal := currentVal.Field(i)
 
+		if keepMap[fullPath] {
+			result[fullPath] = currentFieldVal.Interface()
+			continue
+		}
+
 		if isInline {
 			// 处理带有inline标签的匿名字段
-			inlineMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, freezeMap, prefix)
+			inlineMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, skipMap, keepMap, prefix)
 			for k, v := range inlineMap {
 				result[k] = v
 			}
 		} else if originalFieldVal.Kind() == reflect.Struct {
 			// 处理嵌套结构体
 			nestedPrefix := fullPath + "."
-			nestedMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, freezeMap, nestedPrefix)
+			nestedMap := sc.diffStructToMap(originalFieldVal, currentFieldVal, skipMap, keepMap, nestedPrefix)
 			for k, v := range nestedMap {
 				result[k] = v
 			}
@@ -248,9 +263,9 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 	return result
 }
 
-// ToUpdateBson struct更新内容给转换为bson.M freeze支持格式 a.b.c
+// ToUpdateBson struct更新内容给转换为bson.M skip支持格式 a.b.c 代表跳过这个
 // 只会更新存在的 有值的 若原本有值要清除 请使用diff
-func ToUpdateBson(input any, freeze ...string) (bson.M, error) {
+func ToUpdateBson(input any, skips []string, keeps []string) (bson.M, error) {
 	converter := NewStructConverter()
 	converter.AddCustomIsZero(new(primitive.ObjectID), func(v reflect.Value, field reflect.StructField) bool {
 		return v.Interface().(primitive.ObjectID).IsZero()
@@ -258,15 +273,15 @@ func ToUpdateBson(input any, freeze ...string) (bson.M, error) {
 	converter.AddCustomIsZero(new(time.Time), func(v reflect.Value, field reflect.StructField) bool {
 		return v.Interface().(time.Time).IsZero()
 	})
-	return converter.StructToBsonM(input, freeze...)
+	return converter.StructToBsonM(input, skips, keeps)
 }
 
-// ToDiffBson 两个struct找出不同项 支持freeze格式为 a.b.c
+// ToDiffBson 两个struct找出不同项 支持skip格式为 a.b.c
 // 只会对比值不同的 两个struct必须相同
-func ToDiffBson[T any](original, current T, freeze ...string) (bson.M, error) {
+func ToDiffBson[T any](original, current T, skips []string, keeps []string) (bson.M, error) {
 	converter := NewStructConverter()
 
-	return converter.DiffToBsonM(original, current, freeze...)
+	return converter.DiffToBsonM(original, current, skips, keeps)
 }
 
 func NewStructConverter() *StructConverter {

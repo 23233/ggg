@@ -76,6 +76,28 @@ func (sc *StructConverter) IsZero(v reflect.Value, field reflect.StructField) bo
 	return cmp.Equal(v.Interface(), zeroValue)
 }
 
+func (sc *StructConverter) parseBsonTag(fieldType reflect.StructField) (string, bool) {
+	bsonTag := fieldType.Tag.Get("bson")
+	if bsonTag == "-" {
+		return "", false
+	}
+
+	isInline := strings.Contains(bsonTag, "inline") || (bsonTag == "" && fieldType.Anonymous)
+	if isInline {
+		bsonTag = strings.TrimSuffix(bsonTag, ",inline")
+	}
+
+	// 如果bsonTag未定义且不是内联，则使用字段名
+	if bsonTag == "" && !isInline {
+		bsonTag = fieldType.Name
+	}
+
+	// 不加这行key会出现 omitempty
+	bsonTag = strings.Split(bsonTag, ",")[0]
+
+	return bsonTag, isInline
+}
+
 func (sc *StructConverter) AddCustomIsZero(value interface{}, fn func(reflect.Value, reflect.StructField) bool) {
 	typ := reflect.TypeOf(value)
 	if typ.Kind() == reflect.Ptr {
@@ -120,23 +142,7 @@ func (sc *StructConverter) structToMap(val reflect.Value, skipMap map[string]boo
 			continue
 		}
 
-		bsonTag := fieldType.Tag.Get("bson")
-		if bsonTag == "-" {
-			continue
-		}
-
-		bsonTagParts := strings.Split(bsonTag, ",")
-		bsonTag = bsonTagParts[0]
-
-		isInline := strings.Contains(bsonTag, "inline") || (bsonTag == "" && fieldType.Anonymous)
-		if isInline {
-			bsonTag = strings.TrimSuffix(bsonTag, ",inline")
-		}
-
-		// 如果bsonTag未定义且不是内联，则使用字段名
-		if bsonTag == "" && !isInline {
-			bsonTag = fieldType.Name
-		}
+		bsonTag, isInline := sc.parseBsonTag(fieldType)
 
 		fullPath := prefix + bsonTag
 
@@ -214,15 +220,7 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 			continue
 		}
 
-		isInline := strings.Contains(bsonTag, "inline") || (bsonTag == "" && fieldType.Anonymous)
-		if isInline {
-			bsonTag = strings.TrimSuffix(bsonTag, ",inline")
-		}
-
-		// 如果bsonTag未定义且不是内联，则使用字段名
-		if bsonTag == "" && !isInline {
-			bsonTag = fieldType.Name
-		}
+		bsonTag, isInline := sc.parseBsonTag(fieldType)
 
 		fullPath := bsonTag
 		if prefix != "" && !isInline {

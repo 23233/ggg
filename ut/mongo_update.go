@@ -238,6 +238,15 @@ func (sc *StructConverter) diffStructToMap(originalVal, currentVal reflect.Value
 			result[fullPath] = currentFieldVal.Interface()
 			continue
 		}
+		if sc.isSpecialStructType(fieldType.Type) {
+			if !cmp.Equal(originalFieldVal.Interface(), currentFieldVal.Interface()) {
+				result[fullPath] = currentFieldVal.Interface()
+			}
+			continue
+		}
+		if sc.IsZero(currentFieldVal, fieldType) {
+			continue
+		}
 
 		if isInline {
 			// 处理带有inline标签的匿名字段

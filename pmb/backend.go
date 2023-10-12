@@ -34,7 +34,7 @@ type Backend struct {
 
 func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
 	for _, model := range b.models {
-		if model.EngName == name {
+		if model.EngName == name || model.RawName == name {
 			return model, true
 		}
 	}

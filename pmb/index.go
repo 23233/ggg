@@ -193,6 +193,7 @@ type SchemaBase struct {
 	Group    string `json:"group,omitempty"`    // 组名
 	Priority int    `json:"priority,omitempty"` // 在组下显示的优先级 越大越优先
 	EngName  string `json:"eng_name,omitempty"` // 英文名 表名
+	RawName  string `json:"raw_name,omitempty"` // 原始名称
 	Alias    string `json:"alias,omitempty"`    // 别名 中文名
 }
 
@@ -285,6 +286,7 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 		typ = typ.Elem()
 	}
 	name := typ.Name()
+	s.RawName = name
 
 	s.EngName = name
 }

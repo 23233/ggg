@@ -5,6 +5,10 @@ import "testing"
 func TestGet(t *testing.T) {
 	result := Get()
 	t.Logf(result)
+	chrome := GetChrome()
+	t.Logf("chrome : %s", chrome)
+	gen := GetGenPcUa()
+	t.Logf("生成的pcua: %s", gen)
 }
 
 func TestGetMobile(t *testing.T) {

@@ -2,6 +2,8 @@ package ua
 
 import (
 	"crypto/rand"
+	"fmt"
+	"github.com/23233/ggg/ut"
 	"math/big"
 	"strings"
 )
@@ -781,10 +783,41 @@ func GetWin10() string {
 	return win10[randInt(0, len(win10)-1)]
 }
 
-func Get() string {
-	m := randInt(2, 4)
-	if m > 2 {
-		return GetPc()
+func GetChrome() string {
+	for {
+		item := Get()
+		if strings.Contains(item, "Chrome") {
+			return item
+		}
 	}
-	return GetMobile()
+}
+
+func Get() string {
+	randomIndex := ut.RandomInt(0, 3)
+	var selectedData []string
+	switch randomIndex {
+	case 0:
+		selectedData = mobile
+	case 1:
+		selectedData = pc
+	case 2:
+		selectedData = win10
+	}
+	return selectedData[randInt(0, len(selectedData)-1)]
+}
+
+// GetGenPcUa 生成pc端ua
+func GetGenPcUa() string {
+	//template := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.1653.43.1298 Safari/537.36 Edg/117.0.2045.60"
+	webKitBig := ut.RandomInt(500, 550)
+	webKitSub := ut.RandomInt(10, 60)
+	ChromeBig := ut.RandomInt(100, 160)
+	ChromeSub := ut.RandomInt(1200, 1700)
+	ChromeThree := ut.RandomInt(12, 60)
+	ChromeLast := ut.RandomInt(1100, 1600)
+	EdgeSub := ut.RandomInt(0, 3)
+	EdgeThree := ut.RandomInt(1500, 2600)
+	EdgeLast := ut.RandomInt(10, 80)
+	result := fmt.Sprintf("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/%d.%d (KHTML, like Gecko) Chrome/%d.%d.%d.%d Safari/%d.%d Edg/%d.%d.%d.%d", webKitBig, webKitSub, ChromeBig, ChromeSub, ChromeThree, ChromeLast, webKitBig, webKitSub, ChromeBig, EdgeSub, EdgeThree, EdgeLast)
+	return result
 }

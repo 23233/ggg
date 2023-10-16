@@ -10,6 +10,10 @@ import (
 )
 
 var (
+	// JwtExchange jwt交换
+	// 必传origin JwtCheckDep jwt解析出来的内容包
+	// 必传params JwtGenPipe jwt的配置信息
+	// 必传db redis Client
 	JwtExchange = &RunnerContext[*JwtCheckDep, *JwtGenPipe, rueidis.Client, string]{
 		Name: "jwt交换",
 		Key:  "jwt_exchange",

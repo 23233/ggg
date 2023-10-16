@@ -17,6 +17,10 @@ type ModelGetDataDep struct {
 }
 
 var (
+	// QueryGetData 通过模型解析出query获取内容
+	// 必传origin ModelGetDataDep 中的modelId
+	// 必传params ModelGetData 需要设定为是否为单条以及是否获取匹配条数
+	// 必传db 为qmgo的Database
 	QueryGetData = &RunnerContext[*ModelGetDataDep, *ModelGetData, *qmgo.Database, *ut.MongoFacetResult]{
 		Key:  "query_get_data",
 		Name: "query获取数据",

@@ -120,6 +120,9 @@ func CompareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 
 var (
 	// ModelPut 模型修改 origin需要是一个map或struct 只会修改与原始条目的diff项
+	// 选传origin 若不传模型取body映射为map
+	// 必传params ModelPutConfig 其中ModelId和RowId必传
+	// 必传db 为qmgo的Database
 	ModelPut = &RunnerContext[any, *ModelPutConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_put",
 		Name: "模型单条修改",

@@ -14,6 +14,8 @@ type RandomPipe struct {
 }
 
 var (
+	// RandomGen 随机数生成
+	// 必传params RandomPipe
 	RandomGen = &RunnerContext[any, *RandomPipe, any, any]{
 		Name: "随机数生成",
 		Key:  "random",

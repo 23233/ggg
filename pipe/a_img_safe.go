@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	// ImgSafe 图像安全校验 必传 origin 是一个图像url地址
 	ImgSafe = &RunnerContext[string, any, any, bool]{
 		Name: "图片安全校验",
 		Key:  "img_safe",

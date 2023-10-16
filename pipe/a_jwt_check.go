@@ -26,6 +26,9 @@ type JwtCheckDep struct {
 }
 
 var (
+	// JwtCheck jwt验证
+	// 必传origin JwtCheckDep
+	// 必传db 为redis Client
 	JwtCheck = &RunnerContext[*JwtCheckDep, any, rueidis.Client, JwtFlatBase]{
 		Name: "jwt验证",
 		Key:  "jwt_check",

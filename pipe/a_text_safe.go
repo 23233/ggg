@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	// TextSafe 文字安全校验
+	// 必传origin 为待校验文字
 	TextSafe = &RunnerContext[string, any, any, bool]{
 		Name: "文字安全验证",
 		Key:  "text_safe",

@@ -21,7 +21,10 @@ type RbacAllowPipe struct {
 }
 
 var (
-	RbacRoles = &RunnerContext[any, *RbacGetRolePipe, *RbacDomain, []string]{
+	// RbacGetRoles 获取rbac的规则
+	// 必传params RbacGetRolePipe
+	// 必传db 为RbacDomain的实例
+	RbacGetRoles = &RunnerContext[any, *RbacGetRolePipe, *RbacDomain, []string]{
 		Key:  "rbac_get_role",
 		Name: "rbac权限获取",
 		call: func(ctx iris.Context, origin any, params *RbacGetRolePipe, db *RbacDomain, more ...any) *RunResp[[]string] {
@@ -32,6 +35,9 @@ var (
 			return newPipeResult(roles)
 		},
 	}
+	// RbacAllow 判断rbac是否运行执行操作
+	// 必传params RbacAllowPipe
+	// 必传db 为RbacDomain的实例
 	RbacAllow = &RunnerContext[any, *RbacAllowPipe, *RbacDomain, bool]{
 		Key:  "rbac_allow",
 		Name: "rbac权限允许执行",

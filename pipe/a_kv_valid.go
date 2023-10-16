@@ -32,6 +32,7 @@ func (c *KvValidConfig) Check() (bool, error) {
 }
 
 var (
+	// KvValid kv结构验证器 必传params
 	KvValid = &RunnerContext[any, *KvValidConfig, any, bool]{
 		Name: "kv验证器",
 		Key:  "kv_valid",
@@ -48,6 +49,7 @@ var (
 			return newPipeResult(pass)
 		},
 	}
+	// pipeKvListValid 多个kv结构验证器 必传params
 	pipeKvListValid = &RunnerContext[any, *KvsValidPipe, any, []bool]{
 		Name: "kv验证器",
 		Key:  "kv_valid",

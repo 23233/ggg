@@ -15,6 +15,9 @@ type SmsPipe struct {
 }
 
 var (
+	// SmsSend 短信发送
+	// 必传params SmsPipe
+	// 必传db SmsClient 的实例
 	SmsSend = &RunnerContext[any, *SmsPipe, *SmsClient, string]{
 		Name: "短信验证码发送",
 		Key:  "sms_send",
@@ -23,6 +26,9 @@ var (
 			return newPipeResultErr(code, err)
 		},
 	}
+	// SmsValid 短信验证码验证
+	// 必传params SmsPipe
+	// 必传db SmsClient 的实例
 	SmsValid = &RunnerContext[any, *SmsPipe, *SmsClient, bool]{
 		Name: "短信验证码验证",
 		Key:  "sms_valid",

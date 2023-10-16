@@ -20,6 +20,8 @@ type ParseResponse struct {
 }
 
 var (
+	// ResponseParse 请求返回值的设定与解析
+	// 必传params ReqResponse
 	ResponseParse = &RunnerContext[any, *ReqResponse, any, *ParseResponse]{
 		Name: "返回值解析",
 		Key:  "response_parse",

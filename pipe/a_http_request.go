@@ -34,6 +34,7 @@ func (c *HttpRequestConfig) GetMustCode() int {
 }
 
 var (
+	// HttpRequest 发起http请求  必传 params
 	HttpRequest = &RunnerContext[any, *HttpRequestConfig, any, *req.Response]{
 		Name: "http请求",
 		Key:  "http_request",

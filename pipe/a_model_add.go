@@ -76,7 +76,10 @@ func StructToMap(s any) (map[string]any, error) {
 }
 
 var (
-	// ModelAdd 模型新增origin支持struct和map的传入 对于传入struct会转换为map 通过json标签为key
+	// ModelAdd 模型json新增
+	// 必传origin 支持map和struct 为模型的struct 对于传入struct会转换为map 通过json标签为key
+	// 必传params ModelCtxAddConfig 配置信息 模型ID必须存在
+	// 必传db 为qmgo的Database的实例
 	ModelAdd = &RunnerContext[any, *ModelCtxAddConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_add",
 		Name: "模型json新增",

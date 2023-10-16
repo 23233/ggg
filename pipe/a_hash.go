@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	// HashGen hash生成 必传params Type可选b62 b58
 	HashGen = &RunnerContext[any, *HashGenPipe, any, string]{
 		Name: "hash生成",
 		Key:  "hash_gen",

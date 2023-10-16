@@ -11,6 +11,9 @@ type SchemaValidConfig struct {
 }
 
 var (
+	// SchemaValid 基于json schema的验证器
+	// 必传origin 为待验证的数据 只能是map
+	// 必传params SchemaValidConfig 必包含schema
 	SchemaValid = &RunnerContext[map[string]any, *SchemaValidConfig, any, map[string]any]{
 		Name: "schema验证器",
 		Key:  "schema_valid",

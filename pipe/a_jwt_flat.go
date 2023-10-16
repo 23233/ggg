@@ -8,6 +8,9 @@ import (
 )
 
 var (
+	// JwtFlat jwt解构出内容包
+	// 必传origin 为Authorization头的字符串内容
+	// 必传db 为redis Client
 	JwtFlat = &RunnerContext[string, any, rueidis.Client, JwtFlatBase]{
 		Name: "jwt解构",
 		Key:  "jwt_flat",

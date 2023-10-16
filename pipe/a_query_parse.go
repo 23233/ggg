@@ -18,6 +18,8 @@ type QueryParseConfig struct {
 // 从传入的参数中获取到外键 搜索 和 geo启用信息
 
 var (
+	// QueryParse 根据约定规则从query中解析出mongodb的查询信息
+	// 必传params QueryParseConfig 所有的fields都是以json tag为准
 	QueryParse = &RunnerContext[any, *QueryParseConfig, any, *ut.QueryFull]{
 		Key:  "model_ctx_query",
 		Name: "模型query映射",

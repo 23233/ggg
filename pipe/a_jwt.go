@@ -32,6 +32,9 @@ func (c *JwtGenPipe) GetExpire(defaultTimes ...time.Duration) time.Duration {
 
 var (
 	// JwtGen jwt 结构设计 Strict模式下 用户一个env下仅可登陆一个设备  [key为userId:env]:value 为token
+	// 必传origin jwt设置
+	// 必传params 生成参数
+	// 必传db redis Client
 	JwtGen = &RunnerContext[*PipeJwtDep, *JwtGenPipe, rueidis.Client, string]{
 		Name: "jwt生成",
 		Key:  "jwt_gen",

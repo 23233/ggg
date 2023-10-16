@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// RequestCacheGet 请求缓存获取
+	// RequestCacheGet 请求缓存获取 必传params和db
 	RequestCacheGet = &RunnerContext[any, *RequestCachePipe, rueidis.Client, *ParseResponse]{
 		call: func(ctx iris.Context, origin any, params *RequestCachePipe, db rueidis.Client, more ...any) *RunResp[*ParseResponse] {
 			if params == nil {

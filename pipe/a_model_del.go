@@ -14,6 +14,9 @@ type ModelDelConfig struct {
 }
 
 var (
+	// ModelDel 模型单条删除
+	// 必传params ModelDelConfig 必传modelId和rowId
+	// 必传db 为qmgo的qmgo.Database
 	ModelDel = &RunnerContext[any, *ModelDelConfig, *qmgo.Database, any]{
 		Key:  "model_ctx_del",
 		Name: "模型单条删除",

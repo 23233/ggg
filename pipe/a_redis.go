@@ -156,6 +156,9 @@ func (c *RedisOperate) RespParse(resp rueidis.RedisResult) (result any, err erro
 // redis是没有一致性事务 虽然有事务方法 但是已被执行的命令无法撤回
 
 var (
+	// RedisCommand  redis单条操作
+	// 必传params RedisOperate
+	// 必传db
 	RedisCommand = &RunnerContext[any, *RedisOperate, rueidis.Client, any]{
 		Name: "redis单条操作",
 		Key:  "redis_command",
@@ -194,6 +197,10 @@ var (
 			return newPipeResultErr(result, err)
 		},
 	}
+
+	// RedisCommands  redis多条操作
+	// 必传params RedisOperates
+	// 必传db
 	RedisCommands = &RunnerContext[any, *RedisOperates, rueidis.Client, []any]{
 		Name: "多条redis操作",
 		Key:  "redis_commands",

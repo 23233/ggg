@@ -25,6 +25,9 @@ func (c *LocalCachePipe) GetExpire() time.Duration {
 // 使用LRU 可在本地空间使用缓存
 
 var (
+	// LocalCacheGet 本地缓存获取 使用 gcache
+	// 必传params
+	// 必传db 为gcache实例
 	LocalCacheGet = &RunnerContext[any, *LocalCachePipe, gcache.Cache, any]{
 		Name: "本地缓存获取",
 		Key:  "local_cache_get",
@@ -56,7 +59,11 @@ var (
 			return newPipeResult(v)
 		},
 	}
-	pipeLocalCacheSet = &RunnerContext[any, *LocalCachePipe, gcache.Cache, any]{
+
+	// LocalCacheSet 本地缓存设置 使用gcache
+	// 必传params
+	// 必传db 为gcache实例
+	LocalCacheSet = &RunnerContext[any, *LocalCachePipe, gcache.Cache, any]{
 		Name: "本地缓存设置",
 		Key:  "local_cache_set",
 		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *RunResp[any] {

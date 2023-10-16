@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	// SwipeValidGet 滑块验证码获取
+	// 必传db SwipeValidCode 的实例
 	SwipeValidGet = &RunnerContext[any, any, *SwipeValidCode, string]{
 		Name: "滑块验证码获取",
 		Key:  "swipe_valid_get",
@@ -22,6 +24,8 @@ var (
 			return newPipeResult(sEnc)
 		},
 	}
+	// SwipeValidCheck 滑块验证码验证
+	// 必传db SwipeValidCode 的实例
 	SwipeValidCheck = &RunnerContext[string, any, *SwipeValidCode, *SwipeValid]{
 		Name: "滑块验证码验证",
 		Key:  "swipe_valid_check",

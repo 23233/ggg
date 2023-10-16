@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	// JwtVisit jwt一整套流程整合 对jwt自动续期
+	// 必传origin JwtCheckDep jwt请求头包 需要有 Authorization 字段
+	// 必传db 为redis Client
 	JwtVisit = &RunnerContext[*JwtCheckDep, any, rueidis.Client, JwtFlatBase]{
 		Name: "jwt显示",
 		Key:  "jwt_visit",

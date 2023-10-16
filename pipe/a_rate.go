@@ -38,6 +38,7 @@ func (c *RateLimitPipe) genClient() (*limiter.Limiter, error) {
 
 var (
 	// RequestRate 限速器 使用 https://github.com/ulule/limiter 实现
+	// 必传params RateLimitPipe
 	RequestRate = &RunnerContext[any, *RateLimitPipe, any, any]{
 		Name: "请求限速",
 		Key:  "request_rate",

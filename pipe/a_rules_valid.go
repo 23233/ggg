@@ -49,6 +49,8 @@ func (c *RulesValidate) Valid(data map[string]any) ValidResult {
 }
 
 var (
+	// RulesValid 规则验证 使用github.com/gookit/validate库 基于语义可验证map
+	// 必传params RulesValidate 格式是这样的 required|int|min:1|max:99
 	RulesValid = &RunnerContext[any, *RulesValidate, any, ValidResult]{
 		Name: "规则验证",
 		Key:  "rules_valid",

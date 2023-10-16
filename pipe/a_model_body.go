@@ -126,7 +126,9 @@ func (m *ModelCtxMapperPack) Process(data any) error {
 }
 
 var (
-	// ModelMapper 对body的mapper是支持struct和map的
+	// ModelMapper 模型body中映射取出对应的map 不需要db
+	// 选传origin 支持map和struct 若不传则为map struct以json的tag为key进行匹配
+	// 必传params ModelCtxMapperPack new(ModelCtxMapperPack)都可以 但是必传
 	ModelMapper = &RunnerContext[any, *ModelCtxMapperPack, any, any]{
 		Key:  "model_ctx_mapper",
 		Name: "模型body取map",

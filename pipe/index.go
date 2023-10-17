@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// CtxGetEnv 从ua中读取出env环境变量
 func CtxGetEnv(ctx iris.Context, defaultStr ...string) string {
 	referrer := ctx.GetReferrer()
 	ua := ctx.GetHeader("User-Agent")

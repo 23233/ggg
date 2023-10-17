@@ -6,18 +6,6 @@ import (
 	"time"
 )
 
-type Info struct {
-	Key  string `json:"key,omitempty"`
-	Name string `json:"name,omitempty"`
-	Desc string `json:"desc,omitempty"`
-}
-
-func NewPipeInfo(name string) *Info {
-	return &Info{
-		Name: name,
-	}
-}
-
 // RunResp 操作序列执行结果
 type RunResp[T any] struct {
 	Result       T     // 执行结果
@@ -55,15 +43,6 @@ func newPipeResultErr[T any](result T, err error) *RunResp[T] {
 		Err:    err,
 		Result: result,
 	}
-}
-
-// 以下就是各种pipe的定义了 需要挪到单个文件中去
-
-// ModelCtxMapperArgs 模型上下文映射参数 适用于post 和put 请求
-type ModelCtxMapperArgs struct {
-	OmitKeys   []string              `json:"omit_keys,omitempty" bson:"omit_keys,omitempty"`     // 需要跳过的keys
-	GenKeys    map[string]*Attribute `json:"gen_keys,omitempty" bson:"gen_keys,omitempty"`       // 代码生成的数据
-	InjectData map[string]any        `json:"inject_data,omitempty" bson:"inject_data,omitempty"` // 注入的数据
 }
 
 type StrTemplate struct {
@@ -105,8 +84,3 @@ func (c *StrExpand) Build() (string, error) {
 	}
 	return attach, nil
 }
-
-// MongoOperateField 会生成 bson.M{<warp>:<children | value | nil>}
-// warp $set{}
-// https://www.mongodb.com/docs/manual/reference/method/db.collection.updateMany/#mongodb-method-db.collection.updateMany
-// https://www.mongodb.com/docs/manual/reference/operator/update/

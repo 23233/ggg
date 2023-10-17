@@ -205,8 +205,8 @@ type SchemaModel[T any] struct {
 	Actions []ISchemaAction    `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryInjects []ContextValueInject
-	WriteInsert  bool     `json:"write_insert,omitempty"` // 是否把注入内容写入新增体
-	PostMustKeys []string `json:"post_must_keys,omitempty"`
+	WriteInsert  bool     `json:"write_insert,omitempty"`   // 是否把注入内容写入新增体
+	PostMustKeys []string `json:"post_must_keys,omitempty"` // 新增时候必须存在的key
 	// 过滤参数能否通过 这里能注入和修改过滤参数和判断参数是否缺失 返回错误则抛出错误
 	filterCanPass func(ctx iris.Context, query *ut.QueryFull) error
 }

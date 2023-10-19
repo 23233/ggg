@@ -146,7 +146,7 @@ func (a *AccountComm) SetDisable(newDisable bool) {
 	a.Disable = newDisable
 }
 
-type SimpleAccount struct {
+type GenericsAccount struct {
 	ModelBase   `bson:",inline"`
 	AccountPass `bson:",inline"`
 	AccountCoin `bson:",inline"`
@@ -154,46 +154,38 @@ type SimpleAccount struct {
 	Platforms   map[string]*AccountPlatform `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
 }
 
-func (s *SimpleAccount) GetBase() ModelBase {
-	return s.ModelBase
-}
-
-func (s *SimpleAccount) SetBase(raw ModelBase) {
-	s.ModelBase = raw
-}
-
-func (s *SimpleAccount) SetAccountPass(pass AccountPass) {
+func (s *GenericsAccount) SetAccountPass(pass AccountPass) {
 	s.AccountPass = pass
 }
 
-func (s *SimpleAccount) GetAccountPass() AccountPass {
+func (s *GenericsAccount) GetAccountPass() AccountPass {
 	return s.AccountPass
 }
 
-func (s *SimpleAccount) GetCoin() AccountCoin {
+func (s *GenericsAccount) GetCoin() AccountCoin {
 	return s.AccountCoin
 }
 
-func (s *SimpleAccount) setCoin(coin AccountCoin) {
+func (s *GenericsAccount) setCoin(coin AccountCoin) {
 	s.AccountCoin = coin
 }
 
-func (s *SimpleAccount) GetComm() AccountComm {
+func (s *GenericsAccount) GetComm() AccountComm {
 	return s.AccountComm
 }
 
-func (s *SimpleAccount) SetComm(comm AccountComm) {
+func (s *GenericsAccount) SetComm(comm AccountComm) {
 	s.AccountComm = comm
 }
 
-func (s *SimpleAccount) SetPlatform(platform string, data *AccountPlatform) {
+func (s *GenericsAccount) SetPlatform(platform string, data *AccountPlatform) {
 	if s.Platforms == nil {
 		s.Platforms = make(map[string]*AccountPlatform)
 	}
 	s.Platforms[platform] = data
 }
 
-func (s *SimpleAccount) GetPlatform(platform string) (*AccountPlatform, bool) {
+func (s *GenericsAccount) GetPlatform(platform string) (*AccountPlatform, bool) {
 	if s.Platforms == nil {
 		s.Platforms = make(map[string]*AccountPlatform)
 	}
@@ -201,42 +193,90 @@ func (s *SimpleAccount) GetPlatform(platform string) (*AccountPlatform, bool) {
 	return v, ok
 }
 
-func (s *SimpleAccount) Filters(ctx context.Context, db *qmgo.Collection, filters bson.M) ([]*SimpleAccount, error) {
-	var result = make([]*SimpleAccount, 0)
+func (s *GenericsAccount) Filters(ctx context.Context, db *qmgo.Collection, filters bson.M) ([]*GenericsAccount, error) {
+	return MongoFilters[*GenericsAccount](ctx, db, filters)
+}
+func (s *GenericsAccount) GetOne(ctx context.Context, db *qmgo.Collection, uid string) (*GenericsAccount, error) {
+	return MongoGetOne[*GenericsAccount](ctx, db, uid)
+}
+func (s *GenericsAccount) Random(ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]*GenericsAccount, error) {
+	return MongoRandom[*GenericsAccount](ctx, db, filters, count)
+}
+func (s *GenericsAccount) UpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
+	return MongoUpdateOne[*GenericsAccount](ctx, db, uid, pack)
+}
+func (s *GenericsAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]*GenericsAccount) error) error {
+	return MongoIterateAccountsByBatch[*GenericsAccount](ctx, db, batchSize, processFunc)
+}
+func (s *GenericsAccount) BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*GenericsAccount) error {
+	return MongoBulkInsert[*GenericsAccount](ctx, db, accounts...)
+}
+
+type IAccountGenericsFull interface {
+	IAccountGenerics
+	IAccountShortcut
+}
+
+type IAccountGenerics interface {
+	SetAccountPass(pass AccountPass)
+	GetAccountPass() AccountPass
+	GetCoin() AccountCoin
+	setCoin(coin AccountCoin)
+	GetComm() AccountComm
+	SetComm(comm AccountComm)
+	SetPlatform(platform string, data *AccountPlatform)
+	GetPlatform(platform string) (*AccountPlatform, bool)
+}
+
+type IAccountShortcut interface {
+	Filters(ctx context.Context, db *qmgo.Collection, filters bson.M) ([]*GenericsAccount, error)
+	GetOne(ctx context.Context, db *qmgo.Collection, uid string) (*GenericsAccount, error)
+	Random(ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]*GenericsAccount, error)
+	UpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error
+	iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]*GenericsAccount) error) error
+	BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*GenericsAccount) error
+}
+
+var _ IAccountGenericsFull = (*GenericsAccount)(nil)
+
+// 封装常见操作方法
+
+func MongoFilters[T any](ctx context.Context, db *qmgo.Collection, filters bson.M) ([]T, error) {
+	var result = make([]T, 0)
 	err := db.Find(ctx, filters).All(&result)
 	if err != nil {
 		return nil, err
 	}
 	return result, err
 }
-func (s *SimpleAccount) GetOne(ctx context.Context, db *qmgo.Collection, uid string) (*SimpleAccount, error) {
-	var result = new(SimpleAccount)
-	err := db.Find(ctx, bson.M{ut.DefaultUidTag: uid}).One(&result)
+func MongoGetOne[T any](ctx context.Context, db *qmgo.Collection, uid string) (T, error) {
+	var result = new(T)
+	err := db.Find(ctx, bson.M{ut.DefaultUidTag: uid}).One(result)
 	if err != nil {
-		return nil, err
+		return *result, err
 	}
-	return result, err
+	return *result, err
 }
-func (s *SimpleAccount) Random(ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]*SimpleAccount, error) {
+func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]T, error) {
 	pipeline := mongo.Pipeline{
 		{{"$match", filters}},
 		{{"$sample", bson.D{{"size", count}}}},
 	}
-	var accounts = make([]*SimpleAccount, 0)
+	var accounts = make([]T, 0)
 	err := db.Aggregate(ctx, pipeline).All(&accounts)
 	if err != nil {
 		return nil, err
 	}
 	return accounts, nil
 }
-func (s *SimpleAccount) UpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
+func MongoUpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
 	return db.UpdateOne(ctx, bson.M{ut.DefaultUidTag: uid}, bson.M{"$set": pack})
 }
-func (s *SimpleAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]SimpleAccount) error) error {
+func MongoIterateAccountsByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]T) error) error {
 	lastID := primitive.NilObjectID
 
 	for {
-		var accounts []SimpleAccount
+		var accounts = make([]T, 0)
 
 		err := db.Find(ctx, bson.M{"_id": bson.M{"$gt": lastID}}).Sort("_id").Limit(batchSize).All(&accounts)
 		if err != nil {
@@ -254,12 +294,12 @@ func (s *SimpleAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Col
 		}
 
 		// 更新 lastID 以供下一次迭代使用
-		lastID = accounts[len(accounts)-1].Id
+		lastID = accounts[len(accounts)-1].GetBase().Id
 	}
 
 	return nil
 }
-func (s *SimpleAccount) BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*SimpleAccount) error {
+func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) error {
 	// 批量新增
 	opts := opta.InsertManyOptions{}
 	// order默认为true 则一个报错后面都停 所以设置为false
@@ -273,32 +313,3 @@ func (s *SimpleAccount) BulkInsert(ctx context.Context, db *qmgo.Collection, acc
 	logger.J.Infof("批量插入成功 %d 条", len(result.InsertedIDs))
 	return nil
 }
-
-type AccountGenericsFull interface {
-	AccountGenerics
-	AccountShortcut
-}
-
-type AccountGenerics interface {
-	GetBase() ModelBase
-	SetBase(raw ModelBase)
-	SetAccountPass(pass AccountPass)
-	GetAccountPass() AccountPass
-	GetCoin() AccountCoin
-	setCoin(coin AccountCoin)
-	GetComm() AccountComm
-	SetComm(comm AccountComm)
-	SetPlatform(platform string, data *AccountPlatform)
-	GetPlatform(platform string) (*AccountPlatform, bool)
-}
-
-type AccountShortcut interface {
-	Filters(ctx context.Context, db *qmgo.Collection, filters bson.M) ([]*SimpleAccount, error)
-	GetOne(ctx context.Context, db *qmgo.Collection, uid string) (*SimpleAccount, error)
-	Random(ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]*SimpleAccount, error)
-	UpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error
-	iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]SimpleAccount) error) error
-	BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*SimpleAccount) error
-}
-
-var _ AccountGenericsFull = (*SimpleAccount)(nil)

@@ -197,7 +197,7 @@ func (s *GenericsAccount) Filters(ctx context.Context, db *qmgo.Collection, filt
 	return MongoFilters[*GenericsAccount](ctx, db, filters)
 }
 func (s *GenericsAccount) GetOne(ctx context.Context, db *qmgo.Collection, uid string) (*GenericsAccount, error) {
-	return MongoGetOne[*GenericsAccount](ctx, db, uid)
+	return MongoGetOne[GenericsAccount](ctx, db, uid)
 }
 func (s *GenericsAccount) Random(ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]*GenericsAccount, error) {
 	return MongoRandom[*GenericsAccount](ctx, db, filters, count)
@@ -206,7 +206,7 @@ func (s *GenericsAccount) UpdateOne(ctx context.Context, db *qmgo.Collection, ui
 	return MongoUpdateOne[*GenericsAccount](ctx, db, uid, pack)
 }
 func (s *GenericsAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]*GenericsAccount) error) error {
-	return MongoIterateAccountsByBatch[*GenericsAccount](ctx, db, batchSize, processFunc)
+	return MongoIterateByBatch[*GenericsAccount](ctx, db, batchSize, processFunc)
 }
 func (s *GenericsAccount) BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*GenericsAccount) error {
 	return MongoBulkInsert[*GenericsAccount](ctx, db, accounts...)
@@ -249,13 +249,15 @@ func MongoFilters[T any](ctx context.Context, db *qmgo.Collection, filters bson.
 	}
 	return result, err
 }
-func MongoGetOne[T any](ctx context.Context, db *qmgo.Collection, uid string) (T, error) {
+
+// MongoGetOne 传入实例 返回new之后的指针
+func MongoGetOne[T any](ctx context.Context, db *qmgo.Collection, uid string) (*T, error) {
 	var result = new(T)
 	err := db.Find(ctx, bson.M{ut.DefaultUidTag: uid}).One(result)
 	if err != nil {
-		return *result, err
+		return result, err
 	}
-	return *result, err
+	return result, err
 }
 func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]T, error) {
 	pipeline := mongo.Pipeline{
@@ -272,7 +274,7 @@ func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D
 func MongoUpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
 	return db.UpdateOne(ctx, bson.M{ut.DefaultUidTag: uid}, bson.M{"$set": pack})
 }
-func MongoIterateAccountsByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]T) error) error {
+func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]T) error) error {
 	lastID := primitive.NilObjectID
 
 	for {

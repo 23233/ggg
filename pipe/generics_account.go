@@ -203,7 +203,7 @@ func (s *GenericsAccount) Random(ctx context.Context, db *qmgo.Collection, filte
 	return MongoRandom[*GenericsAccount](ctx, db, filters, count)
 }
 func (s *GenericsAccount) UpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
-	return MongoUpdateOne[*GenericsAccount](ctx, db, uid, pack)
+	return MongoUpdateOne(ctx, db, uid, pack)
 }
 func (s *GenericsAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]*GenericsAccount) error) error {
 	return MongoIterateByBatch[*GenericsAccount](ctx, db, batchSize, processFunc)

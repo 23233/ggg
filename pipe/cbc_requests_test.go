@@ -13,7 +13,7 @@ type TestPayload struct {
 
 func TestCbcService(t *testing.T) {
 	app := iris.New()
-	cbcService := NewCbcService([]byte("mysecretpassword"))
+	cbcService := NewCbcService("mysecretpassword")
 
 	CbcRegisterHandler("/test1", func(ctx iris.Context, query map[string]interface{}, body TestPayload) {
 		ctx.JSON(body)

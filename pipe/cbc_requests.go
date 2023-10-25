@@ -14,12 +14,15 @@ import (
 	"github.com/kataras/iris/v12"
 )
 
+// cbc服务 来解决某些端口需要加密的问题 统一使用post 连query都放在body里面进行加密 没有烦恼
+// iv的下发可以藏起来 通过加密或者unicode等方式增加一些调试难度
+
 type CbcService struct {
-	Key []byte
+	iv []byte
 }
 
-func NewCbcService(key []byte) *CbcService {
-	return &CbcService{Key: key}
+func NewCbcService(iv string) *CbcService {
+	return &CbcService{iv: []byte(iv)}
 }
 
 func (c *CbcService) Decrypt(cipherText string) ([]byte, error) {
@@ -28,7 +31,7 @@ func (c *CbcService) Decrypt(cipherText string) ([]byte, error) {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(c.Key)
+	block, err := aes.NewCipher(c.iv)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +51,7 @@ func (c *CbcService) Decrypt(cipherText string) ([]byte, error) {
 }
 
 func (c *CbcService) Encrypt(plainText []byte) (string, error) {
-	block, err := aes.NewCipher(c.Key)
+	block, err := aes.NewCipher(c.iv)
 	if err != nil {
 		return "", err
 	}

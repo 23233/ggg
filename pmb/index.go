@@ -232,7 +232,7 @@ func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	return r
 }
 
-func ToJsonSchema[T any](origin T) *jsonschema.Schema {
+func ToJsonSchema[T any](origin T, omitFields ...string) *jsonschema.Schema {
 	schema := new(jsonschema.Reflector)
 	// 只要为标记为omitempty的都会进入required
 	//schema.RequiredFromJSONSchemaTags = true
@@ -267,6 +267,11 @@ func ToJsonSchema[T any](origin T) *jsonschema.Schema {
 		}
 		if field.Name == "Uid" && field.Type == reflect.TypeOf("") {
 			return false
+		}
+		for _, omitField := range omitFields {
+			if field.Name == omitField {
+				return false
+			}
 		}
 		return true
 	}

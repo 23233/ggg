@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
+	"github.com/gookit/goutil/testutil/assert"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/httptest"
@@ -402,5 +403,11 @@ func TestMapper(t *testing.T) {
 		}
 
 	}
+
+}
+
+func TestNameParse(t *testing.T) {
+	inst := NewSchemaModel(new(testModelStruct), getMg())
+	assert.Eq(t, "GenericsTask_interface", inst.cleanTypeName("GenericsTask[interface {}]"))
 
 }

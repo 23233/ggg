@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -279,6 +281,23 @@ func ToJsonSchema[T any](origin T, omitFields ...string) *jsonschema.Schema {
 	ref := schema.Reflect(origin)
 	return ref
 }
+func (s *SchemaModel[T]) cleanTypeName(typeName string) string {
+	// 移除所有空的花括号
+	reBraces := regexp.MustCompile(`\{\s*\}`)
+	typeName = reBraces.ReplaceAllString(typeName, "")
+
+	// 替换第一个出现的 [ 为 _
+	typeName = strings.Replace(typeName, "[", "_", 1)
+
+	// 移除所有剩余的 [ 和 ]
+	reRemainingBrackets := regexp.MustCompile(`[\[\]]`)
+	typeName = reRemainingBrackets.ReplaceAllString(typeName, "")
+
+	// 去除字符串末尾的空格
+	typeName = strings.TrimRight(typeName, " ")
+
+	return typeName
+}
 
 func (s *SchemaModel[T]) SetRaw(raw T) {
 
@@ -293,7 +312,7 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 	name := typ.Name()
 	s.RawName = name
 
-	s.EngName = name
+	s.EngName = s.cleanTypeName(name)
 }
 
 func (s *SchemaModel[T]) AddAction(action ISchemaAction) {

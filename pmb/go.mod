@@ -19,12 +19,17 @@ require (
 	go.mongodb.org/mongo-driver v1.11.7
 )
 
-require github.com/kataras/realip v0.0.2 // indirect
+require (
+	github.com/gookit/color v1.5.2 // indirect
+	github.com/kataras/realip v0.0.2
+	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+)
 
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81 // indirect
-	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6 // indirect
-	github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f // indirect
+	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6
+	github.com/23233/ggg/sv v0.0.0-20221002105326-9e8ed7cbb14f
 	github.com/23233/lad v0.1.3 // indirect
 	github.com/23233/user_agent v0.1.1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
@@ -64,7 +69,7 @@ require (
 	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gookit/filter v1.1.4 // indirect
-	github.com/gookit/goutil v0.5.15 // indirect
+	github.com/gookit/goutil v0.5.15
 	github.com/gookit/validate v1.4.6 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -107,7 +112,7 @@ require (
 	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
 	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	github.com/quic-go/quic-go v0.35.1 // indirect
-	github.com/redis/rueidis v1.0.10 // indirect
+	github.com/redis/rueidis v1.0.10
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -119,7 +124,7 @@ require (
 	github.com/shockerli/cvt v0.2.7 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sony/sonyflake v1.1.0 // indirect
-	github.com/stretchr/testify v1.8.3 // indirect
+	github.com/stretchr/testify v1.8.3
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.689 // indirect

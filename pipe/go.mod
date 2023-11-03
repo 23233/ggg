@@ -12,7 +12,7 @@ require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81
 	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6
 	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
-	github.com/23233/jsonschema v0.11.1
+	github.com/23233/jsonschema v0.11.2
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
 	github.com/casbin/casbin/v2 v2.71.1

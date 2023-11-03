@@ -12,7 +12,7 @@ replace (
 require (
 	github.com/23233/ggg/pipe v0.0.0-20230628084524-a5a98249dc81
 	github.com/23233/ggg/ut v0.0.0-20230628082929-0ead189017f6
-	github.com/23233/jsonschema v0.11.1
+	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.7

@@ -2,6 +2,8 @@ github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81 h1:HNNMb4Q/Z
 github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81/go.mod h1:l4Y62CAKbNSukMH8Ual6D9H9DdGPu4uBhz9zf7G++cM=
 github.com/23233/jsonschema v0.11.1 h1:z4K0X8KE+TdzIzJ97YCeUj7Ig1OImerNSboCayAu3B4=
 github.com/23233/jsonschema v0.11.1/go.mod h1:c0TXS9NqCRPLOohM4mrU+uqlxZoCvK266U5Nyr/nq40=
+github.com/23233/jsonschema v0.11.2 h1:kc9yBhcTNJ8B7kE+Wa72vBCkOxvva9JY9hOIza6m5hw=
+github.com/23233/jsonschema v0.11.2/go.mod h1:c0TXS9NqCRPLOohM4mrU+uqlxZoCvK266U5Nyr/nq40=
 github.com/23233/lad v0.1.3 h1:EaTvwhXdBW26A33KevJRS9fDDOF+afmPxS0kJ7FOUEo=
 github.com/23233/lad v0.1.3/go.mod h1:4eKphUZ+SC1OC0Z56OdNiMRIbVS9u7do5bs3df151IQ=
 github.com/23233/user_agent v0.1.1 h1:bSB+TiMxShGFJx9IDwKyfUw5T0nUSH9sJaFNmYaAviQ=

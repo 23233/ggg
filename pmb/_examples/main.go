@@ -8,6 +8,7 @@ import (
 	"github.com/23233/ggg/ut"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
 	"github.com/redis/rueidis"
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,6 +75,7 @@ func main() {
 
 	var action = pmb.NewAction[map[string]any, *testActionDesc]("设置desc为新的", new(testActionDesc))
 	action.GetBase().Prefix = "前缀测试"
+	action.GetBase().TableEmptySelectUseAllSheet = true
 	action.SetCall(func(ctx iris.Context, args any) (any, error) {
 
 		// 这里没办法跟上面对齐 主要是F没有地方透传 所以只能是map
@@ -84,7 +86,16 @@ func main() {
 		for _, row := range part.Rows {
 			ids = append(ids, row[ut.DefaultUidTag].(string))
 		}
-		result, err := model.GetCollection().UpdateAll(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": ids}}, bson.M{
+
+		var filter = bson.M{ut.DefaultUidTag: bson.M{"$in": ids}}
+		if len(ids) < 1 {
+			if !action.GetBase().TableEmptySelectUseAllSheet {
+				return nil, errors.New("未选中任意行数 无法变更")
+			}
+			filter = bson.M{}
+		}
+
+		result, err := model.GetCollection().UpdateAll(ctx, filter, bson.M{
 			"$set": bson.M(part.FormData),
 		})
 		if err != nil {

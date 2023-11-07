@@ -61,12 +61,13 @@ type ActionPostArgs[T, F any] struct {
 }
 
 type SchemaActionBase struct {
-	Name       string             `json:"name,omitempty"`        // 动作名称 需要唯一
-	Prefix     string             `json:"prefix,omitempty"`      // 前缀标识 仅展示用
-	Types      []uint             `json:"types,omitempty"`       // 0 表可用 1 行可用
-	Form       *jsonschema.Schema `json:"form,omitempty"`        // 若form为nil 则不会弹出表单填写
-	MustSelect bool               `json:"must_select,omitempty"` // 必须有所选择表选择适用 行是必须选一行
-	Conditions []ut.Kov           `json:"conditions,omitempty"`  // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
+	Name                        string             `json:"name,omitempty"`                   // 动作名称 需要唯一
+	Prefix                      string             `json:"prefix,omitempty"`                 // 前缀标识 仅展示用
+	Types                       []uint             `json:"types,omitempty"`                  // 0 表可用 1 行可用
+	Form                        *jsonschema.Schema `json:"form,omitempty"`                   // 若form为nil 则不会弹出表单填写
+	MustSelect                  bool               `json:"must_select,omitempty"`            // 必须有所选择表选择适用 行是必须选一行
+	TableEmptySelectUseAllSheet bool               `json:"table_empty_select_use_all_sheet"` // 表模式未选中行则默认是整表
+	Conditions                  []ut.Kov           `json:"conditions,omitempty"`             // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
 }
 
 func (s *SchemaActionBase) SetType(tp []uint) {
@@ -199,12 +200,22 @@ type SchemaBase struct {
 	Alias    string `json:"alias,omitempty"`    // 别名 中文名
 }
 
+type SchemaTableDisable struct {
+	Read    bool `json:"read,omitempty"`
+	Edit    bool `json:"edit,omitempty"`
+	Del     bool `json:"del,omitempty"`
+	Create  bool `json:"create,omitempty"`
+	Actions bool `json:"actions,omitempty"`
+}
+
 type SchemaModel[T any] struct {
 	SchemaBase
-	db      *qmgo.Database
-	raw     T
-	Schema  *jsonschema.Schema `json:"schema,omitempty"`
-	Actions []ISchemaAction    `json:"actions,omitempty"` // 各类操作
+	db           *qmgo.Database
+	raw          T
+	Schema       *jsonschema.Schema  `json:"schema,omitempty"`
+	AddSchema    *jsonschema.Schema  `json:"add_schema,omitempty"` // 新增时的schema 可以额外指定 不指定则是原始schema
+	TableDisable *SchemaTableDisable `json:"table_disable,omitempty"`
+	Actions      []ISchemaAction     `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryInjects []ContextValueInject
 	WriteInsert  bool     `json:"write_insert,omitempty"`   // 是否把注入内容写入新增体
@@ -373,13 +384,17 @@ func (s *SchemaModel[T]) GetAction(name string) (ISchemaAction, bool) {
 
 func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 	inline := struct {
-		Info    SchemaBase         `json:"info"`
-		Actions []ISchemaAction    `json:"actions"`
-		Schema  *jsonschema.Schema `json:"schema"`
+		Info         SchemaBase          `json:"info"`
+		Actions      []ISchemaAction     `json:"actions"`
+		Schema       *jsonschema.Schema  `json:"schema"`
+		AddSchema    *jsonschema.Schema  `json:"add_schema"`
+		TableDisable *SchemaTableDisable `json:"table_disable"`
 	}{
-		Info:    s.SchemaBase,
-		Actions: s.Actions,
-		Schema:  s.Schema,
+		Info:         s.SchemaBase,
+		Actions:      s.Actions,
+		Schema:       s.Schema,
+		AddSchema:    s.AddSchema,
+		TableDisable: s.TableDisable,
 	}
 	inline.Schema.Title = s.SchemaBase.Alias
 	return json.Marshal(inline)

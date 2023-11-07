@@ -141,20 +141,6 @@ func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
 			IrisRespErr("秘钥错误", err, ctx)
 			return
 		}
-		// 判断role是否支持
-		allRole := []string{"root", "staff"}
-		pass := false
-		for _, s := range allRole {
-			if body.Role == s {
-				pass = true
-				break
-			}
-		}
-		if !pass {
-			IrisRespErr("未被支持的role", err, ctx)
-			return
-		}
-
 		err = c.SetRole(ctx, bson.M{
 			"$or": bson.A{
 				bson.D{{"user_name", body.Id}},

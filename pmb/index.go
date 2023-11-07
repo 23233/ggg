@@ -208,12 +208,35 @@ type SchemaTableDisable struct {
 	Actions bool `json:"actions,omitempty"`
 }
 
+type SchemaRole struct {
+	RoleGroup []string `json:"role_group"` // staff root
+	NameGroup []string `json:"name_group"` // 自定义名称组
+}
+
+type SchemaHooks[T any] struct {
+	CustomAddHandler func(ctx iris.Context, params pipe.ModelCtxMapperPack, model *SchemaModel[T]) error
+	OnAddBefore      func(ctx iris.Context, args *pipe.RunResp[any], model *SchemaModel[T]) error                                      // 在新增之前
+	OnAddAfter       func(ctx iris.Context, args *pipe.RunResp[map[string]any], model *SchemaModel[T]) error                           // 在新增之后
+	OnGetBefore      func(ctx iris.Context, args *pipe.RunResp[*ut.QueryFull], params *pipe.ModelGetData, model *SchemaModel[T]) error // 在获取之前
+	OnGetAfter       func(ctx iris.Context, args *pipe.RunResp[*ut.MongoFacetResult], model *SchemaModel[T]) error                     // 在获取之后
+	OnEditBefore     func(ctx iris.Context)                                                                                            // 在修改之前
+	OnEditAfter      func(ctx iris.Context)                                                                                            // 在修改之后
+	OnDelBefore      func(ctx iris.Context)                                                                                            // 在删除之前
+	OnDelAfter       func(ctx iris.Context)                                                                                            // 在删除之后
+}
+
+type SchemaIframe struct {
+	Url string `json:"url,omitempty"`
+}
+
 type SchemaModel[T any] struct {
 	SchemaBase
 	db           *qmgo.Database
 	raw          T
+	Roles        *SchemaRole         `json:"roles,omitempty"`
 	Schema       *jsonschema.Schema  `json:"schema,omitempty"`
 	AddSchema    *jsonschema.Schema  `json:"add_schema,omitempty"` // 新增时的schema 可以额外指定 不指定则是原始schema
+	Iframe       *SchemaIframe       `json:"iframe,omitempty"`
 	TableDisable *SchemaTableDisable `json:"table_disable,omitempty"`
 	Actions      []ISchemaAction     `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
@@ -222,6 +245,7 @@ type SchemaModel[T any] struct {
 	PostMustKeys []string `json:"post_must_keys,omitempty"` // 新增时候必须存在的key
 	// 过滤参数能否通过 这里能注入和修改过滤参数和判断参数是否缺失 返回错误则抛出错误
 	filterCanPass func(ctx iris.Context, query *ut.QueryFull) error
+	Hooks         SchemaHooks[T]
 }
 
 func (s *SchemaModel[T]) AddQueryInject(q ContextValueInject) {
@@ -245,6 +269,8 @@ func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	return r
 }
 
+// ToJsonSchema 把一个struct转换为jsonschema 在后台的前端ui-schema中不支持patternProperties
+// 也就是说不支持map[string]any的写法 omitFields 是需要跳过的字段名 是struct的字段名
 func ToJsonSchema[T any](origin T, omitFields ...string) *jsonschema.Schema {
 	schema := new(jsonschema.Reflector)
 	// 只要为标记为omitempty的都会进入required
@@ -371,6 +397,10 @@ func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
 	b.filterCanPass = s.filterCanPass
 	b.raw = s.raw
 	b.db = s.db
+	b.AddSchema = s.AddSchema
+	b.TableDisable = s.TableDisable
+	b.Roles = s.Roles
+	b.Iframe = s.Iframe
 	return b
 }
 func (s *SchemaModel[T]) GetAction(name string) (ISchemaAction, bool) {
@@ -389,12 +419,14 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 		Schema       *jsonschema.Schema  `json:"schema"`
 		AddSchema    *jsonschema.Schema  `json:"add_schema"`
 		TableDisable *SchemaTableDisable `json:"table_disable"`
+		Iframe       *SchemaIframe       `json:"iframe"`
 	}{
 		Info:         s.SchemaBase,
 		Actions:      s.Actions,
 		Schema:       s.Schema,
 		AddSchema:    s.AddSchema,
 		TableDisable: s.TableDisable,
+		Iframe:       s.Iframe,
 	}
 	inline.Schema.Title = s.SchemaBase.Alias
 	return json.Marshal(inline)
@@ -465,6 +497,13 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 
 	}
 
+	if s.Hooks.OnGetBefore != nil {
+		err := s.Hooks.OnGetBefore(ctx, resp, &getParams, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	// 获取数据
 	dataResp := pipe.QueryGetData.Run(ctx,
 		&pipe.ModelGetDataDep{
@@ -479,6 +518,13 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 		}
 		if dataResp.Err != qmgo.ErrNoSuchDocuments {
 			return dataResp.Err
+		}
+	}
+
+	if s.Hooks.OnGetAfter != nil {
+		err := s.Hooks.OnGetAfter(ctx, dataResp, s)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -571,10 +617,24 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 		}
 	}
 
+	if s.Hooks.OnAddBefore != nil {
+		err := s.Hooks.OnAddBefore(ctx, resp, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	// 进行新增
 	insertResult := pipe.ModelAdd.Run(ctx, resp.Result, &pipe.ModelCtxAddConfig{ModelId: s.EngName}, s.db)
 	if insertResult.Err != nil {
 		return insertResult.Err
+	}
+
+	if s.Hooks.OnAddAfter != nil {
+		err := s.Hooks.OnAddAfter(ctx, insertResult, s)
+		if err != nil {
+			return err
+		}
 	}
 
 	ctx.JSON(insertResult.Result)
@@ -727,7 +787,12 @@ func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
 		}
 	})
 	p.Post("/", func(ctx iris.Context) {
-		err := s.PostHandler(ctx, pipe.ModelCtxMapperPack{})
+		var err error
+		if s.Hooks.CustomAddHandler != nil {
+			err = s.Hooks.CustomAddHandler(ctx, pipe.ModelCtxMapperPack{}, s)
+		} else {
+			err = s.PostHandler(ctx, pipe.ModelCtxMapperPack{})
+		}
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return

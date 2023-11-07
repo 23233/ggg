@@ -95,9 +95,22 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		ctx.JSON(iris.Map{"info": user.Masking(0)})
 	})
 	// 这里必须有staff权限
-	party.Get("/models", mustLoginMiddleware, b.minStaff(), func(ctx iris.Context) {
+	party.Get("/models", mustLoginMiddleware, func(ctx iris.Context) {
+		var models = make([]*SchemaModel[any], 0)
+		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+		isRoot := b.rbac.HasRoles(user.Uid, []string{"root"})
+		if isRoot {
+			models = b.models
+		} else {
+			for _, model := range b.models {
+				if b.canRole(user, model) {
+					models = append(models, model)
+				}
+			}
+		}
+
 		ctx.JSON(iris.Map{
-			"models": b.models,
+			"models": models,
 		})
 	})
 	party.Get("/message", mustLoginMiddleware, b.GetMsgHandler)
@@ -105,13 +118,13 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	party.Get("/config/{eng:string}",
 		mustLoginMiddleware,
 		b.engGetModelMiddleware,
-		b.minStaff(),
+		b.canRoleMiddleware,
 		func(ctx iris.Context) {
 			model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 			_ = ctx.JSON(model)
 			return
 		})
-	party.Post("/action/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
+	party.Post("/action/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 
@@ -192,7 +205,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 
 	// crud
-	curd := party.Party("/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.minStaff())
+	curd := party.Party("/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.canRoleMiddleware)
 	curd.Get("/{uid:string}", func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
@@ -215,7 +228,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
-	curd.Post("/", b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
+	curd.Post("/", recordBodyMiddleware, func(ctx iris.Context) {
 
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
@@ -235,7 +248,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 
 	})
-	curd.Put("/{uid:string}", b.minRoot(), recordBodyMiddleware, func(ctx iris.Context) {
+	curd.Put("/{uid:string}", recordBodyMiddleware, func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.PutHandler(ctx, pipe.ModelPutConfig{
 			UpdateTime: true,
@@ -248,7 +261,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		}
 
 	})
-	curd.Delete("/{uid:string}", b.minRoot(), func(ctx iris.Context) {
+	curd.Delete("/{uid:string}", func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.DelHandler(ctx, pipe.ModelDelConfig{})
 		if err != nil {
@@ -303,27 +316,39 @@ func (b *Backend) engGetModelMiddleware(ctx iris.Context) {
 	ctx.Values().Set(b.modelContextKey, m)
 	ctx.Next()
 }
-func (b *Backend) gtRoleMiddleware(roles []string) iris.Handler {
-	return func(ctx iris.Context) {
-		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
-		if !b.rbac.HasRoles(user.Uid, roles) {
-			IrisRespErr("获取权限失败", nil, ctx, http.StatusMethodNotAllowed)
-			ctx.StopExecution()
-			return
-		}
-		ctx.Next()
+
+func (b *Backend) canRole(user *SimpleUserModel, model *SchemaModel[any]) bool {
+	if b.rbac.HasRoles(user.Uid, []string{"root"}) {
+		return true
 	}
+	allRole := append(model.Roles.RoleGroup, model.Roles.NameGroup...)
+	allRole = append(allRole, model.EngName)
+	return b.rbac.HasRoles(user.Uid, allRole)
 }
-func (b *Backend) minStaff() iris.Handler {
-	return b.gtRoleMiddleware([]string{"staff", "root"})
+
+func (b *Backend) canRoleMiddleware(ctx iris.Context) {
+	// 获取出当前用户和模型
+	user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+	model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+
+	if !b.canRole(user, model) {
+		IrisRespErr("获取权限失败", nil, ctx, http.StatusMethodNotAllowed)
+		ctx.StopExecution()
+		return
+	}
+	ctx.Next()
 }
-func (b *Backend) minRoot() iris.Handler {
-	return b.gtRoleMiddleware([]string{"root"})
-}
+
 func (b *Backend) InsertLogModel() {
 	m := NewSchemaModel(new(OperationLog), b.db)
 	m.Alias = "操作日志"
 	m.EngName = "operation_log"
+	b.AddModel(m.ToAny())
+}
+func (b *Backend) InsertUserModel() {
+	m := NewSchemaModel(new(SimpleUserModel), b.db)
+	m.Alias = "用户表"
+	m.EngName = UserModelName
 	b.AddModel(m.ToAny())
 }
 
@@ -388,6 +413,7 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 
 	// 新增操作日志
 	bk.InsertLogModel()
+	bk.InsertUserModel()
 
 	// 日志也需要索引
 	go func() {

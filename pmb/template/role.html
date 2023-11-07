@@ -37,10 +37,11 @@
     <form id="myForm" autocomplete="off">
         <input type="text" id="id" name="id" placeholder="请输入ID" required maxlength="50">
         <input type="text" id="secret" name="secret" placeholder="请输入秘钥" required maxlength="50">
-        <select id="role" name="role" required>
-            <option value="staff" selected>Staff</option>
-            <option value="root">Root</option>
-        </select>
+        <input list="roles" id="role" name="role" placeholder="请选择或输入角色" required maxlength="36">
+        <datalist id="roles">
+            <option value="staff">
+            <option value="root">
+        </datalist>
         <button type="submit">提交</button>
     </form>
 </div>
@@ -51,8 +52,8 @@
         const secret = document.getElementById('secret').value;
         const role = document.getElementById('role').value;
 
-        if (!id || !secret || !role || id.length > 50 || secret.length > 50) {
-            alert('请确保所有字段都已填写且不超过50个字符');
+        if (!id || !secret || !role || id.length > 50 || secret.length > 50 || role.length > 36) {
+            alert('请确保所有字段都已填写且符合长度要求');
             return;
         }
 

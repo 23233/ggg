@@ -151,7 +151,8 @@ type GenericsAccount struct {
 	AccountPass `bson:",inline"`
 	AccountCoin `bson:",inline"`
 	AccountComm `bson:",inline"`
-	Platforms   map[string]*AccountPlatform `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
+	// 在mongo中 可以直接使用.法 也就是 platforms.name 就可以传所有数组对象的name包含了的
+	Platforms []*AccountPlatform `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
 }
 
 func (s *GenericsAccount) SetAccountPass(pass AccountPass) {
@@ -176,21 +177,6 @@ func (s *GenericsAccount) GetComm() AccountComm {
 
 func (s *GenericsAccount) SetComm(comm AccountComm) {
 	s.AccountComm = comm
-}
-
-func (s *GenericsAccount) SetPlatform(platform string, data *AccountPlatform) {
-	if s.Platforms == nil {
-		s.Platforms = make(map[string]*AccountPlatform)
-	}
-	s.Platforms[platform] = data
-}
-
-func (s *GenericsAccount) GetPlatform(platform string) (*AccountPlatform, bool) {
-	if s.Platforms == nil {
-		s.Platforms = make(map[string]*AccountPlatform)
-	}
-	v, ok := s.Platforms[platform]
-	return v, ok
 }
 
 func (s *GenericsAccount) Filters(ctx context.Context, db *qmgo.Collection, filters bson.M) ([]*GenericsAccount, error) {
@@ -224,8 +210,6 @@ type IAccountGenerics interface {
 	setCoin(coin AccountCoin)
 	GetComm() AccountComm
 	SetComm(comm AccountComm)
-	SetPlatform(platform string, data *AccountPlatform)
-	GetPlatform(platform string) (*AccountPlatform, bool)
 }
 
 type IAccountShortcut interface {

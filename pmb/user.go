@@ -29,18 +29,8 @@ type Platform struct {
 }
 
 type SimpleUserModel struct {
-	pipe.ModelBase `bson:",inline"`
-	NickName       string     `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"昵称"`                 // 昵称
-	AvatarUrl      string     `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"头像地址" mab:"t=img"` // 头像地址
-	UserName       string     `json:"user_name,omitempty" bson:"user_name,omitempty" comment:"用户名"`
-	Password       string     `json:"password,omitempty" bson:"password,omitempty" comment:"用户登录密码"`
-	Salt           string     `json:"salt,omitempty" bson:"salt,omitempty" comment:"密码加密salt"`
-	TelPhone       string     `json:"tel_phone,omitempty" bson:"tel_phone,omitempty" comment:"电话号码"` // 电话号码
-	Balance        uint64     `json:"balance,omitempty" bson:"balance,omitempty" comment:"余额(分)" `   // 余额 单位是分
-	Email          string     `json:"email,omitempty" bson:"email,omitempty" comment:"邮箱地址"`
-	Platforms      []Platform `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
-
-	roleSecret string
+	pipe.GenericsAccount `bson:",inline"`
+	roleSecret           string
 	connectInfo
 }
 

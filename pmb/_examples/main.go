@@ -67,6 +67,7 @@ func main() {
 	bk.RegistryLoginRegRoute(party, true)
 
 	bk.InsertLogModel()
+	bk.InsertUserModel()
 
 	pmb.UserInstance.SetConn(bk.CloneConn())
 

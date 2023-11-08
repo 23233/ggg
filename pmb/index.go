@@ -193,11 +193,13 @@ func NewAction[T any, F any](name string, form F) ISchemaAction {
 }
 
 type SchemaBase struct {
-	Group    string `json:"group,omitempty"`    // 组名
-	Priority int    `json:"priority,omitempty"` // 在组下显示的优先级 越大越优先
-	EngName  string `json:"eng_name,omitempty"` // 英文名 表名
-	RawName  string `json:"raw_name,omitempty"` // 原始名称
-	Alias    string `json:"alias,omitempty"`    // 别名 中文名
+	Group     string `json:"group,omitempty"`      // 组名
+	Priority  int    `json:"priority,omitempty"`   // 在组下显示的优先级 越大越优先
+	TableName string `json:"table_name,omitempty"` // 表名
+	UniqueId  string `json:"unique_id,omitempty"`  // 唯一ID 默认生成sonyflakeId
+	PathId    string `json:"path_id,omitempty"`    // 路径ID 默认取UniqueId 在加入backend时会自动修改
+	RawName   string `json:"raw_name,omitempty"`   // 原始名称
+	Alias     string `json:"alias,omitempty"`      // 别名 中文名
 }
 
 type SchemaTableDisable struct {
@@ -349,7 +351,9 @@ func (s *SchemaModel[T]) SetRaw(raw T) {
 	name := typ.Name()
 	s.RawName = name
 
-	s.EngName = s.cleanTypeName(name)
+	s.TableName = s.cleanTypeName(name)
+	// 唯一Id 的生成规则?
+	s.UniqueId = pipe.SfNextId()
 }
 
 func (s *SchemaModel[T]) AddAction(action ISchemaAction) {
@@ -389,7 +393,9 @@ func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
 	b.Group = s.Group
 	b.Alias = s.Alias
 	b.Actions = s.Actions
-	b.EngName = s.EngName
+	b.PathId = s.PathId
+	b.TableName = s.TableName
+	b.UniqueId = s.UniqueId
 	b.Schema = s.Schema
 	b.Priority = s.Priority
 	b.queryInjects = s.queryInjects
@@ -433,7 +439,10 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 }
 
 func (s *SchemaModel[T]) GetCollection() *qmgo.Collection {
-	return s.db.Collection(s.EngName)
+	return s.db.Collection(s.TableName)
+}
+func (s *SchemaModel[T]) GetTableName() string {
+	return s.TableName
 }
 
 // GetHandler 仅获取数据
@@ -507,7 +516,7 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	// 获取数据
 	dataResp := pipe.QueryGetData.Run(ctx,
 		&pipe.ModelGetDataDep{
-			ModelId: s.EngName,
+			ModelId: s.GetTableName(),
 			Query:   resp.Result,
 		},
 		&getParams,
@@ -625,7 +634,7 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 	}
 
 	// 进行新增
-	insertResult := pipe.ModelAdd.Run(ctx, resp.Result, &pipe.ModelCtxAddConfig{ModelId: s.EngName}, s.db)
+	insertResult := pipe.ModelAdd.Run(ctx, resp.Result, &pipe.ModelCtxAddConfig{ModelId: s.GetTableName()}, s.db)
 	if insertResult.Err != nil {
 		return insertResult.Err
 	}
@@ -642,7 +651,7 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 	user := s.GetContextUser(ctx)
 	uid := insertResult.Result[ut.DefaultUidTag]
 	uidStr, _ := uid.(string)
-	MustOpLog(ctx, s.db.Collection("operation_log"), "post", user, s.EngName, "新增一行", uidStr, nil)
+	MustOpLog(ctx, s.db.Collection("operation_log"), "post", user, s.GetTableName(), "新增一行", uidStr, nil)
 
 	return nil
 }
@@ -666,7 +675,7 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 	}
 	params.QueryFilter.QueryParse.InsertOrReplaces("and", injectQuery...)
 
-	params.ModelId = s.EngName
+	params.ModelId = s.GetTableName()
 
 	newV := s.newRaw()
 	err = ctx.ReadBody(&newV)
@@ -688,13 +697,13 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 			Value: v,
 		})
 	}
-	MustOpLog(ctx, s.db.Collection("operation_log"), "put", user, s.EngName, "修改行", params.RowId, fields)
+	MustOpLog(ctx, s.db.Collection("operation_log"), "put", user, s.GetTableName(), "修改行", params.RowId, fields)
 
 	return nil
 }
 
 func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig) error {
-	params.ModelId = s.EngName
+	params.ModelId = s.GetTableName()
 
 	if len(params.RowId) < 1 {
 
@@ -725,7 +734,7 @@ func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig
 	_, _ = ctx.WriteString(resp.Result.(string))
 
 	user := s.GetContextUser(ctx)
-	MustOpLog(ctx, s.db.Collection("operation_log"), "del", user, s.EngName, "删除行", params.RowId, nil)
+	MustOpLog(ctx, s.db.Collection("operation_log"), "del", user, s.GetTableName(), "删除行", params.RowId, nil)
 
 	return nil
 }
@@ -747,7 +756,7 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 }
 
 func (s *SchemaModel[T]) Registry(part iris.Party) {
-	p := part.Party("/" + s.EngName)
+	p := part.Party("/" + s.UniqueId)
 	s.RegistryConfigAction(p)
 	s.RegistryCrud(p)
 }

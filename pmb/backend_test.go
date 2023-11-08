@@ -60,7 +60,7 @@ func TestNewBackend(t *testing.T) {
 		assert.Equal(t, nil, err)
 	})
 
-	prefix := app.GetRelPath() + model.EngName
+	prefix := app.GetRelPath() + model.PathId
 	var uid string
 
 	headers := map[string]string{

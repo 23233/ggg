@@ -7,11 +7,12 @@ import (
 
 // QueryParseConfig 所有的fields都是以json tag为准
 type QueryParseConfig struct {
-	SearchFields []string  `json:"search_fields,omitempty"`
-	Pks          []*ut.Pk  `json:"pks,omitempty"`
-	GeoKey       string    `json:"geo_key,omitempty"` // 开启了geo的字段
-	InjectAnd    []*ut.Kov `json:"inject_and,omitempty"`
-	InjectOr     []*ut.Kov `json:"inject_or,omitempty"`
+	SearchFields []string          `json:"search_fields,omitempty"`
+	Pks          []*ut.Pk          `json:"pks,omitempty"`
+	GeoKey       string            `json:"geo_key,omitempty"` // 开启了geo的字段
+	InjectAnd    []*ut.Kov         `json:"inject_and,omitempty"`
+	InjectOr     []*ut.Kov         `json:"inject_or,omitempty"`
+	UrlParams    map[string]string `json:"url_params,omitempty"`
 }
 
 // 从传入的params中获取出 query and or page page_size sort等信息
@@ -25,10 +26,14 @@ var (
 		Name: "模型query映射",
 		call: func(ctx iris.Context, origin any, params *QueryParseConfig, db any, more ...any) *RunResp[*ut.QueryFull] {
 			qs := ut.NewPruneCtxQuery()
-			urlParams := ctx.URLParams()
 
 			if params == nil {
 				params = new(QueryParseConfig)
+			}
+
+			var urlParams = params.UrlParams
+			if urlParams == nil {
+				urlParams = ctx.URLParams()
 			}
 
 			mapper, err := qs.PruneParse(urlParams, params.SearchFields, params.GeoKey)

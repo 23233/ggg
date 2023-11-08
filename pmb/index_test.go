@@ -148,7 +148,7 @@ func TestNewSchemaModel(t *testing.T) {
 
 	inst.AddAction(ac2)
 
-	prefix := "/" + inst.EngName
+	prefix := "/" + inst.PathId
 	var uid string
 
 	e := httptest.New(t, app)

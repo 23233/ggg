@@ -34,7 +34,7 @@ type Backend struct {
 
 func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
 	for _, model := range b.models {
-		if model.EngName == name || model.RawName == name {
+		if model.RawName == name || model.TableName == name || model.UniqueId == name || model.PathId == name {
 			return model, true
 		}
 	}
@@ -42,10 +42,27 @@ func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
 }
 
 func (b *Backend) AddModel(m *SchemaModel[any]) {
-	_, has := b.GetModel(m.EngName)
-	if has {
-		return
+	// 初始化UniqueId为TableName
+	uniqueId := m.TableName
+
+	// 查找唯一的UniqueId
+	for {
+		found := false
+		for _, model := range b.models {
+			if model.PathId == uniqueId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			break // 找到了唯一的UniqueId，跳出循环
+		}
+		// 如果UniqueId已经存在，尝试在其后添加0
+		uniqueId += "0"
 	}
+
+	// 设置唯一的UniqueId
+	m.PathId = uniqueId
 	b.models = append(b.models, m)
 }
 func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
@@ -94,7 +111,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		ctx.JSON(iris.Map{"info": user.Masking(0)})
 	})
-	// 这里必须有staff权限
+
 	party.Get("/models", mustLoginMiddleware, func(ctx iris.Context) {
 		var models = make([]*SchemaModel[any], 0)
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
@@ -115,16 +132,16 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 	party.Get("/message", mustLoginMiddleware, b.GetMsgHandler)
 
-	party.Get("/config/{eng:string}",
+	party.Get("/config/{unique:string}",
 		mustLoginMiddleware,
-		b.engGetModelMiddleware,
+		b.uniqueGetModelMiddleware,
 		b.canRoleMiddleware,
 		func(ctx iris.Context) {
 			model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 			_ = ctx.JSON(model)
 			return
 		})
-	party.Post("/action/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
+	party.Post("/action/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 
@@ -205,7 +222,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 
 	// crud
-	curd := party.Party("/{eng:string}", mustLoginMiddleware, b.engGetModelMiddleware, b.canRoleMiddleware)
+	curd := party.Party("/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware)
 	curd.Get("/{uid:string}", func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
 		err := model.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
@@ -305,9 +322,9 @@ func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
 
 }
 
-func (b *Backend) engGetModelMiddleware(ctx iris.Context) {
-	engName := ctx.Params().GetString("eng")
-	m, has := b.GetModel(engName)
+func (b *Backend) uniqueGetModelMiddleware(ctx iris.Context) {
+	uniqueId := ctx.Params().GetString("unique")
+	m, has := b.GetModel(uniqueId)
 	if !has {
 		IrisRespErr("获取模型失败", nil, ctx)
 		ctx.StopExecution()
@@ -322,7 +339,7 @@ func (b *Backend) canRole(user *SimpleUserModel, model *SchemaModel[any]) bool {
 		return true
 	}
 	allRole := append(model.Roles.RoleGroup, model.Roles.NameGroup...)
-	allRole = append(allRole, model.EngName)
+	allRole = append(allRole, model.UniqueId, model.TableName)
 	return b.rbac.HasRoles(user.Uid, allRole)
 }
 
@@ -342,13 +359,13 @@ func (b *Backend) canRoleMiddleware(ctx iris.Context) {
 func (b *Backend) InsertLogModel() {
 	m := NewSchemaModel(new(OperationLog), b.db)
 	m.Alias = "操作日志"
-	m.EngName = "operation_log"
+	m.TableName = "operation_log"
 	b.AddModel(m.ToAny())
 }
 func (b *Backend) InsertUserModel() {
 	m := NewSchemaModel(new(SimpleUserModel), b.db)
 	m.Alias = "用户表"
-	m.EngName = UserModelName
+	m.TableName = UserModelName
 	b.AddModel(m.ToAny())
 }
 

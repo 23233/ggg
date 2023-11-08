@@ -54,10 +54,10 @@ type ActionPostPart[F any] struct {
 
 // ActionPostArgs T是行数据 F是表单数据
 type ActionPostArgs[T, F any] struct {
-	Rows     []T               `json:"rows"`
-	FormData F                 `json:"form_data"`
-	User     *SimpleUserModel  `json:"user"`
-	Model    *SchemaModel[any] `json:"model"`
+	Rows     []T              `json:"rows"`
+	FormData F                `json:"form_data"`
+	User     *SimpleUserModel `json:"user"`
+	Model    IModelItem       `json:"model"`
 }
 
 type SchemaActionBase struct {
@@ -86,7 +86,7 @@ type ISchemaAction interface {
 	SetCall(func(ctx iris.Context, args any) (responseInfo any, err error))
 }
 
-func ActionParseArgs[T any, F any](ctx iris.Context, model *SchemaModel[any]) (*ActionPostPart[F], []T, ISchemaAction, error) {
+func ActionParseArgs[T any, F any](ctx iris.Context, model IModelItem) (*ActionPostPart[F], []T, ISchemaAction, error) {
 	// 必须为post
 	part := new(ActionPostPart[F])
 	err := ctx.ReadBody(&part)
@@ -94,16 +94,10 @@ func ActionParseArgs[T any, F any](ctx iris.Context, model *SchemaModel[any]) (*
 		return nil, nil, nil, errors.Wrap(err, "解构action参数包失败")
 	}
 
-	var action ISchemaAction
-	for _, ac := range model.Actions {
-		if ac.GetBase().Name == part.Name {
-			action = ac
-			break
-		}
-	}
-
-	if action == nil {
+	action, has := model.GetAction(part.Name)
+	if !has {
 		return nil, nil, nil, errors.Wrap(err, "未找到对应action")
+
 	}
 
 	rows := make([]T, 0, len(part.Rows))
@@ -117,7 +111,7 @@ func ActionParseArgs[T any, F any](ctx iris.Context, model *SchemaModel[any]) (*
 	return part, rows, action, nil
 }
 
-func ActionRun[T any, F any](ctx iris.Context, model *SchemaModel[any], user *SimpleUserModel) {
+func ActionRun[T any, F any](ctx iris.Context, model IModelItem, user *SimpleUserModel) {
 	part, rows, action, err := ActionParseArgs[T, F](ctx, model)
 	args := new(ActionPostArgs[T, F])
 	args.Rows = rows
@@ -234,7 +228,7 @@ type SchemaIframe struct {
 type SchemaModel[T any] struct {
 	SchemaBase
 	db           *qmgo.Database
-	raw          T
+	raw          any
 	Roles        *SchemaRole         `json:"roles,omitempty"`
 	Schema       *jsonschema.Schema  `json:"schema,omitempty"`
 	AddSchema    *jsonschema.Schema  `json:"add_schema,omitempty"` // 新增时的schema 可以额外指定 不指定则是原始schema
@@ -260,6 +254,16 @@ func (s *SchemaModel[T]) GetContextUser(ctx iris.Context) *SimpleUserModel {
 		user = ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 	}
 	return user
+}
+
+func (s *SchemaModel[T]) GetSelf() *SchemaModel[T] {
+	return s
+}
+func (s *SchemaModel[T]) GetBase() SchemaBase {
+	return s.SchemaBase
+}
+func (s *SchemaModel[T]) GetRoles() *SchemaRole {
+	return s.Roles
 }
 
 func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
@@ -338,7 +342,7 @@ func (s *SchemaModel[T]) cleanTypeName(typeName string) string {
 	return typeName
 }
 
-func (s *SchemaModel[T]) SetRaw(raw T) {
+func (s *SchemaModel[T]) SetRaw(raw any) {
 
 	s.raw = raw
 	s.Schema = ToJsonSchema(raw)
@@ -388,27 +392,6 @@ func (s *SchemaModel[T]) HaveUserKey() bool {
 	return ok
 }
 
-func (s *SchemaModel[T]) ToAny() *SchemaModel[any] {
-	var b = new(SchemaModel[any])
-	b.Group = s.Group
-	b.Alias = s.Alias
-	b.Actions = s.Actions
-	b.PathId = s.PathId
-	b.TableName = s.TableName
-	b.UniqueId = s.UniqueId
-	b.Schema = s.Schema
-	b.Priority = s.Priority
-	b.queryInjects = s.queryInjects
-	b.WriteInsert = s.WriteInsert
-	b.filterCanPass = s.filterCanPass
-	b.raw = s.raw
-	b.db = s.db
-	b.AddSchema = s.AddSchema
-	b.TableDisable = s.TableDisable
-	b.Roles = s.Roles
-	b.Iframe = s.Iframe
-	return b
-}
 func (s *SchemaModel[T]) GetAction(name string) (ISchemaAction, bool) {
 	for _, ac := range s.Actions {
 		if ac.GetBase().Name == name {
@@ -443,6 +426,9 @@ func (s *SchemaModel[T]) GetCollection() *qmgo.Collection {
 }
 func (s *SchemaModel[T]) GetTableName() string {
 	return s.TableName
+}
+func (s *SchemaModel[T]) GetAllAction() []ISchemaAction {
+	return s.Actions
 }
 
 // GetHandler 仅获取数据
@@ -656,6 +642,10 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 	return nil
 }
 
+func (s *SchemaModel[T]) SetPathId(newId string) {
+	s.PathId = newId
+}
+
 func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig) error {
 	injectQuery, err := s.ParseInject(ctx)
 	if err != nil {
@@ -751,7 +741,7 @@ func (s *SchemaModel[T]) getUid(ctx iris.Context) (string, error) {
 }
 
 func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
-	ActionRun[T, map[string]any](ctx, s.ToAny(), nil)
+	ActionRun[T, map[string]any](ctx, s, nil)
 	return
 }
 
@@ -823,4 +813,27 @@ func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
 			return
 		}
 	})
+}
+
+type IModelItem interface {
+	GetBase() SchemaBase
+	SetRaw(raw any)
+	AddAction(action ISchemaAction)
+	GetAction(name string) (ISchemaAction, bool)
+	ParseInject(ctx iris.Context) ([]*ut.Kov, error)
+	GetCollection() *qmgo.Collection
+	GetTableName() string
+	GetHandler(ctx iris.Context, queryParams pipe.QueryParseConfig, getParams pipe.ModelGetData, uid string) error
+	PostHandler(ctx iris.Context, params pipe.ModelCtxMapperPack) error
+	PutHandler(ctx iris.Context, params pipe.ModelPutConfig) error
+	DelHandler(ctx iris.Context, params pipe.ModelDelConfig) error
+	ActionEntry(ctx iris.Context)
+	Registry(part iris.Party)
+	RegistryConfigAction(p iris.Party)
+	RegistryCrud(p iris.Party)
+	AddQueryInject(q ContextValueInject)
+	GetContextUser(ctx iris.Context) *SimpleUserModel
+	GetAllAction() []ISchemaAction
+	SetPathId(newId string)
+	GetRoles() *SchemaRole
 }

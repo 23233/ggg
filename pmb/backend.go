@@ -27,29 +27,30 @@ var embedWeb embed.FS
 
 type Backend struct {
 	connectInfo
-	models          []*SchemaModel[any]
+	models          []IModelItem
 	modelContextKey string
 	msg             *MessageQueue
 }
 
-func (b *Backend) GetModel(name string) (*SchemaModel[any], bool) {
+func (b *Backend) GetModel(name string) (IModelItem, bool) {
 	for _, model := range b.models {
-		if model.RawName == name || model.TableName == name || model.UniqueId == name || model.PathId == name {
+		base := model.GetBase()
+		if base.RawName == name || base.TableName == name || base.UniqueId == name || base.PathId == name {
 			return model, true
 		}
 	}
 	return nil, false
 }
 
-func (b *Backend) AddModel(m *SchemaModel[any]) {
+func (b *Backend) AddModel(m IModelItem) {
 	// 初始化UniqueId为TableName
-	uniqueId := m.TableName
+	uniqueId := m.GetTableName()
 
 	// 查找唯一的UniqueId
 	for {
 		found := false
 		for _, model := range b.models {
-			if model.PathId == uniqueId {
+			if model.GetBase().PathId == uniqueId {
 				found = true
 				break
 			}
@@ -62,7 +63,7 @@ func (b *Backend) AddModel(m *SchemaModel[any]) {
 	}
 
 	// 设置唯一的UniqueId
-	m.PathId = uniqueId
+	m.SetPathId(uniqueId)
 	b.models = append(b.models, m)
 }
 func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
@@ -113,7 +114,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 
 	party.Get("/models", mustLoginMiddleware, func(ctx iris.Context) {
-		var models = make([]*SchemaModel[any], 0)
+		var models = make([]IModelItem, 0)
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		isRoot := b.rbac.HasRoles(user.Uid, []string{"root"})
 		if isRoot {
@@ -334,19 +335,20 @@ func (b *Backend) uniqueGetModelMiddleware(ctx iris.Context) {
 	ctx.Next()
 }
 
-func (b *Backend) canRole(user *SimpleUserModel, model *SchemaModel[any]) bool {
+func (b *Backend) canRole(user *SimpleUserModel, model IModelItem) bool {
 	if b.rbac.HasRoles(user.Uid, []string{"root"}) {
 		return true
 	}
-	allRole := append(model.Roles.RoleGroup, model.Roles.NameGroup...)
-	allRole = append(allRole, model.UniqueId, model.TableName)
+	allRole := append(model.GetRoles().RoleGroup, model.GetRoles().NameGroup...)
+	base := model.GetBase()
+	allRole = append(allRole, base.UniqueId, base.TableName)
 	return b.rbac.HasRoles(user.Uid, allRole)
 }
 
 func (b *Backend) canRoleMiddleware(ctx iris.Context) {
 	// 获取出当前用户和模型
 	user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
-	model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+	model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 
 	if !b.canRole(user, model) {
 		IrisRespErr("获取权限失败", nil, ctx, http.StatusMethodNotAllowed)
@@ -360,13 +362,13 @@ func (b *Backend) InsertLogModel() {
 	m := NewSchemaModel(new(OperationLog), b.db)
 	m.Alias = "操作日志"
 	m.TableName = "operation_log"
-	b.AddModel(m.ToAny())
+	b.AddModel(m)
 }
 func (b *Backend) InsertUserModel() {
 	m := NewSchemaModel(new(SimpleUserModel), b.db)
 	m.Alias = "用户表"
 	m.TableName = UserModelName
-	b.AddModel(m.ToAny())
+	b.AddModel(m)
 }
 
 func (b *Backend) SendMsg(ctx context.Context, uid, content string) {

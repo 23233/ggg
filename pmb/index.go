@@ -236,16 +236,17 @@ type SchemaModel[T any] struct {
 	TableDisable *SchemaTableDisable `json:"table_disable,omitempty"`
 	Actions      []ISchemaAction     `json:"actions,omitempty"` // 各类操作
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
-	queryInjects []ContextValueInject
-	WriteInsert  bool     `json:"write_insert,omitempty"`   // 是否把注入内容写入新增体
-	PostMustKeys []string `json:"post_must_keys,omitempty"` // 新增时候必须存在的key
+	queryContextInjects []ContextValueInject
+	queryFilterInject   []*ut.Kov // 过滤参数注入
+	WriteInsert         bool      `json:"write_insert,omitempty"`   // 是否把注入内容写入新增体
+	PostMustKeys        []string  `json:"post_must_keys,omitempty"` // 新增时候必须存在的key
 	// 过滤参数能否通过 这里能注入和修改过滤参数和判断参数是否缺失 返回错误则抛出错误
 	filterCanPass func(ctx iris.Context, query *ut.QueryFull) error
 	Hooks         SchemaHooks[T]
 }
 
-func (s *SchemaModel[T]) AddQueryInject(q ContextValueInject) {
-	s.queryInjects = append(s.queryInjects, q)
+func (s *SchemaModel[T]) AddQueryContextInject(q ContextValueInject) {
+	s.queryContextInjects = append(s.queryContextInjects, q)
 }
 
 func (s *SchemaModel[T]) GetContextUser(ctx iris.Context) *SimpleUserModel {
@@ -368,9 +369,16 @@ func (s *SchemaModel[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, q
 	s.filterCanPass = filterCanPass
 }
 
+func (s *SchemaModel[T]) AddQueryFilterInject(fl *ut.Kov) {
+	if s.queryFilterInject == nil {
+		s.queryFilterInject = make([]*ut.Kov, 0)
+	}
+	s.queryFilterInject = append(s.queryFilterInject, fl)
+}
+
 func (s *SchemaModel[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
-	result := make([]*ut.Kov, 0, len(s.queryInjects))
-	for _, inject := range s.queryInjects {
+	result := make([]*ut.Kov, 0, len(s.queryContextInjects))
+	for _, inject := range s.queryContextInjects {
 		value := ctx.Values().Get(inject.FromKey)
 		if value == nil && !inject.AllowEmpty {
 			return nil, errors.New(fmt.Sprintf("%s key为空", inject.FromKey))
@@ -384,6 +392,7 @@ func (s *SchemaModel[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
 			Value: value,
 		})
 	}
+
 	return result, nil
 }
 
@@ -455,6 +464,10 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	}
 
 	queryParams.InjectAnd = append(queryParams.InjectAnd, injectQuery...)
+
+	if s.queryFilterInject != nil && len(s.queryFilterInject) >= 1 {
+		queryParams.InjectAnd = append(queryParams.InjectAnd, s.queryFilterInject...)
+	}
 
 	// 解析query
 	resp := pipe.QueryParse.Run(ctx, nil, &queryParams, nil)
@@ -824,6 +837,7 @@ type IModelItem interface {
 	SetRaw(raw any)
 	AddAction(action ISchemaAction)
 	GetAction(name string) (ISchemaAction, bool)
+	AddQueryFilterInject(fl *ut.Kov)
 	ParseInject(ctx iris.Context) ([]*ut.Kov, error)
 	GetCollection() *qmgo.Collection
 	GetTableName() string
@@ -835,7 +849,7 @@ type IModelItem interface {
 	Registry(part iris.Party)
 	RegistryConfigAction(p iris.Party)
 	RegistryCrud(p iris.Party)
-	AddQueryInject(q ContextValueInject)
+	AddQueryContextInject(q ContextValueInject)
 	GetContextUser(ctx iris.Context) *SimpleUserModel
 	GetAllAction() []ISchemaAction
 	SetPathId(newId string)

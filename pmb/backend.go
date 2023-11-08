@@ -66,7 +66,7 @@ func (b *Backend) AddModel(m IModelItem) {
 	m.SetPathId(uniqueId)
 	b.models = append(b.models, m)
 }
-func (b *Backend) AddModelAny(raw any) *SchemaModel[any] {
+func (b *Backend) AddModelAny(raw any) IModelItem {
 	m := NewSchemaModel(raw, b.db)
 	b.AddModel(m)
 	return m
@@ -138,13 +138,13 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		b.uniqueGetModelMiddleware,
 		b.canRoleMiddleware,
 		func(ctx iris.Context) {
-			model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+			model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 			_ = ctx.JSON(model)
 			return
 		})
 	party.Post("/action/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 
 		// 必须为post
 		part := new(ActionPostPart[map[string]any])
@@ -225,7 +225,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	// crud
 	curd := party.Party("/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware)
 	curd.Get("/{uid:string}", func(ctx iris.Context) {
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		err := model.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
 			Single: true,
 		}, "")
@@ -236,7 +236,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 	curd.Get("/", func(ctx iris.Context) {
 		//user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		err := model.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
 			Single:        false,
 			GetQueryCount: true,
@@ -249,7 +249,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	curd.Post("/", recordBodyMiddleware, func(ctx iris.Context) {
 
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 
 		// 这个模型必须包含了 UserIdFieldName 字段才注入 否则不注入
 		injectData := make(map[string]any)
@@ -267,7 +267,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 
 	})
 	curd.Put("/{uid:string}", recordBodyMiddleware, func(ctx iris.Context) {
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		err := model.PutHandler(ctx, pipe.ModelPutConfig{
 			UpdateTime: true,
 			// 这里虽然没有判断就注入了用户id 但是因为drop 未找到是跳过 所以无所谓
@@ -280,7 +280,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 
 	})
 	curd.Delete("/{uid:string}", func(ctx iris.Context) {
-		model := ctx.Values().Get(b.modelContextKey).(*SchemaModel[any])
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		err := model.DelHandler(ctx, pipe.ModelDelConfig{})
 		if err != nil {
 			IrisRespErr("", err, ctx)

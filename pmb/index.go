@@ -586,6 +586,10 @@ func (s *SchemaModel[T]) newRaw() any {
 // PostHandler 新增数据
 func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMapperPack) error {
 
+	if s.Hooks.CustomAddHandler != nil {
+		return s.Hooks.CustomAddHandler(ctx, params, s)
+	}
+
 	if s.WriteInsert {
 		injectQuery, err := s.ParseInject(ctx)
 		if err != nil {
@@ -836,4 +840,5 @@ type IModelItem interface {
 	GetAllAction() []ISchemaAction
 	SetPathId(newId string)
 	GetRoles() *SchemaRole
+	HaveUserKey() bool
 }

@@ -311,12 +311,9 @@ func (c *SimpleUserModel) SetRole(ctx context.Context, filters bson.M, roleTarge
 	if err != nil {
 		return err
 	}
-	switch roleTarget {
-	case "root":
-		_, err = c.rbac.SetRoot(user.Uid)
-	default:
-		_, err = c.rbac.SetStaff(user.Uid)
-	}
+
+	_, err = c.rbac.SetRoleDefaultDomain(user.Uid, roleTarget)
+
 	return err
 }
 

@@ -158,18 +158,33 @@ func (c *RbacDomain) allow(sub, dom, obj, act string) []string {
 // 对于身份的设置
 
 func (c *RbacDomain) SetRoot(uid string) (bool, error) {
-	return c.E.AddRoleForUser(uid, "root", RbacAllDomainDefault)
+	return c.SetRoleDefaultDomain(uid, "root")
 }
 func (c *RbacDomain) DelRoot(uid string) error {
-	_, err := c.E.DeleteRoleForUserInDomain(uid, "root", RbacAllDomainDefault)
+
+	_, err := c.DelRoleDefaultDomain(uid, "root")
 	return err
 }
 
+func (c *RbacDomain) SetRole(uid string, role string, domain string) (bool, error) {
+	return c.E.AddRoleForUser(uid, role, domain)
+}
+func (c *RbacDomain) SetRoleDefaultDomain(uid string, role string) (bool, error) {
+	return c.E.AddRoleForUser(uid, role, RbacAllDomainDefault)
+}
+
+func (c *RbacDomain) DelRole(uid string, role string, domain string) (bool, error) {
+	return c.E.DeleteRoleForUserInDomain(uid, role, domain)
+}
+func (c *RbacDomain) DelRoleDefaultDomain(uid string, role string) (bool, error) {
+	return c.E.DeleteRoleForUserInDomain(uid, role, RbacAllDomainDefault)
+}
+
 func (c *RbacDomain) SetStaff(uid string) (bool, error) {
-	return c.E.AddRoleForUser(uid, "staff", RbacAllDomainDefault)
+	return c.SetRoleDefaultDomain(uid, "staff")
 }
 func (c *RbacDomain) DelStaff(uid string) error {
-	_, err := c.E.DeleteRoleForUserInDomain(uid, "staff", RbacAllDomainDefault)
+	_, err := c.DelRoleDefaultDomain(uid, "staff")
 	return err
 }
 

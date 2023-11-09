@@ -339,9 +339,13 @@ func (b *Backend) canRole(user *SimpleUserModel, model IModelItem) bool {
 	if b.rbac.HasRoles(user.Uid, []string{"root"}) {
 		return true
 	}
-	allRole := append(model.GetRoles().RoleGroup, model.GetRoles().NameGroup...)
+	role := model.GetRoles()
+	var allRole = make([]string, 0)
+	if role != nil {
+		allRole = append(role.RoleGroup, role.NameGroup...)
+	}
 	base := model.GetBase()
-	allRole = append(allRole, base.UniqueId, base.TableName)
+	allRole = append(allRole, base.UniqueId, base.TableName, base.Group)
 	return b.rbac.HasRoles(user.Uid, allRole)
 }
 

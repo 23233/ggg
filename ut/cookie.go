@@ -110,3 +110,29 @@ func ParseCookiesToStr(cookies []*http.Cookie, sep string) string {
 	}
 	return strings.Join(parts, sep)
 }
+
+// FindCookieValue 从字符串cookie中找到任一Key
+func FindCookieValue(cookieStr string, key string) (string, bool) {
+	// 以分号为分隔符分割cookie字符串
+	pairs := strings.Split(cookieStr, ";")
+
+	for _, pair := range pairs {
+		// 移除键值对周围的空格
+		pair = strings.TrimSpace(pair)
+		// 检查键值对是否包含等号
+		if strings.Contains(pair, "=") {
+			// 分割键值对
+			kv := strings.SplitN(pair, "=", 2)
+			if len(kv) == 2 && kv[0] == key {
+				return kv[1], true
+			}
+		}
+	}
+	return "", false
+}
+
+// MustFindCookieValue 未找到则返回空字符串
+func MustFindCookieValue(cookieStr string, key string) string {
+	v, _ := FindCookieValue(cookieStr, key)
+	return v
+}

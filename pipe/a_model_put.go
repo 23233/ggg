@@ -14,12 +14,13 @@ import (
 )
 
 type ModelPutConfig struct {
-	QueryFilter *ut.QueryFull `json:"query_filter,omitempty"`
-	DropKeys    []string      `json:"drop_keys,omitempty"` // 最后的diff还需要丢弃的key
-	ModelId     string        `json:"model_id,omitempty"`
-	RowId       string        `json:"row_id,omitempty"`
-	UpdateTime  bool          `json:"update_time,omitempty"`
-	UpdateForce bool          `json:"update_force,omitempty"` // 强行覆盖
+	QueryFilter *ut.QueryFull  `json:"query_filter,omitempty"`
+	DropKeys    []string       `json:"drop_keys,omitempty"` // 最后的diff还需要丢弃的key
+	ModelId     string         `json:"model_id,omitempty"`
+	RowId       string         `json:"row_id,omitempty"`
+	UpdateTime  bool           `json:"update_time,omitempty"`
+	UpdateForce bool           `json:"update_force,omitempty"` // 强行覆盖
+	BodyMap     map[string]any `json:"body_map,omitempty"`
 }
 
 func parseToTime(val interface{}) (time.Time, bool) {
@@ -127,10 +128,14 @@ var (
 		Key:  "model_ctx_put",
 		Name: "模型单条修改",
 		call: func(ctx iris.Context, origin any, params *ModelPutConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
-			bodyData := make(map[string]any)
-			err := ctx.ReadBody(&bodyData)
-			if err != nil {
-				return newPipeErr[map[string]any](err)
+			var bodyData = make(map[string]any)
+			if params.BodyMap != nil {
+				bodyData = params.BodyMap
+			} else {
+				err := ctx.ReadBody(&bodyData)
+				if err != nil {
+					return newPipeErr[map[string]any](err)
+				}
 			}
 
 			if params == nil {
@@ -161,7 +166,7 @@ var (
 
 			// 获取原始那一条
 			var result = make(map[string]any)
-			err = db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
+			err := db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {
 				return newPipeErr[map[string]any](err)
 			}

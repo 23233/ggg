@@ -74,9 +74,8 @@ func setFieldValue(field reflect.Value, value interface{}) error {
 
 // ModelCtxMapperPack 解析body数据包 所有map key 支持 a.b.c 但是对应的是json tag标签名
 type ModelCtxMapperPack struct {
-	InjectData        map[string]any `json:"inject_data,omitempty"`         // 注入数据 默认覆盖
-	DropKeys          []string       `json:"drop_keys,omitempty"`           // 需要丢弃的key
-	DisableReaderBody bool           `json:"disable_reader_body,omitempty"` // 禁止载入body
+	InjectData map[string]any `json:"inject_data,omitempty"` // 注入数据 默认覆盖
+	DropKeys   []string       `json:"drop_keys,omitempty"`   // 需要丢弃的key
 }
 
 func (m *ModelCtxMapperPack) processStruct(data any) error {
@@ -129,7 +128,6 @@ func (m *ModelCtxMapperPack) Process(data any) error {
 var (
 	// ModelMapper 模型body中映射取出对应的map 不需要db
 	// 必传origin 支持map和struct struct以json的tag为key进行匹配
-	// 若origin已是read映射了body序列化的 需要设置params的 DisableReaderBody 为false
 	// 必传params ModelCtxMapperPack new(ModelCtxMapperPack)都可以 但是必传
 	ModelMapper = &RunnerContext[any, *ModelCtxMapperPack, any, any]{
 		Key:  "model_ctx_mapper",
@@ -137,13 +135,7 @@ var (
 		call: func(ctx iris.Context, origin any, params *ModelCtxMapperPack, db any, more ...any) *RunResp[any] {
 			var bodyData = origin
 			if origin == nil {
-				return newPipeErr[any](PipeSelectorParamsError)
-			}
-			if !params.DisableReaderBody {
-				err := ctx.ReadBody(&bodyData)
-				if err != nil {
-					return newPipeErr[any](err)
-				}
+				return newPipeErr[any](PipeOriginError)
 			}
 			err := params.Process(bodyData)
 			if err != nil {

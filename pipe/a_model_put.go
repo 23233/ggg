@@ -121,26 +121,20 @@ func CompareAndDiff(origin interface{}, bodyData map[string]interface{}, oldData
 
 var (
 	// ModelPut 模型修改 origin需要是一个map或struct 只会修改与原始条目的diff项
-	// 选传origin 若不传模型取body映射为map
+	// 必传origin 可选struct或map 可以是ctx.ReadBody的映射
 	// 必传params ModelPutConfig 其中ModelId和RowId必传
 	// 必传db 为qmgo的Database
 	ModelPut = &RunnerContext[any, *ModelPutConfig, *qmgo.Database, map[string]any]{
 		Key:  "model_ctx_put",
 		Name: "模型单条修改",
 		call: func(ctx iris.Context, origin any, params *ModelPutConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
-			var bodyData = make(map[string]any)
-			if params.BodyMap != nil {
-				bodyData = params.BodyMap
-			} else {
-				err := ctx.ReadBody(&bodyData)
-				if err != nil {
-					return newPipeErr[map[string]any](err)
-				}
-			}
-
 			if params == nil {
 				return newPipeErr[map[string]any](PipeParamsError)
 			}
+			if params.BodyMap == nil {
+				return newPipeErr[map[string]any](PipeOriginError)
+			}
+			bodyData := params.BodyMap
 
 			ft := params.QueryFilter
 			if ft == nil {

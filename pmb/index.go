@@ -614,6 +614,10 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 	}
 
 	newV := s.newRaw()
+	err := ctx.ReadBody(newV)
+	if err != nil {
+		return err
+	}
 
 	// 通过模型去序列化body 可以防止一些无效的数据注入
 	resp := pipe.ModelMapper.Run(ctx, newV, &params, nil)

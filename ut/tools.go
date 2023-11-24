@@ -25,6 +25,10 @@ func RandomStr(n int) string {
 
 // RandomInt 区间整数随机
 func RandomInt(start, end int) int {
+	if end <= start {
+		// 处理错误情况，例如返回 start 或其他合适的处理方式
+		return start // 或者抛出错误
+	}
 	return randSeed.Intn(end-start) + start
 }
 

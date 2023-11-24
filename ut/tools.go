@@ -9,12 +9,8 @@ import (
 )
 
 var (
-	randSeed *rand.Rand
-)
-
-func init() {
 	randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
+)
 
 // RandomStr 随机N位字符串(英文)
 func RandomStr(n int) string {
@@ -25,10 +21,19 @@ func RandomStr(n int) string {
 
 // RandomInt 区间整数随机
 func RandomInt(start, end int) int {
-	if end <= start {
-		// 处理错误情况，例如返回 start 或其他合适的处理方式
-		return start // 或者抛出错误
+	// 确保 start 和 end 都至少为 1
+	if start < 1 {
+		start = 1
 	}
+	if end < 1 {
+		end = 1
+	}
+
+	// 确保 end - start 大于 0
+	if end <= start {
+		end = start + 1
+	}
+
 	return randSeed.Intn(end-start) + start
 }
 

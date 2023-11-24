@@ -3,6 +3,7 @@ package ut
 import (
 	"errors"
 	"fmt"
+	"github.com/colduction/randomizer"
 	"math/rand"
 	"reflect"
 	"time"
@@ -21,20 +22,9 @@ func RandomStr(n int) string {
 
 // RandomInt 区间整数随机
 func RandomInt(start, end int) int {
-	// 确保 start 和 end 都至少为 1
-	if start < 1 {
-		start = 1
-	}
-	if end < 1 {
-		end = 1
-	}
-
-	// 确保 end - start 大于 0
-	if end <= start {
-		end = start + 1
-	}
-
-	return randSeed.Intn(end-start) + start
+	// 使用randomizer方法保证线程安全的rand 否则在高并发下rand seed会到0 然后panic
+	// 看这里https://qqq.ninja/blog/post/fast-threadsafe-randomness-in-go/
+	return randomizer.RandInt(start, end)
 }
 
 // RangeRandomIntSet 范围随机正整数但不重复
@@ -48,7 +38,7 @@ func RangeRandomIntSet(start int64, end int64, count int64) []int64 {
 	//随机数生成器，加入时间戳保证每次生成的随机数不一样
 	for int64(len(nums)) < count {
 		//生成随机数
-		num := int64(randSeed.Intn(int(end-start))) + start
+		num := int64(RandomInt(int(start), int(end)))
 		//查重
 		exist := false
 		for _, v := range nums {

@@ -293,7 +293,11 @@ func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 
 	result, err := db.InsertMany(ctx, accounts, opts)
 	if err != nil {
-		logger.J.ErrorE(err, "批量插入失败")
+		if result == nil || len(result.InsertedIDs) < 1 {
+			logger.J.ErrorE(err, "批量插入失败")
+		} else {
+			logger.J.Infof("批量插入局部成功 %d 条", len(result.InsertedIDs))
+		}
 		return err
 	}
 	logger.J.Infof("批量插入成功 %d 条", len(result.InsertedIDs))

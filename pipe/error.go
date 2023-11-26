@@ -18,3 +18,7 @@ var (
 	PipeRunAfterEmptyError   = errors.New("操作序列包解析后为空错误")
 	PipeRatedError           = errors.New("太快了 请慢一点~")
 )
+
+var (
+	PipeBulkEmptySuccessError = errors.New("批量新增无一成功错误")
+)

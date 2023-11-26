@@ -299,6 +299,9 @@ func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 			logger.J.ErrorE(err, "批量插入发生非bulkWrite异常")
 			return err
 		}
+		if len(result.InsertedIDs) < 1 {
+			return PipeBulkEmptySuccessError
+		}
 	}
 	logger.J.Infof("批量插入成功 %d 条", len(result.InsertedIDs))
 	return nil

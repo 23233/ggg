@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/ut"
@@ -293,12 +294,10 @@ func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 
 	result, err := db.InsertMany(ctx, accounts, opts)
 	if err != nil {
-		if result == nil || len(result.InsertedIDs) < 1 {
-			logger.J.ErrorE(err, "批量插入失败")
-		} else {
-			logger.J.Infof("批量插入局部成功 %d 条", len(result.InsertedIDs))
+		var bulkErr mongo.BulkWriteException
+		if ok := errors.As(err, &bulkErr); !ok {
+			return err
 		}
-		return err
 	}
 	logger.J.Infof("批量插入成功 %d 条", len(result.InsertedIDs))
 	return nil

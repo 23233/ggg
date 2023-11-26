@@ -296,6 +296,7 @@ func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 	if err != nil {
 		var bulkErr mongo.BulkWriteException
 		if ok := errors.As(err, &bulkErr); !ok {
+			logger.J.ErrorE(err, "批量插入发生非bulkWrite异常")
 			return err
 		}
 	}

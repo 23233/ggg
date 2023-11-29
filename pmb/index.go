@@ -68,6 +68,7 @@ type SchemaActionBase struct {
 	MustSelect                  bool               `json:"must_select,omitempty"`            // 必须有所选择表选择适用 行是必须选一行
 	TableEmptySelectUseAllSheet bool               `json:"table_empty_select_use_all_sheet"` // 表模式未选中行则默认是整表
 	Conditions                  []ut.Kov           `json:"conditions,omitempty"`             // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
+	FaWarning                   bool               `json:"fa_warning,omitempty"`             // 是否弹出二次确认操作
 }
 
 func (s *SchemaActionBase) SetType(tp []uint) {

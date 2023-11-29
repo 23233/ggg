@@ -97,7 +97,7 @@ func mongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 			return result, PipeBulkEmptySuccessError
 		}
 	}
-	logger.J.Infof("批量插入成功 %d 条", len(result.InsertedIDs))
+	logger.J.Infof("批量预期传入 %d条 插入成功 %d 条", len(accounts), len(result.InsertedIDs))
 	return result, nil
 }
 func MongoBulkInsertCount[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) (int, error) {

@@ -40,6 +40,8 @@ github.com/casbin/redis-adapter/v2 v2.4.0/go.mod h1:ZYscj2kjD89H9v3sm9i3ocWU4IlA
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927/go.mod h1:h/aW8ynjgkuj+NQRlZcDbAbM1ORAbXjXX77sX7T289U=
+github.com/colduction/randomizer v1.0.2 h1:Msq6dXxsI73XrC9JYKvsKCw8vdXEhmkX2dI1Ndo3PJE=
+github.com/colduction/randomizer v1.0.2/go.mod h1:3Y5GKLV57XREe1uE9jD+smecyejM54/hX4amAHbOdgw=
 github.com/davecgh/go-spew v0.0.0-20161028175848-04cdfd42973b/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81
 	github.com/23233/ggg/logger v0.0.0-20230628082929-0ead189017f6
-	github.com/23233/ggg/ut v0.0.0-20221002105326-9e8ed7cbb14f
+	github.com/23233/ggg/ut v0.0.0-20231125085718-c7312d0c4e06
 	github.com/23233/jsonschema v0.11.2
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
@@ -53,6 +53,7 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/colduction/randomizer v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect

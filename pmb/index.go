@@ -433,6 +433,9 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 func (s *SchemaModel[T]) GetCollection() *qmgo.Collection {
 	return s.db.Collection(s.TableName)
 }
+func (s *SchemaModel[T]) GetDb() *qmgo.Database {
+	return s.db
+}
 func (s *SchemaModel[T]) GetTableName() string {
 	return s.TableName
 }
@@ -844,6 +847,7 @@ type IModelItem interface {
 	AddQueryFilterInject(fl *ut.Kov)
 	ParseInject(ctx iris.Context) ([]*ut.Kov, error)
 	GetCollection() *qmgo.Collection
+	GetDb() *qmgo.Database
 	GetTableName() string
 	GetHandler(ctx iris.Context, queryParams pipe.QueryParseConfig, getParams pipe.ModelGetData, uid string) error
 	PostHandler(ctx iris.Context, params pipe.ModelCtxMapperPack) error

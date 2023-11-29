@@ -17,7 +17,6 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/casbin/casbin/v2 v2.71.1
 	github.com/casbin/redis-adapter/v2 v2.4.0
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.5.9
 	github.com/gookit/validate v1.4.6

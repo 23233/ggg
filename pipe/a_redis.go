@@ -1,7 +1,6 @@
 package pipe
 
 import (
-	"github.com/go-redis/redis/v8"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"github.com/redis/rueidis"
@@ -184,7 +183,7 @@ var (
 			redisCmd.Args(ab.Args...)
 			resp := rdb.Do(ctx, redisCmd.Build())
 			if resp.Error() != nil {
-				if resp.Error() == redis.Nil {
+				if resp.Error() == rueidis.Nil {
 					if !params.AllowNil {
 						return newPipeErr[any](resp.Error())
 					}
@@ -232,7 +231,7 @@ var (
 
 			for index, resp := range rdb.DoMulti(ctx, cmdList...) {
 				if resp.Error() != nil {
-					if resp.Error() == redis.Nil {
+					if resp.Error() == rueidis.Nil {
 						if !params.Records[index].AllowNil {
 							return newPipeErr[[]any](resp.Error())
 						}

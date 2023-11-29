@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/ut"
-	"github.com/go-redis/redis/v8"
 	"github.com/redis/rueidis"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
@@ -121,7 +120,7 @@ func (s *SmsClient) SendBeforeCheck(ctx context.Context, templateId string, mobi
 	resp := s.rdb.Do(ctx, s.rdb.B().Exists().Key(s.redisPrefix+mobile).Build())
 	if resp.Error() != nil {
 		// 如果不存在的时候才进行发送
-		if resp.Error() == redis.Nil {
+		if resp.Error() == rueidis.Nil {
 			return s.Send(ctx, templateId, mobile)
 		}
 		return "", resp.Error()

@@ -1,7 +1,6 @@
 package pipe
 
 import (
-	"github.com/go-redis/redis/v8"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"github.com/redis/rueidis"
@@ -55,7 +54,7 @@ var (
 				resp := helper.JwtRedisGetKey(ctx, redisKey)
 				if resp.Error() != nil {
 					// 只要不是为空错误 则为其他错误都直接返回
-					if resp.Error() != redis.Nil {
+					if resp.Error() != rueidis.Nil {
 						return newPipeErr[string](resp.Error())
 					}
 				}

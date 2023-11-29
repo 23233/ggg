@@ -2,7 +2,6 @@ package pipe
 
 import (
 	"github.com/23233/ggg/ut"
-	"github.com/go-redis/redis/v8"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
@@ -25,7 +24,7 @@ var (
 
 			resp := db.Do(ctx, db.B().Get().Key(cacheKey).Build())
 			if resp.Error() != nil {
-				if resp.Error() == redis.Nil {
+				if resp.Error() == rueidis.Nil {
 					// 如果缓存为空 则直接跳出到下一步
 					return newPipeErr[*ParseResponse](nil)
 				}

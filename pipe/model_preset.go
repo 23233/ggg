@@ -30,6 +30,12 @@ func (c *ModelBase) BeforeInsert(ctx context.Context) error {
 	}
 	return nil
 }
+func (c *ModelBase) Reset() {
+	c.Id = primitive.NewObjectID()
+	c.Uid = SfNextId()
+	c.UpdateAt = time.Now().Local()
+	c.CreateAt = time.Now().Local()
+}
 
 func DefaultModelMap() map[string]any {
 	var m = make(map[string]any, 0)

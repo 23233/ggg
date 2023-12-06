@@ -56,24 +56,24 @@ var (
 		Key:  "rules_valid",
 		call: func(ctx iris.Context, origin any, params *RulesValidate, db any, more ...any) *RunResp[ValidResult] {
 			if params == nil {
-				return newPipeErr[ValidResult](PipePackParamsError)
+				return NewPipeErr[ValidResult](PipePackParamsError)
 			}
 			// 先获取到所有数据map
 			mp := make(map[string]any)
 			for _, rv := range params.Record {
 				tv, err := ut.TypeChange(rv.Value, rv.NeedType)
 				if err != nil {
-					return newPipeErr[ValidResult](err)
+					return NewPipeErr[ValidResult](err)
 				}
 				mp[rv.Key] = tv
 			}
 
 			result := params.Valid(mp)
 			if !result.Pass {
-				return newPipeErr[ValidResult](errors.New(result.Msg))
+				return NewPipeErr[ValidResult](errors.New(result.Msg))
 			}
 
-			return newPipeResult(result)
+			return NewPipeResult(result)
 
 		},
 	}

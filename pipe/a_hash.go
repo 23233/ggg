@@ -14,7 +14,7 @@ var (
 		Key:  "hash_gen",
 		call: func(ctx iris.Context, origin any, params *HashGenPipe, db any, more ...any) *RunResp[string] {
 			if len(params.Cols) < 1 {
-				return newPipeErr[string](PipePackParamsError)
+				return NewPipeErr[string](PipePackParamsError)
 			}
 
 			var result string
@@ -27,9 +27,9 @@ var (
 				result = ut.StrToB58(strings.Join(params.Cols, ""))
 				break
 			default:
-				return newPipeErr[string](errors.New("hash生成类型错误"))
+				return NewPipeErr[string](errors.New("hash生成类型错误"))
 			}
-			return newPipeResult[string](result)
+			return NewPipeResult[string](result)
 		},
 	}
 )

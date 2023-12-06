@@ -135,14 +135,14 @@ var (
 		call: func(ctx iris.Context, origin any, params *ModelCtxMapperPack, db any, more ...any) *RunResp[any] {
 			var bodyData = origin
 			if origin == nil {
-				return newPipeErr[any](PipeOriginError)
+				return NewPipeErr[any](PipeOriginError)
 			}
 			err := params.Process(bodyData)
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 
-			return newPipeResult(bodyData)
+			return NewPipeResult(bodyData)
 
 		},
 	}

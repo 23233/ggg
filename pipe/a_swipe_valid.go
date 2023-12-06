@@ -16,12 +16,12 @@ var (
 
 			sp, err := db.Gen(ctx)
 			if err != nil {
-				return newPipeErr[string](err)
+				return NewPipeErr[string](err)
 			}
 			raw := sp.ToString()
 			sEnc := base64.StdEncoding.EncodeToString([]byte(raw))
 
-			return newPipeResult(sEnc)
+			return NewPipeResult(sEnc)
 		},
 	}
 	// SwipeValidCheck 滑块验证码验证
@@ -32,9 +32,9 @@ var (
 		call: func(ctx iris.Context, origin string, params any, db *SwipeValidCode, more ...any) *RunResp[*SwipeValid] {
 			check, err := db.Check(ctx, origin)
 			if err != nil {
-				return newPipeErr[*SwipeValid](errors.New("验证失败 请重试"))
+				return NewPipeErr[*SwipeValid](errors.New("验证失败 请重试"))
 			}
-			return newPipeResult(check)
+			return NewPipeResult(check)
 		},
 	}
 )

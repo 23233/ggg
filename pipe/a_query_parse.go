@@ -38,7 +38,7 @@ var (
 
 			mapper, err := qs.PruneParse(urlParams, params.SearchFields, params.GeoKey)
 			if err != nil {
-				return newPipeErr[*ut.QueryFull](err)
+				return NewPipeErr[*ut.QueryFull](err)
 			}
 
 			if params.InjectAnd != nil {
@@ -48,7 +48,7 @@ var (
 				mapper.QueryParse.InsertOrReplaces("or", params.InjectOr...)
 			}
 			mapper.Pks = params.Pks
-			return newPipeResult(mapper)
+			return NewPipeResult(mapper)
 
 		},
 	}

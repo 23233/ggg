@@ -34,21 +34,21 @@ var (
 		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *RunResp[any] {
 
 			if params == nil {
-				return newPipeErr[any](PipePackParamsError)
+				return NewPipeErr[any](PipePackParamsError)
 			}
 			gc := db
 
 			k, err := params.KeyGen.Build()
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 			v, err := gc.Get(k)
 			if err != nil {
 				if err != gcache.KeyNotFoundError {
-					return newPipeErr[any](err)
+					return NewPipeErr[any](err)
 				}
 				if params.EmptyRaise {
-					return newPipeErr[any](err)
+					return NewPipeErr[any](err)
 				}
 			} else {
 				if !params.DisWriteHeader {
@@ -56,7 +56,7 @@ var (
 				}
 			}
 
-			return newPipeResult(v)
+			return NewPipeResult(v)
 		},
 	}
 
@@ -68,19 +68,19 @@ var (
 		Key:  "local_cache_set",
 		call: func(ctx iris.Context, origin any, params *LocalCachePipe, db gcache.Cache, more ...any) *RunResp[any] {
 			if params == nil {
-				return newPipeErr[any](PipePackParamsError)
+				return NewPipeErr[any](PipePackParamsError)
 			}
 
 			k, err := params.KeyGen.Build()
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 
 			err = db.SetWithExpire(k, params.Values, params.GetExpire())
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
-			return newPipeResult[any](params.Values)
+			return NewPipeResult[any](params.Values)
 		},
 	}
 )

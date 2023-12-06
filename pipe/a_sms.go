@@ -23,7 +23,7 @@ var (
 		Key:  "sms_send",
 		call: func(ctx iris.Context, origin any, params *SmsPipe, db *SmsClient, more ...any) *RunResp[string] {
 			code, err := db.SendBeforeCheck(ctx, params.TemplateId, params.Mobile)
-			return newPipeResultErr(code, err)
+			return NewPipeResultErr(code, err)
 		},
 	}
 	// SmsValid 短信验证码验证
@@ -36,12 +36,12 @@ var (
 
 			pass := db.Valid(ctx, params.Mobile, params.Code)
 			if !pass {
-				return newPipeErr[bool](errors.New("短信验证码验证失败"))
+				return NewPipeErr[bool](errors.New("短信验证码验证失败"))
 
 			}
 			db.DelKey(context.TODO(), params.Mobile)
 
-			return newPipeResult(pass)
+			return NewPipeResult(pass)
 		},
 	}
 )

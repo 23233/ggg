@@ -25,12 +25,12 @@ var (
 			// 先判断当前环境是否合规
 			resp := JwtVisit.call(ctx, origin, nil, db)
 			if resp.Err != nil {
-				return newPipeErr[string](resp.Err)
+				return NewPipeErr[string](resp.Err)
 			}
 			flatMap := resp.Result
 
 			if flatMap.IsShort() {
-				return newPipeErr[string](errors.New("短令牌无法生成短令牌"))
+				return NewPipeErr[string](errors.New("短令牌无法生成短令牌"))
 			}
 
 			helper := NewJwtHelper(db)
@@ -44,10 +44,10 @@ var (
 			shortRedisKey := helper.JwtShortRedisGenKey(shortToken)
 			err := helper.JwtSaveToken(ctx, shortRedisKey, raw, params.GetExpire(time.Hour))
 			if err != nil {
-				return newPipeErr[string](err)
+				return NewPipeErr[string](err)
 			}
 
-			return newPipeResult[string](shortToken)
+			return NewPipeResult[string](shortToken)
 		},
 	}
 )

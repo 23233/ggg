@@ -30,9 +30,9 @@ var (
 		call: func(ctx iris.Context, origin any, params *RbacGetRolePipe, db *RbacDomain, more ...any) *RunResp[[]string] {
 			roles, err := db.E.GetRolesForUser(params.UserId, params.Domain)
 			if err != nil {
-				return newPipeErr[[]string](err)
+				return NewPipeErr[[]string](err)
 			}
-			return newPipeResult(roles)
+			return NewPipeResult(roles)
 		},
 	}
 	// RbacAllow 判断rbac是否运行执行操作
@@ -43,7 +43,7 @@ var (
 		Name: "rbac权限允许执行",
 		call: func(ctx iris.Context, origin any, params *RbacAllowPipe, db *RbacDomain, more ...any) *RunResp[bool] {
 			if len(params.Sub) < 1 {
-				return newPipeErr[bool](errors.New("权限判断操作者不能为空"))
+				return NewPipeErr[bool](errors.New("权限判断操作者不能为空"))
 			}
 			// 访问资源为空的话 则是默认当前请求访问路径
 			if len(params.Obj) < 1 {
@@ -59,7 +59,7 @@ var (
 			}
 			// 谁(sub)在那个域名(domain)下进行了什么资源(obj)的什么操作(act)
 			pass := db.E.HasPolicy(params.Sub, params.Domain, params.Obj, params.Act)
-			return newPipeResult(pass)
+			return NewPipeResult(pass)
 		},
 	}
 )

@@ -45,22 +45,22 @@ var (
 		call: func(ctx iris.Context, origin any, params *RateLimitPipe, db any, more ...any) *RunResp[any] {
 
 			if params == nil {
-				return newPipeErr[any](PipePackParamsError)
+				return NewPipeErr[any](PipePackParamsError)
 			}
 			k, err := params.KeyGen.Build()
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 
 			client, err := params.genClient()
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 
 			// 过程报错了 并不是说达到限速了
 			rateCtx, err := client.Get(ctx, k)
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 
 			if params.WriteHeader {
@@ -72,9 +72,9 @@ var (
 			// 超出限速了
 			if rateCtx.Reached {
 				// 抛出错误
-				return newPipeErr[any](PipeRatedError).SetReqCode(http.StatusTooManyRequests)
+				return NewPipeErr[any](PipeRatedError).SetReqCode(http.StatusTooManyRequests)
 			}
-			return newPipeResult[any](nil)
+			return NewPipeResult[any](nil)
 		},
 	}
 )

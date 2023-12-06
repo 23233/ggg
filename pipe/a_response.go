@@ -28,7 +28,7 @@ var (
 		call: func(ctx iris.Context, origin any, params *ReqResponse, db any, more ...any) *RunResp[*ParseResponse] {
 
 			if params == nil {
-				return newPipeErr[*ParseResponse](PipePackParamsError)
+				return NewPipeErr[*ParseResponse](PipePackParamsError)
 			}
 
 			var pr = new(ParseResponse)
@@ -66,7 +66,7 @@ var (
 					case "string":
 						st, err := jsoniter.MarshalToString(respMap)
 						if err != nil {
-							return newPipeErr[*ParseResponse](errors.Wrap(err, "返回值转换为字符串失败"))
+							return NewPipeErr[*ParseResponse](errors.Wrap(err, "返回值转换为字符串失败"))
 						}
 						pr.Msg = st
 						break
@@ -78,7 +78,7 @@ var (
 				}
 
 			}
-			return newPipeResult(pr)
+			return NewPipeResult(pr)
 		},
 	}
 )

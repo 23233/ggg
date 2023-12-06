@@ -2,17 +2,20 @@ package pipe
 
 import (
 	"github.com/23233/ggg/ut"
+	"github.com/kataras/iris/v12"
+	"net/http"
 	"os"
 	"time"
 )
 
 // RunResp 操作序列执行结果
 type RunResp[T any] struct {
-	Result       T     // 执行结果
-	Err          error // 错误
-	ReqCode      int   // 请求状态码 权重在pipeline定义的errCode之后
-	BusinessCode int   // 业务code 仅在错误时有则会返回
-	IsBreak      bool  // 是否中断之后的执行
+	Result       T      // 执行结果
+	Msg          string // 错误说明 有说明则返回说明
+	Err          error  // 错误
+	ReqCode      int    // 请求状态码 权重在pipeline定义的errCode之后
+	BusinessCode int    // 业务code 仅在错误时有则会返回
+	IsBreak      bool   // 是否中断之后的执行
 }
 
 func (c *RunResp[T]) SetBusinessCode(businessCode int) *RunResp[T] {
@@ -27,18 +30,55 @@ func (c *RunResp[T]) SetBreak(b bool) *RunResp[T] {
 	c.IsBreak = b
 	return c
 }
+func (c *RunResp[T]) RaiseError(ctx iris.Context) {
+	var detail = c.Msg
+	if len(c.Msg) < 1 {
+		detail = c.Err.Error()
+	}
+	result := iris.Map{
+		"detail": detail,
+		"code":   c.BusinessCode,
+	}
+	reqCode := http.StatusBadRequest
+	if c.ReqCode > 0 {
+		reqCode = c.ReqCode
+	}
+	ctx.StatusCode(reqCode)
+	ctx.JSON(result)
+}
+func (c *RunResp[T]) ReturnSuccess(ctx iris.Context) {
+	result := iris.Map{
+		"code": c.BusinessCode,
+		"data": c.Result,
+	}
+	ctx.JSON(result)
+}
+func (c *RunResp[T]) Return(ctx iris.Context) {
+	if c.Err != nil {
+		c.RaiseError(ctx)
+		return
+	}
+	c.ReturnSuccess(ctx)
 
-func newPipeErr[T any](err error) *RunResp[T] {
+}
+
+func NewPipeErrMsg[T any](msg string, err error) *RunResp[T] {
+	return &RunResp[T]{
+		Err: err,
+		Msg: msg,
+	}
+}
+func NewPipeErr[T any](err error) *RunResp[T] {
 	return &RunResp[T]{
 		Err: err,
 	}
 }
-func newPipeResult[T any](result T) *RunResp[T] {
+func NewPipeResult[T any](result T) *RunResp[T] {
 	return &RunResp[T]{
 		Result: result,
 	}
 }
-func newPipeResultErr[T any](result T, err error) *RunResp[T] {
+func NewPipeResultErr[T any](result T, err error) *RunResp[T] {
 	return &RunResp[T]{
 		Err:    err,
 		Result: result,

@@ -19,28 +19,28 @@ var (
 			}
 			cacheKey, err := params.GetCacheKey(ctx)
 			if err != nil {
-				return newPipeErr[*ParseResponse](err)
+				return NewPipeErr[*ParseResponse](err)
 			}
 
 			resp := db.Do(ctx, db.B().Get().Key(cacheKey).Build())
 			if resp.Error() != nil {
 				if resp.Error() == rueidis.Nil {
 					// 如果缓存为空 则直接跳出到下一步
-					return newPipeErr[*ParseResponse](nil)
+					return NewPipeErr[*ParseResponse](nil)
 				}
-				return newPipeErr[*ParseResponse](resp.Error())
+				return NewPipeErr[*ParseResponse](resp.Error())
 			}
 			raw, err := resp.ToString()
 			if err != nil {
-				return newPipeErr[*ParseResponse](err)
+				return NewPipeErr[*ParseResponse](err)
 			}
 			var response *ParseResponse
 			err = jsoniter.Unmarshal([]byte(raw), &response)
 			if err != nil {
-				return newPipeErr[*ParseResponse](err)
+				return NewPipeErr[*ParseResponse](err)
 			}
 			// 主动抛出跳出的错误
-			return newPipeResultErr[*ParseResponse](response, PipeCacheHasError).SetBreak(true)
+			return NewPipeResultErr[*ParseResponse](response, PipeCacheHasError).SetBreak(true)
 		},
 		Name: "请求缓存获取",
 		Key:  "request_cache_get",
@@ -51,20 +51,20 @@ var (
 
 			cacheKey, err := params.GetCacheKey(ctx)
 			if err != nil {
-				return newPipeErr[*ParseResponse](err)
+				return NewPipeErr[*ParseResponse](err)
 			}
 
 			if _, ok := db.(rueidis.Client); !ok {
-				return newPipeErr[*ParseResponse](errors.New("获取rdb失败"))
+				return NewPipeErr[*ParseResponse](errors.New("获取rdb失败"))
 			}
 			rdb := db.(rueidis.Client)
 
 			mpByte, _ := jsoniter.Marshal(origin)
 			rdbResp := rdb.Do(ctx, rdb.B().Set().Key(cacheKey).Value(string(mpByte)).ExSeconds(int64(params.GetCacheTime().Seconds())).Build())
 			if rdbResp.Error() != nil {
-				return newPipeErr[*ParseResponse](rdbResp.Error())
+				return NewPipeErr[*ParseResponse](rdbResp.Error())
 			}
-			return newPipeResult[*ParseResponse](nil)
+			return NewPipeResult[*ParseResponse](nil)
 		},
 		Name: "请求缓存设置",
 		Key:  "request_cache_set",

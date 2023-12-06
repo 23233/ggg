@@ -164,11 +164,11 @@ var (
 		call: func(ctx iris.Context, origin any, params *RedisOperate, db rueidis.Client, more ...any) *RunResp[any] {
 
 			if params == nil {
-				return newPipeErr[any](PipePackParamsError)
+				return NewPipeErr[any](PipePackParamsError)
 			}
 			ab, err := params.Build()
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 			rdb := db
 
@@ -185,15 +185,15 @@ var (
 			if resp.Error() != nil {
 				if resp.Error() == rueidis.Nil {
 					if !params.AllowNil {
-						return newPipeErr[any](resp.Error())
+						return NewPipeErr[any](resp.Error())
 					}
-					return newPipeErr[any](nil)
+					return NewPipeErr[any](nil)
 				}
-				return newPipeErr[any](resp.Error())
+				return NewPipeErr[any](resp.Error())
 			}
 
 			result, err := params.RespParse(resp)
-			return newPipeResultErr(result, err)
+			return NewPipeResultErr(result, err)
 		},
 	}
 
@@ -209,7 +209,7 @@ var (
 			for _, rc := range params.Records {
 				ab, err := rc.Build()
 				if err != nil {
-					return newPipeErr[[]any](err)
+					return NewPipeErr[[]any](err)
 				}
 				redisCmd := rdb.B().Arbitrary(ab.Command)
 				for _, kv := range ab.Keys {
@@ -223,7 +223,7 @@ var (
 			}
 
 			if len(cmdList) < 1 {
-				return newPipeErr[[]any](errors.New("redis命令组为空"))
+				return NewPipeErr[[]any](errors.New("redis命令组为空"))
 
 			}
 
@@ -233,22 +233,22 @@ var (
 				if resp.Error() != nil {
 					if resp.Error() == rueidis.Nil {
 						if !params.Records[index].AllowNil {
-							return newPipeErr[[]any](resp.Error())
+							return NewPipeErr[[]any](resp.Error())
 						}
 						result = append(result, nil)
 						continue
 					}
-					return newPipeErr[[]any](resp.Error())
+					return NewPipeErr[[]any](resp.Error())
 				}
 
 				r, err := params.Records[index].RespParse(resp)
 				if err != nil {
-					return newPipeErr[[]any](err)
+					return NewPipeErr[[]any](err)
 				}
 				result = append(result, r)
 			}
 
-			return newPipeResult(result)
+			return NewPipeResult(result)
 		},
 	}
 )

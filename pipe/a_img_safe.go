@@ -13,10 +13,10 @@ var (
 		call: func(ctx iris.Context, origin string, params any, db any, more ...any) *RunResp[bool] {
 
 			if len(origin) < 1 {
-				return newPipeResult[bool](false)
+				return NewPipeResult[bool](false)
 			}
 			pass, err := contentSafe.C.AutoHitImg(origin)
-			return newPipeResultErr[bool](pass, err)
+			return NewPipeResultErr[bool](pass, err)
 		},
 	}
 )

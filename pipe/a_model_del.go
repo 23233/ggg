@@ -34,14 +34,14 @@ var (
 			pipeline := ut.QueryToMongoPipeline(ft)
 			err := db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
 			// 进行删除
 			err = db.Collection(params.ModelId).Remove(ctx, bson.M{ut.DefaultUidTag: params.RowId})
 			if err != nil {
-				return newPipeErr[any](err)
+				return NewPipeErr[any](err)
 			}
-			return newPipeResult[any]("ok")
+			return NewPipeResult[any]("ok")
 		},
 	}
 )

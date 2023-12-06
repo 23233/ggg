@@ -59,9 +59,9 @@ var (
 				}
 			}
 			if err != nil {
-				return newPipeErr[*ut.MongoFacetResult](err)
+				return NewPipeErr[*ut.MongoFacetResult](err)
 			}
-			return newPipeResult(all)
+			return NewPipeResult(all)
 		},
 	}
 )

@@ -38,15 +38,15 @@ var (
 		Key:  "kv_valid",
 		call: func(ctx iris.Context, origin any, params *KvValidConfig, db any, more ...any) *RunResp[bool] {
 			if params == nil {
-				return newPipeErr[bool](PipePackParamsError)
+				return NewPipeErr[bool](PipePackParamsError)
 			}
 
 			pass, err := params.Check()
 			if err != nil {
-				return newPipeErr[bool](err)
+				return NewPipeErr[bool](err)
 			}
 
-			return newPipeResult(pass)
+			return NewPipeResult(pass)
 		},
 	}
 	// pipeKvListValid 多个kv结构验证器 必传params
@@ -56,19 +56,19 @@ var (
 		call: func(ctx iris.Context, origin any, params *KvsValidPipe, db any, more ...any) *RunResp[[]bool] {
 
 			if params == nil {
-				return newPipeErr[[]bool](PipePackParamsError)
+				return NewPipeErr[[]bool](PipePackParamsError)
 			}
 			var result = make([]bool, 0, len(params.Records))
 
 			for _, kv := range params.Records {
 				pass, err := kv.Check()
 				if err != nil {
-					return newPipeErr[[]bool](err)
+					return NewPipeErr[[]bool](err)
 				}
 				result = append(result, pass)
 			}
 
-			return newPipeResult(result)
+			return NewPipeResult(result)
 		},
 	}
 )

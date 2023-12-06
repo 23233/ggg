@@ -22,13 +22,13 @@ var (
 			dep := origin
 			resp := JwtFlat.call(ctx, dep.Authorization, nil, db)
 			if resp.Err != nil {
-				return newPipeErr[JwtFlatBase](errors.Wrap(resp.Err, "解析结构"))
+				return NewPipeErr[JwtFlatBase](errors.Wrap(resp.Err, "解析结构"))
 			}
 			dep.FlatMap = resp.Result
 
 			resp2 := JwtCheck.call(ctx, dep, nil, db)
 			if resp2.Err != nil {
-				return newPipeErr[JwtFlatBase](errors.Wrap(resp2.Err, "验证安全"))
+				return NewPipeErr[JwtFlatBase](errors.Wrap(resp2.Err, "验证安全"))
 			}
 
 			// 进行续期
@@ -62,7 +62,7 @@ var (
 					logger.J.ErrorE(err, "续期token失败 %s %s", pack.UserId, pack.Env)
 				}
 			}
-			return newPipeResult(resp.Result)
+			return NewPipeResult(resp.Result)
 		},
 	}
 )

@@ -17,7 +17,7 @@ var (
 		call: func(ctx iris.Context, origin string, params any, rdb rueidis.Client, more ...any) *RunResp[JwtFlatBase] {
 
 			if len(origin) < 1 {
-				return newPipeErr[JwtFlatBase](errors.New("获取token令牌错误"))
+				return NewPipeErr[JwtFlatBase](errors.New("获取token令牌错误"))
 			}
 
 			helper := NewJwtHelper(rdb)
@@ -28,17 +28,17 @@ var (
 			if isShort {
 				shortToken := strings.TrimPrefix(origin, JwtShortPrefix)
 				if len(shortToken) != JwtShortLen {
-					return newPipeErr[JwtFlatBase](errors.New("短token令牌格式错误"))
+					return NewPipeErr[JwtFlatBase](errors.New("短token令牌格式错误"))
 				}
 
 				// 通过short token 获取完整token
 				resp := rdb.Do(ctx, rdb.B().Get().Key(helper.JwtShortRedisGenKey(shortToken)).Build())
 				if resp.Error() != nil {
-					return newPipeErr[JwtFlatBase](resp.Error())
+					return NewPipeErr[JwtFlatBase](resp.Error())
 				}
 				st, err := resp.ToString()
 				if err != nil {
-					return newPipeErr[JwtFlatBase](err)
+					return NewPipeErr[JwtFlatBase](err)
 				}
 				auth = JwtPrefix + st
 
@@ -46,17 +46,17 @@ var (
 
 			// 如果不是 Bearer 则是格式错误
 			if !strings.HasPrefix(auth, JwtPrefix) {
-				return newPipeErr[JwtFlatBase](errors.New("token令牌格式错误"))
+				return NewPipeErr[JwtFlatBase](errors.New("token令牌格式错误"))
 			}
 
 			// 解构出map
 			tk, err := helper.TokenExtract(auth, ctJwt)
 			if err != nil {
-				return newPipeErr[JwtFlatBase](err)
+				return NewPipeErr[JwtFlatBase](err)
 			}
 			tk.Raw = auth
 
-			return newPipeResult(*tk)
+			return NewPipeResult(*tk)
 		},
 	}
 )

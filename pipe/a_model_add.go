@@ -23,7 +23,7 @@ var (
 		Name: "模型json新增",
 		call: func(ctx iris.Context, origin any, params *ModelCtxAddConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
 			if origin == nil {
-				return newPipeErr[map[string]any](PipeDepNotFound)
+				return NewPipeErr[map[string]any](PipeDepNotFound)
 			}
 
 			rawData := make(map[string]any)
@@ -37,13 +37,13 @@ var (
 			case reflect.Struct:
 				mp, err := StructToMap(origin)
 				if err != nil {
-					return newPipeErr[map[string]any](err)
+					return NewPipeErr[map[string]any](err)
 				}
 				rawData = mp
 			case reflect.Map:
 				rawData = origin.(map[string]any)
 			default:
-				return newPipeErr[map[string]any](errors.New("origin 类型错误"))
+				return NewPipeErr[map[string]any](errors.New("origin 类型错误"))
 			}
 
 			// 注入_id
@@ -53,15 +53,15 @@ var (
 			}
 			err := mapper.Process(rawData)
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
 			_, err = db.Collection(params.ModelId).InsertOne(ctx, rawData)
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
-			return newPipeResult(rawData)
+			return NewPipeResult(rawData)
 		},
 	}
 )

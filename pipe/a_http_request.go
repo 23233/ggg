@@ -40,11 +40,11 @@ var (
 		Key:  "http_request",
 		call: func(ctx iris.Context, origin any, params *HttpRequestConfig, db any, more ...any) *RunResp[*req.Response] {
 			if params == nil {
-				return newPipeErr[*req.Response](PipePackParamsError)
+				return NewPipeErr[*req.Response](PipePackParamsError)
 			}
 			// 格式验证
 			if len(params.Uri) < 1 {
-				return newPipeErr[*req.Response](PipeParamsError)
+				return NewPipeErr[*req.Response](PipeParamsError)
 			}
 
 			// 设置请求头
@@ -69,16 +69,16 @@ var (
 
 			resp, err := r.Send(params.GetMethod(), params.Uri)
 			if err != nil {
-				return newPipeErr[*req.Response](err)
+				return NewPipeErr[*req.Response](err)
 			}
 			if resp.StatusCode != params.GetMustCode() {
-				return newPipeErr[*req.Response](errors.New(fmt.Sprintf("请求需要 %d 响应码 但得到了 %d", params.GetMustCode(), resp.StatusCode)))
+				return NewPipeErr[*req.Response](errors.New(fmt.Sprintf("请求需要 %d 响应码 但得到了 %d", params.GetMustCode(), resp.StatusCode)))
 			}
 			if resp.IsErrorState() {
-				return newPipeErr[*req.Response](resp.Err)
+				return NewPipeErr[*req.Response](resp.Err)
 			}
 
-			return newPipeResult[*req.Response](resp)
+			return NewPipeResult[*req.Response](resp)
 		},
 	}
 )

@@ -19,25 +19,25 @@ var (
 		Key:  "schema_valid",
 		call: func(ctx iris.Context, origin map[string]any, params *SchemaValidConfig, db any, more ...any) *RunResp[map[string]any] {
 			if origin == nil {
-				return newPipeErr[map[string]any](PipeDepError)
+				return NewPipeErr[map[string]any](PipeDepError)
 			}
 
 			// schema 验证
 			if params == nil {
-				return newPipeErr[map[string]any](PipePackParamsError)
+				return NewPipeErr[map[string]any](PipePackParamsError)
 			}
 
 			rawBin, err := jsoniter.Marshal(params.Schema)
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
 			err = SchemaValidFunc(rawBin, origin)
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
-			return newPipeResult(origin)
+			return NewPipeResult(origin)
 		},
 	}
 )

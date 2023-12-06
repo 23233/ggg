@@ -39,7 +39,7 @@ var (
 		Key:  "jwt_gen",
 		call: func(ctx iris.Context, origin *PipeJwtDep, params *JwtGenPipe, db rueidis.Client, more ...any) *RunResp[string] {
 			if origin == nil {
-				return newPipeErr[string](PipeDepError)
+				return NewPipeErr[string](PipeDepError)
 			}
 
 			if params == nil {
@@ -55,14 +55,14 @@ var (
 				if resp.Error() != nil {
 					// 只要不是为空错误 则为其他错误都直接返回
 					if resp.Error() != rueidis.Nil {
-						return newPipeErr[string](resp.Error())
+						return NewPipeErr[string](resp.Error())
 					}
 				}
 
 				// token如果存在 但是不强制刷新
 				st, _ := resp.ToString()
 				if len(st) > 0 && !params.Force {
-					return newPipeErr[string](errors.New("当前环境有其他设备在线"))
+					return NewPipeErr[string](errors.New("当前环境有其他设备在线"))
 				}
 			}
 
@@ -71,11 +71,11 @@ var (
 			// 直接写入
 			err := helper.JwtSaveToken(ctx, redisKey, token, params.GetExpire())
 			if err != nil {
-				return newPipeErr[string](err)
+				return NewPipeErr[string](err)
 			}
 
 			// 返回
-			return newPipeResult[string](token)
+			return NewPipeResult[string](token)
 		},
 	}
 )

@@ -29,7 +29,7 @@ func (c *RunnerContext[T, P, D, R]) SetDesc(desc string) *RunnerContext[T, P, D,
 	return c
 }
 func (c *RunnerContext[T, P, D, R]) NewPipeErr(err error) *RunResp[R] {
-	return newPipeErr[R](err)
+	return NewPipeErr[R](err)
 }
 func (c *RunnerContext[T, P, D, R]) Run(ctx iris.Context, origin T, params P, db D, more ...any) *RunResp[R] {
 	return c.call(ctx, origin, params, db, more...)

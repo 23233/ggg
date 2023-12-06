@@ -19,12 +19,12 @@ var (
 			if len(value) > 1 {
 				result, msg := contentSafe.C.AutoHitText(value)
 				if !result {
-					return newPipeResultErr(result, errors.New(fmt.Sprintf("文字安全校验失败 错误:%s", msg)))
+					return NewPipeResultErr(result, errors.New(fmt.Sprintf("文字安全校验失败 错误:%s", msg)))
 				}
-				return newPipeResult(result)
+				return NewPipeResult(result)
 			}
 
-			return newPipeResult(false)
+			return NewPipeResult(false)
 		},
 	}
 )

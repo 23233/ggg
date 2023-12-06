@@ -129,10 +129,10 @@ var (
 		Name: "模型单条修改",
 		call: func(ctx iris.Context, origin any, params *ModelPutConfig, db *qmgo.Database, more ...any) *RunResp[map[string]any] {
 			if params == nil {
-				return newPipeErr[map[string]any](PipeParamsError)
+				return NewPipeErr[map[string]any](PipeParamsError)
 			}
 			if params.BodyMap == nil {
-				return newPipeErr[map[string]any](PipeOriginError)
+				return NewPipeErr[map[string]any](PipeOriginError)
 			}
 			bodyData := params.BodyMap
 
@@ -162,7 +162,7 @@ var (
 			var result = make(map[string]any)
 			err := db.Collection(params.ModelId).Aggregate(ctx, pipeline).One(&result)
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
 			// 如果不传origin则直接序列化body
@@ -183,7 +183,7 @@ var (
 			}
 
 			if len(diff) < 1 {
-				return newPipeErr[map[string]any](errors.New("未获取到更新项"))
+				return NewPipeErr[map[string]any](errors.New("未获取到更新项"))
 			}
 			if params.UpdateTime {
 				_, ok := diff["update_at"]
@@ -194,10 +194,10 @@ var (
 
 			err = db.Collection(params.ModelId).UpdateOne(ctx, bson.M{ut.DefaultUidTag: params.RowId}, bson.M{"$set": diff})
 			if err != nil {
-				return newPipeErr[map[string]any](err)
+				return NewPipeErr[map[string]any](err)
 			}
 
-			return newPipeResult[map[string]any](diff)
+			return NewPipeResult[map[string]any](diff)
 		},
 	}
 )

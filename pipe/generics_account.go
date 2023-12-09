@@ -186,7 +186,7 @@ func (s *GenericsAccount) UpdateOne(ctx context.Context, db *qmgo.Collection, ui
 	return MongoUpdateOne(ctx, db, uid, pack)
 }
 func (s *GenericsAccount) iterateAccountsByBatch(ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]*GenericsAccount) error) error {
-	return MongoIterateByBatch[*GenericsAccount](ctx, db, batchSize, processFunc)
+	return MongoIterateByBatch[*GenericsAccount](ctx, db, bson.M{}, batchSize, processFunc)
 }
 func (s *GenericsAccount) BulkInsert(ctx context.Context, db *qmgo.Collection, accounts ...*GenericsAccount) error {
 	return MongoBulkInsert[*GenericsAccount](ctx, db, accounts...)

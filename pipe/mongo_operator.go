@@ -49,13 +49,20 @@ func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D
 func MongoUpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
 	return db.UpdateOne(ctx, bson.M{ut.DefaultUidTag: uid}, bson.M{"$set": pack})
 }
-func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, batchSize int64, processFunc func([]T) error) error {
+func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, filter bson.M, batchSize int64, processFunc func([]T) error) error {
 	lastID := primitive.NilObjectID
 
 	for {
 		var accounts = make([]T, 0)
-
-		err := db.Find(ctx, bson.M{"_id": bson.M{"$gt": lastID}}).Sort("_id").Limit(batchSize).All(&accounts)
+		ft := bson.M{
+			"_id": bson.M{"$gt": lastID},
+		}
+		if filter != nil {
+			for k, v := range filter {
+				ft[k] = v
+			}
+		}
+		err := db.Find(ctx, ft).Sort("_id").Limit(batchSize).All(&accounts)
 		if err != nil {
 			return fmt.Errorf("error fetching records: %v", err)
 		}

@@ -9,7 +9,6 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
 	"regexp"
@@ -44,147 +43,6 @@ type ContextValueInject struct {
 	FromKey    string `json:"from_key,omitempty"`
 	ToKey      string `json:"to_key,omitempty"`
 	AllowEmpty bool   `json:"allow_empty,omitempty"`
-}
-
-type ActionPostPart[F any] struct {
-	Name     string   `json:"name"`                // action名称
-	Rows     []string `json:"rows,omitempty"`      // 选中的行id
-	FormData F        `json:"form_data,omitempty"` // 表单填写的值
-}
-
-// ActionPostArgs T是行数据 F是表单数据
-type ActionPostArgs[T, F any] struct {
-	Rows     []T              `json:"rows"`
-	FormData F                `json:"form_data"`
-	User     *SimpleUserModel `json:"user"`
-	Model    IModelItem       `json:"model"`
-}
-
-type SchemaActionBase struct {
-	Name                        string             `json:"name,omitempty"`                   // 动作名称 需要唯一
-	Prefix                      string             `json:"prefix,omitempty"`                 // 前缀标识 仅展示用
-	Types                       []uint             `json:"types,omitempty"`                  // 0 表可用 1 行可用
-	Form                        *jsonschema.Schema `json:"form,omitempty"`                   // 若form为nil 则不会弹出表单填写
-	MustSelect                  bool               `json:"must_select,omitempty"`            // 必须有所选择表选择适用 行是必须选一行
-	TableEmptySelectUseAllSheet bool               `json:"table_empty_select_use_all_sheet"` // 表模式未选中行则默认是整表
-	Conditions                  []ut.Kov           `json:"conditions,omitempty"`             // 选中/执行的前置条件 判断数据为选中的每一行数据 常用场景为 限定只有字段a=b时才可用或a!=b时 挨个执行 任意一个不成功都返回
-	FaWarning                   bool               `json:"fa_warning,omitempty"`             // 是否弹出二次确认操作
-}
-
-func (s *SchemaActionBase) SetType(tp []uint) {
-	s.Types = tp
-}
-func (s *SchemaActionBase) SetForm(raw any) {
-	s.Form = ToJsonSchema(raw)
-}
-func (s *SchemaActionBase) AddCondition(cond ut.Kov) {
-	s.Conditions = append(s.Conditions, cond)
-}
-
-type ISchemaAction interface {
-	Execute(ctx iris.Context, args any) (responseInfo any, err error)
-	GetBase() *SchemaActionBase
-	SetCall(func(ctx iris.Context, args any) (responseInfo any, err error))
-}
-
-func ActionParseArgs[T any, F any](ctx iris.Context, model IModelItem) (*ActionPostPart[F], []T, ISchemaAction, error) {
-	// 必须为post
-	part := new(ActionPostPart[F])
-	err := ctx.ReadBody(&part)
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "解构action参数包失败")
-	}
-
-	action, has := model.GetAction(part.Name)
-	if !has {
-		return nil, nil, nil, errors.Wrap(err, "未找到对应action")
-
-	}
-
-	rows := make([]T, 0, len(part.Rows))
-	if len(part.Rows) >= 1 {
-		// 去获取出最新的这一批数据
-		err = model.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
-		if err != nil {
-			return nil, nil, nil, errors.Wrap(err, "获取对应行列表失败")
-		}
-	}
-	return part, rows, action, nil
-}
-
-func ActionRun[T any, F any](ctx iris.Context, model IModelItem, user *SimpleUserModel) {
-	part, rows, action, err := ActionParseArgs[T, F](ctx, model)
-	args := new(ActionPostArgs[T, F])
-	args.Rows = rows
-	args.FormData = part.FormData
-	args.User = user
-	args.Model = model
-
-	result, err := action.Execute(ctx, args)
-	if err != nil {
-		IrisRespErr("", err, ctx)
-		return
-	}
-
-	if result != nil {
-		_ = ctx.JSON(result)
-		return
-	}
-	_, _ = ctx.WriteString("ok")
-
-}
-
-// SchemaModelAction 模型action T是模型数据 F是表单数据
-type SchemaModelAction[T, F any] struct {
-	SchemaActionBase
-	call func(ctx iris.Context, args any) (responseInfo any, err error)
-}
-
-func (s *SchemaModelAction[T, F]) GetBase() *SchemaActionBase {
-	return &s.SchemaActionBase
-}
-func (s *SchemaModelAction[T, F]) Execute(ctx iris.Context, args any) (responseInfo any, err error) {
-	if s.call == nil {
-		return nil, errors.New("action未定义默认执行函数")
-	}
-	return s.call(ctx, args)
-}
-func (s *SchemaModelAction[T, F]) SetCall(call func(ctx iris.Context, args any) (responseInfo any, err error)) {
-	s.call = call
-}
-
-func NewSchemaModelAction[T, F any]() *SchemaModelAction[T, F] {
-	inst := new(SchemaModelAction[T, F])
-	return inst
-}
-
-func NewRowAction[T any, F any](name string, form F) ISchemaAction {
-	inst := NewSchemaModelAction[T, F]()
-	inst.Types = []uint{1}
-	inst.Name = name
-
-	val := reflect.ValueOf(form)
-	if val.Kind() == reflect.Ptr {
-		if !val.IsNil() {
-			inst.SetForm(form)
-		}
-	} else if val.IsValid() && !val.IsZero() {
-		inst.SetForm(form)
-	}
-	inst.Conditions = make([]ut.Kov, 0)
-	return inst
-}
-func NewTableAction[T any, F any](name string, form F) ISchemaAction {
-	inst := NewRowAction[T, F](name, form)
-	inst.GetBase().SetType([]uint{0})
-	return inst
-}
-
-// NewAction action的名称必填 form没有可传nil
-func NewAction[T any, F any](name string, form F) ISchemaAction {
-	inst := NewRowAction[T, F](name, form)
-	inst.GetBase().SetType([]uint{0, 1})
-	return inst
 }
 
 type SchemaBase struct {
@@ -226,13 +84,19 @@ type SchemaIframe struct {
 	Url string `json:"url,omitempty"`
 }
 
+type ManySchema struct {
+	Table  *jsonschema.Schema `json:"table"`
+	Edit   *jsonschema.Schema `json:"edit"`
+	Add    *jsonschema.Schema `json:"add"`
+	Delete *jsonschema.Schema `json:"delete"`
+}
+
 type SchemaModel[T any] struct {
 	SchemaBase
 	db           *qmgo.Database
 	raw          any
 	Roles        *SchemaRole         `json:"roles,omitempty"`
-	Schema       *jsonschema.Schema  `json:"schema,omitempty"`
-	AddSchema    *jsonschema.Schema  `json:"add_schema,omitempty"` // 新增时的schema 可以额外指定 不指定则是原始schema
+	Schemas      ManySchema          `json:"schemas"`
 	Iframe       *SchemaIframe       `json:"iframe,omitempty"`
 	TableDisable *SchemaTableDisable `json:"table_disable,omitempty"`
 	Actions      []ISchemaAction     `json:"actions,omitempty"` // 各类操作
@@ -347,7 +211,13 @@ func (s *SchemaModel[T]) cleanTypeName(typeName string) string {
 func (s *SchemaModel[T]) SetRaw(raw any) {
 
 	s.raw = raw
-	s.Schema = ToJsonSchema(raw)
+	schema := ToJsonSchema(raw)
+	s.Schemas = ManySchema{
+		Table:  schema,
+		Edit:   schema,
+		Add:    schema,
+		Delete: schema,
+	}
 	// 通过反射获取struct的名称 不包含包名
 
 	typ := reflect.TypeOf(raw)
@@ -397,8 +267,8 @@ func (s *SchemaModel[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
 	return result, nil
 }
 
-func (s *SchemaModel[T]) HaveUserKey() bool {
-	_, ok := s.Schema.Properties.Get(UserIdFieldName)
+func (s *SchemaModel[T]) HaveUserKey(schema *jsonschema.Schema) bool {
+	_, ok := schema.Properties.Get(UserIdFieldName)
 	return ok
 }
 
@@ -415,19 +285,17 @@ func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 	inline := struct {
 		Info         SchemaBase          `json:"info"`
 		Actions      []ISchemaAction     `json:"actions"`
-		Schema       *jsonschema.Schema  `json:"schema"`
-		AddSchema    *jsonschema.Schema  `json:"add_schema"`
+		Schemas      ManySchema          `json:"schemas"`
 		TableDisable *SchemaTableDisable `json:"table_disable"`
 		Iframe       *SchemaIframe       `json:"iframe"`
 	}{
 		Info:         s.SchemaBase,
 		Actions:      s.Actions,
-		Schema:       s.Schema,
-		AddSchema:    s.AddSchema,
+		Schemas:      s.Schemas,
 		TableDisable: s.TableDisable,
 		Iframe:       s.Iframe,
 	}
-	inline.Schema.Title = s.SchemaBase.Alias
+	inline.Schemas.Table.Title = s.SchemaBase.Alias
 	return json.Marshal(inline)
 }
 
@@ -781,7 +649,7 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	p.Get("/config", func(ctx iris.Context) {
 		_ = ctx.JSON(iris.Map{
 			"info":    s.SchemaBase,
-			"schema":  s.Schema,
+			"schemas": s.Schemas,
 			"actions": s.Actions,
 		})
 		return
@@ -839,6 +707,47 @@ func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
 		}
 	})
 }
+func (s *SchemaModel[T]) GetSchema(mode ISchemaMode) *jsonschema.Schema {
+	switch mode {
+	case SchemaModeAdd:
+		return s.Schemas.Add
+	case SchemaModeEdit:
+		return s.Schemas.Edit
+	case SchemaModeTable:
+		return s.Schemas.Table
+	case SchemaModeDelete:
+		return s.Schemas.Delete
+	default:
+		return s.Schemas.Table
+	}
+}
+func (s *SchemaModel[T]) SetSchemaRaw(mode ISchemaMode, raw any) {
+	schema := ToJsonSchema(raw)
+	s.SetSchema(mode, schema)
+}
+func (s *SchemaModel[T]) SetSchema(mode ISchemaMode, schema *jsonschema.Schema) {
+	switch mode {
+	case SchemaModeAdd:
+		s.Schemas.Add = schema
+	case SchemaModeEdit:
+		s.Schemas.Edit = schema
+	case SchemaModeTable:
+		s.Schemas.Table = schema
+	case SchemaModeDelete:
+		s.Schemas.Delete = schema
+	default:
+		s.Schemas.Table = schema
+	}
+}
+
+type ISchemaMode int
+
+const (
+	SchemaModeAdd ISchemaMode = iota
+	SchemaModeEdit
+	SchemaModeTable
+	SchemaModeDelete
+)
 
 type IModelItem interface {
 	GetBase() SchemaBase
@@ -863,5 +772,8 @@ type IModelItem interface {
 	GetAllAction() []ISchemaAction
 	SetPathId(newId string)
 	GetRoles() *SchemaRole
-	HaveUserKey() bool
+	HaveUserKey(schema *jsonschema.Schema) bool
+	GetSchema(mode ISchemaMode) *jsonschema.Schema
+	SetSchemaRaw(mode ISchemaMode, raw any)
+	SetSchema(mode ISchemaMode, schema *jsonschema.Schema)
 }

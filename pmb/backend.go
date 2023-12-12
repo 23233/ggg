@@ -253,7 +253,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 
 		// 这个模型必须包含了 UserIdFieldName 字段才注入 否则不注入
 		injectData := make(map[string]any)
-		if model.HaveUserKey() {
+		if model.HaveUserKey(model.GetSchema(SchemaModeAdd)) {
 			injectData[UserIdFieldName] = user.Uid
 		}
 

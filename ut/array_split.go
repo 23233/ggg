@@ -1,6 +1,6 @@
 package ut
 
-// SplitArrayByThreshold 根据限制分配数组 例如threshold为10 则会把arr分为10分
+// SplitArrayByThreshold 根据固定值分配成数组 例如threshold为5000 则把arr按照5000一个数组进行切分
 func SplitArrayByThreshold[T any](arr []T, threshold int) [][]T {
 	count := (len(arr) + threshold - 1) / threshold
 
@@ -20,7 +20,7 @@ func SplitArrayByThreshold[T any](arr []T, threshold int) [][]T {
 	return result
 }
 
-// SplitArrayByFixedSize 根据固定值分配成数组 例如fixedBulkSize为5000 则把arr按照5000一个数组进行切分
+// SplitArrayByFixedSize 根据限制分配数组 例如fixedBulkSize为10 则会把arr分为10分
 func SplitArrayByFixedSize[T any](arr []T, fixedBulkSize int) [][]T {
 	count := fixedBulkSize
 	if len(arr) < count {

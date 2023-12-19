@@ -519,7 +519,7 @@ func (c *RedisWork[T]) SetCall(call func(id string) ([]T, error)) {
 	c.FetchCall = call
 }
 
-func NewWork[T any](name string, redisClient rueidiscompat.Cmdable) *RedisWork[T] {
+func NewRedisWork[T any](name string, redisClient rueidiscompat.Cmdable) *RedisWork[T] {
 	return &RedisWork[T]{
 		db:         redisClient,
 		Name:       name,

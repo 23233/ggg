@@ -2,14 +2,9 @@ package ut
 
 import (
 	"fmt"
-	"log"
-	"os"
+	"github.com/23233/ggg/logger"
 	"strings"
 	"time"
-)
-
-var (
-	logger = log.New(os.Stderr, "st:", log.Lmsgprefix)
 )
 
 type timeItem struct {
@@ -55,8 +50,8 @@ func (c *FuncCalcTime) Print(endIndexs ...int) {
 
 		preTime = item.Now
 	}
+	logger.J.Infof("[%s][%s][%s]%s", c.Name, c.id, c.start.Format("2006-01-02 15:04:05"), st.String())
 
-	logger.Printf("[%s][%s][%s]%s", c.Name, c.id, c.start.Format("2006-01-02 15:04:05"), st.String())
 }
 
 func (c *FuncCalcTime) Add(t string, msg ...interface{}) {

@@ -13,7 +13,9 @@ import (
 	"time"
 )
 
-type Work[T any] struct {
+// 使用redis进行一些分布式任务 支持[]string{id}(数组切分) id起点_id终点(范围切分) redisKey zset消耗切分
+
+type RedisWork[T any] struct {
 	db                rueidiscompat.Cmdable
 	PlatformName      string                                  // 平台名
 	PlatformEng       string                                  // 平台英文名
@@ -33,10 +35,10 @@ type Work[T any] struct {
 	ForceStop         bool                                    // 是否被强制停止
 	RangeReverse      bool                                    // 范围旋转 默认从小到大 如果设置为true 则是从大到小
 	InjectData        map[string]any                          //
-	OnSuccess         func(self *Work[T]) error               // 当成功时执行
-	OnStartup         func(self *Work[T]) error               // 启动时
-	OnRangeStart      func(scopes []string, self *Work[T]) []string
-	OnRangSuccess     func(self *Work[T], results []T) error
+	OnSuccess         func(self *RedisWork[T]) error          // 当成功时执行
+	OnStartup         func(self *RedisWork[T]) error          // 启动时
+	OnRangeStart      func(scopes []string, self *RedisWork[T]) []string
+	OnRangSuccess     func(self *RedisWork[T], results []T) error
 
 	// 内部态
 	startTime   time.Time // 开始时间
@@ -45,44 +47,44 @@ type Work[T any] struct {
 	redisKey    string
 }
 
-func (c *Work[T]) StartTime() time.Time {
+func (c *RedisWork[T]) StartTime() time.Time {
 	return c.startTime
 }
 
-func (c *Work[T]) SetOnStartup(OnStartup func(self *Work[T]) error) {
+func (c *RedisWork[T]) SetOnStartup(OnStartup func(self *RedisWork[T]) error) {
 	c.OnStartup = OnStartup
 }
 
-func (c *Work[T]) GetNowCount() int64 {
+func (c *RedisWork[T]) GetNowCount() int64 {
 	return c.NowCount.Load()
 }
 
-func (c *Work[T]) GetLast() string {
+func (c *RedisWork[T]) GetLast() string {
 	if len(c.BulkIds) >= 1 {
 		return strconv.Itoa(len(c.BulkIds))
 	}
 	return "0"
 }
 
-func (c *Work[T]) GetFirst() string {
+func (c *RedisWork[T]) GetFirst() string {
 	if len(c.BulkIds) >= 1 {
 		return c.BulkIds[0]
 	}
 	return "0"
 }
 
-func (c *Work[T]) SetOnSuccess(OnSuccess func(self *Work[T]) error) {
+func (c *RedisWork[T]) SetOnSuccess(OnSuccess func(self *RedisWork[T]) error) {
 	c.OnSuccess = OnSuccess
 }
 
-func (c *Work[T]) getConcurrency() int {
+func (c *RedisWork[T]) getConcurrency() int {
 	if c.Concurrency < 1 {
 		return 1
 	}
 	return int(c.Concurrency)
 }
 
-func (c *Work[T]) Run() error {
+func (c *RedisWork[T]) Run() error {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.J.Errorf("work崩溃了 %v", err)
@@ -99,16 +101,16 @@ func (c *Work[T]) Run() error {
 
 }
 
-func (c *Work[T]) RunRedisSetRange(redisKey string) error {
+func (c *RedisWork[T]) RunRedisSetRange(redisKey string) error {
 	c.redisKey = redisKey
 	return c.runRedisRange()
 }
-func (c *Work[T]) RunRedisItem(redisKey string) error {
+func (c *RedisWork[T]) RunRedisItem(redisKey string) error {
 	c.redisKey = redisKey
 	return c.runRedisItem()
 }
 
-func (c *Work[T]) runBulk() error {
+func (c *RedisWork[T]) runBulk() error {
 
 	c.resultsChan = new(ThreadSafeArray[T])
 	if c.OnStartup != nil {
@@ -178,19 +180,19 @@ func (c *Work[T]) runBulk() error {
 	return nil
 }
 
-func (c *Work[T]) runPreset() {
+func (c *RedisWork[T]) runPreset() {
 	c.Running = true
 	c.ForceStop = false
 	c.startTime = time.Now()
 }
 
-func (c *Work[T]) clear() {
+func (c *RedisWork[T]) clear() {
 	c.Running = false
 	c.resultsChan = nil
 	c.NowCount.Store(0)
 }
 
-func (c *Work[T]) runRange(start int64, end int64) error {
+func (c *RedisWork[T]) runRange(start int64, end int64) error {
 	if start > end {
 		return errors.New("起始值大于结束值")
 	}
@@ -314,7 +316,7 @@ func (c *Work[T]) runRange(start int64, end int64) error {
 	return nil
 }
 
-func (c *Work[T]) runRedisRange() error {
+func (c *RedisWork[T]) runRedisRange() error {
 	if c.Running {
 		return errors.New("当前任务进行中")
 	}
@@ -402,7 +404,7 @@ func (c *Work[T]) runRedisRange() error {
 	return nil
 }
 
-func (c *Work[T]) runRedisItem() error {
+func (c *RedisWork[T]) runRedisItem() error {
 	if c.Running {
 		return errors.New("当前任务进行中")
 	}
@@ -513,12 +515,12 @@ func (c *Work[T]) runRedisItem() error {
 	return nil
 }
 
-func (c *Work[T]) SetCall(call func(id string) ([]T, error)) {
+func (c *RedisWork[T]) SetCall(call func(id string) ([]T, error)) {
 	c.FetchCall = call
 }
 
-func NewWork[T any](name string, redisClient rueidiscompat.Cmdable) *Work[T] {
-	return &Work[T]{
+func NewWork[T any](name string, redisClient rueidiscompat.Cmdable) *RedisWork[T] {
+	return &RedisWork[T]{
 		db:         redisClient,
 		Name:       name,
 		BulkIds:    make([]string, 0),

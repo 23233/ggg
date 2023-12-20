@@ -53,7 +53,7 @@ func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection,
 	lastID := primitive.NilObjectID
 
 	for {
-		var accounts = make([]T, 0)
+		var datas = make([]T, 0)
 		ft := bson.M{
 			"_id": bson.M{"$gt": lastID},
 		}
@@ -62,23 +62,23 @@ func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection,
 				ft[k] = v
 			}
 		}
-		err := db.Find(ctx, ft).Sort("_id").Limit(batchSize).All(&accounts)
+		err := db.Find(ctx, ft).Sort("_id").Limit(batchSize).All(&datas)
 		if err != nil {
 			return fmt.Errorf("error fetching records: %v", err)
 		}
 
-		if len(accounts) == 0 {
+		if len(datas) == 0 {
 			break
 		}
 
 		// 使用提供的处理函数处理这批数据
-		err = processFunc(accounts)
+		err = processFunc(datas)
 		if err != nil {
 			return err
 		}
 
 		// 更新 lastID 以供下一次迭代使用
-		lastID = accounts[len(accounts)-1].GetBase().Id
+		lastID = datas[len(datas)-1].GetBase().Id
 	}
 
 	return nil

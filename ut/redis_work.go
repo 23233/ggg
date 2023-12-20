@@ -339,7 +339,8 @@ func (c *RedisWork[T]) runRedisRange() error {
 				break
 			}
 			// 从redis key最顶层获取一个区间
-			scopes, err := c.db.ZPopMax(context.TODO(), c.redisKey, 1).Result()
+			// https://github.com/redis/rueidis/issues/431 暂时不能设置为1
+			scopes, err := c.db.ZPopMax(context.TODO(), c.redisKey).Result()
 			if err != nil {
 				break
 			}

@@ -27,7 +27,7 @@ type RedisWork[T any] struct {
 	DefaultEndCount   int64                                   // 默认截止数值
 	NowCount          atomic.Int64                            // 当前已执行个数
 	FileName          string                                  // 保存文件名
-	Concurrency       uint8                                   // 线程数量
+	Concurrency       uint                                    // 线程数量
 	Results           []T                                     // 结果保存
 	Running           bool                                    // 当前执行状态
 	FetchCall         func(id string) ([]T, error)            // 获取单个

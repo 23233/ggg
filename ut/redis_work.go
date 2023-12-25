@@ -42,6 +42,8 @@ type RedisWork[T any] struct {
 	OnRangSuccess     func(self *RedisWork[T], results []T) error
 	ItemDelayStart    time.Duration // 每获取一个的间隔时间起始点
 	ItemDelayEnd      time.Duration // 每获取一个的间隔时间终止点
+	RangeDelayStart   time.Duration
+	RangeDelayEnd     time.Duration
 
 	// 内部态
 	startTime   time.Time // 开始时间
@@ -50,18 +52,24 @@ type RedisWork[T any] struct {
 	redisKey    string
 }
 
-func (c *RedisWork[T]) GetItemDelay() time.Duration {
-	if c.ItemDelayStart != 0 && c.ItemDelayEnd == 0 {
-		return c.ItemDelayStart
-	} else if c.ItemDelayEnd < c.ItemDelayStart {
-		return c.ItemDelayStart
+func (c *RedisWork[T]) GetItemDelay(start time.Duration, end time.Duration) time.Duration {
+	if start != 0 && end == 0 {
+		return start
+	} else if end < start {
+		return start
 	} else {
-		return time.Duration(randomizer.RandInt64(int64(c.ItemDelayStart), int64(c.ItemDelayEnd)))
+		return time.Duration(randomizer.RandInt64(int64(start), int64(end)))
 	}
 }
 
 func (c *RedisWork[T]) RunItemDelay() {
-	delay := c.GetItemDelay()
+	delay := c.GetItemDelay(c.ItemDelayStart, c.ItemDelayEnd)
+	if delay > 0 {
+		time.Sleep(delay)
+	}
+}
+func (c *RedisWork[T]) RunRangeDelay() {
+	delay := c.GetItemDelay(c.RangeDelayStart, c.RangeDelayEnd)
 	if delay > 0 {
 		time.Sleep(delay)
 	}
@@ -321,6 +329,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
 			}
+			c.RunRangeDelay()
 		}
 
 		duration := time.Since(c.startTime)
@@ -412,6 +421,8 @@ func (c *RedisWork[T]) runRedisRange() error {
 					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
 			}
+			c.RunRangeDelay()
+
 		}
 
 		duration := time.Since(c.startTime)
@@ -525,6 +536,8 @@ func (c *RedisWork[T]) runRedisItem() error {
 					logger.J.ErrorE(err, "%s 任务返回错误", c.Name)
 				}
 			}
+			c.RunRangeDelay()
+
 		}
 
 		duration := time.Since(c.startTime)

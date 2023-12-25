@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/23233/ggg/logger"
+	"github.com/colduction/randomizer"
 	"github.com/redis/rueidis/rueidiscompat"
 	"math"
 	"strconv"
@@ -39,12 +40,31 @@ type RedisWork[T any] struct {
 	OnStartup         func(self *RedisWork[T]) error          // 启动时
 	OnRangeStart      func(scopes []string, self *RedisWork[T]) []string
 	OnRangSuccess     func(self *RedisWork[T], results []T) error
+	ItemDelayStart    time.Duration // 每获取一个的间隔时间起始点
+	ItemDelayEnd      time.Duration // 每获取一个的间隔时间终止点
 
 	// 内部态
 	startTime   time.Time // 开始时间
 	resultsChan *ThreadSafeArray[T]
 	rangeTime   time.Time
 	redisKey    string
+}
+
+func (c *RedisWork[T]) GetItemDelay() time.Duration {
+	if c.ItemDelayStart != 0 && c.ItemDelayEnd == 0 {
+		return c.ItemDelayStart
+	} else if c.ItemDelayEnd < c.ItemDelayStart {
+		return c.ItemDelayStart
+	} else {
+		return time.Duration(randomizer.RandInt64(int64(c.ItemDelayStart), int64(c.ItemDelayEnd)))
+	}
+}
+
+func (c *RedisWork[T]) RunItemDelay() {
+	delay := c.GetItemDelay()
+	if delay > 0 {
+		time.Sleep(delay)
+	}
 }
 
 func (c *RedisWork[T]) StartTime() time.Time {
@@ -285,6 +305,8 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 							continue
 						}
 						bulkData.Append(result...)
+						c.RunItemDelay()
+
 					}
 				}()
 
@@ -374,6 +396,8 @@ func (c *RedisWork[T]) runRedisRange() error {
 							continue
 						}
 						bulkData.Append(result...)
+						c.RunItemDelay()
+
 					}
 				}()
 
@@ -485,6 +509,8 @@ func (c *RedisWork[T]) runRedisItem() error {
 							}
 						}
 						bulkData.Append(result...)
+						c.RunItemDelay()
+
 					}
 				}()
 

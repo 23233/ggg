@@ -188,7 +188,7 @@ var (
 			if params.UpdateTime {
 				_, ok := diff["update_at"]
 				if params.UpdateForce || !ok {
-					diff["update_at"] = time.Now().Local()
+					diff["update_at"] = time.Now().UTC()
 				}
 			}
 

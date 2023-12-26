@@ -53,13 +53,10 @@ type RedisWork[T any] struct {
 }
 
 func (c *RedisWork[T]) GetItemDelay(start time.Duration, end time.Duration) time.Duration {
-	if start != 0 && end == 0 {
+	if end == 0 || end < start {
 		return start
-	} else if end < start {
-		return start
-	} else {
-		return time.Duration(randomizer.RandInt64(int64(start), int64(end)))
 	}
+	return time.Duration(randomizer.RandInt64(int64(start), int64(end)))
 }
 
 func (c *RedisWork[T]) RunItemDelay() {

@@ -23,26 +23,26 @@ func (c *ModelBase) BeforeInsert(ctx context.Context) error {
 		c.Uid = SfNextId()
 	}
 	if c.UpdateAt.IsZero() {
-		c.UpdateAt = time.Now().UTC()
+		c.UpdateAt = time.Now()
 	}
 	if c.CreateAt.IsZero() {
-		c.CreateAt = time.Now().UTC()
+		c.CreateAt = time.Now()
 	}
 	return nil
 }
 func (c *ModelBase) Reset() {
 	c.Id = primitive.NewObjectID()
 	c.Uid = SfNextId()
-	c.UpdateAt = time.Now().UTC()
-	c.CreateAt = time.Now().UTC()
+	c.UpdateAt = time.Now()
+	c.CreateAt = time.Now()
 }
 
 func DefaultModelMap() map[string]any {
 	var m = make(map[string]any, 0)
 	m["_id"] = primitive.NewObjectID()
 	m["uid"] = SfNextId()
-	m["update_at"] = time.Now().UTC()
-	m["create_at"] = time.Now().UTC()
+	m["update_at"] = time.Now()
+	m["create_at"] = time.Now()
 	return m
 }
 

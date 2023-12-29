@@ -49,7 +49,7 @@ func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D
 func MongoUpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack bson.M) error {
 	return db.UpdateOne(ctx, bson.M{ut.DefaultUidTag: uid}, bson.M{"$set": pack})
 }
-func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, filter bson.M, batchSize int64, processFunc func([]T) error) error {
+func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, filter bson.M, selects bson.M, batchSize int64, processFunc func([]T) error) error {
 	lastID := primitive.NilObjectID
 
 	for {
@@ -62,7 +62,11 @@ func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection,
 				ft[k] = v
 			}
 		}
-		err := db.Find(ctx, ft).Sort("_id").Limit(batchSize).All(&datas)
+		baseQ := db.Find(ctx, ft).Sort("_id").Limit(batchSize)
+		if selects != nil && len(selects) >= 1 {
+			baseQ.Select(selects)
+		}
+		err := baseQ.All(&datas)
 		if err != nil {
 			return fmt.Errorf("error fetching records: %v", err)
 		}

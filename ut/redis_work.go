@@ -52,6 +52,10 @@ type RedisWork[T any] struct {
 	redisKey    string
 }
 
+func (c *RedisWork[T]) RedisKey() string {
+	return c.redisKey
+}
+
 func (c *RedisWork[T]) GetItemDelay(start time.Duration, end time.Duration) time.Duration {
 	if end == 0 || end < start {
 		return start
@@ -123,7 +127,6 @@ func (c *RedisWork[T]) Run() error {
 		return c.runBulk()
 	}
 	return c.runRange(c.BulkStart, c.BulkEnd)
-
 }
 
 func (c *RedisWork[T]) RunRedisSetRange(redisKey string) error {

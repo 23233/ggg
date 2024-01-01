@@ -40,6 +40,7 @@ type RedisWork[T any] struct {
 	OnStartup         func(self *RedisWork[T]) error          // 启动时
 	OnRangeStart      func(scopes []string, self *RedisWork[T]) []string
 	OnRangSuccess     func(self *RedisWork[T], results []T, resultMap map[string][]T) error
+	OnSingleSuccess   func(self *RedisWork[T], results []T, target string) error
 	ItemDelayStart    time.Duration // 每获取一个的间隔时间起始点
 	ItemDelayEnd      time.Duration // 每获取一个的间隔时间终止点
 	RangeDelayStart   time.Duration
@@ -327,6 +328,12 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 						}
 						bulkData.Append(result...)
 						bulkMap[bt] = result
+						if c.OnSingleSuccess != nil {
+							err = c.OnSingleSuccess(c, result, bt)
+							if err != nil {
+								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+							}
+						}
 						c.RunItemDelay()
 
 					}
@@ -421,6 +428,12 @@ func (c *RedisWork[T]) runRedisRange() error {
 						}
 						bulkData.Append(result...)
 						bulkMap[bt] = result
+						if c.OnSingleSuccess != nil {
+							err = c.OnSingleSuccess(c, result, bt)
+							if err != nil {
+								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+							}
+						}
 						c.RunItemDelay()
 
 					}
@@ -538,7 +551,12 @@ func (c *RedisWork[T]) runRedisItem() error {
 						}
 						bulkData.Append(result...)
 						bulkMap[bt] = result
-
+						if c.OnSingleSuccess != nil {
+							err = c.OnSingleSuccess(c, result, bt)
+							if err != nil {
+								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+							}
+						}
 						c.RunItemDelay()
 
 					}

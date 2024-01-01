@@ -624,52 +624,54 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 	// 创建一个WaitGroup，用于等待所有goroutine完成
 	var wg sync.WaitGroup
 
-	// 为每个goroutine生成任务并开始执行
-	for i := 0; i < c.getConcurrency(); i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	go func() {
+		// 为每个goroutine生成任务并开始执行
+		for i := 0; i < c.getConcurrency(); i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
 
-			for {
-				if c.ForceStop {
-					break
-				}
-
-				// 每个goroutine自己获取任务
-				scopes, err := c.db.ZPopMin(context.TODO(), c.redisKey, 10).Result()
-				if err != nil || len(scopes) == 0 {
-					break
-				}
-
-				ids := make([]string, len(scopes))
-				for i, scope := range scopes {
-					ids[i] = scope.Member
-				}
-
-				for _, id := range ids {
+				for {
 					if c.ForceStop {
-						return
-					}
-					c.NowCount.Add(1)
-					result, err := c.FetchCall(id)
-					if err != nil && c.FetchError != nil {
-						result, err = c.FetchError(id, err)
-						if err != nil {
-							continue
-						}
+						break
 					}
 
-					if c.OnSingleSuccess != nil {
-						err = c.OnSingleSuccess(c, result, id)
-						if err != nil {
-							logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, id)
-						}
+					// 每个goroutine自己获取任务
+					scopes, err := c.db.ZPopMin(context.TODO(), c.redisKey, 10).Result()
+					if err != nil || len(scopes) == 0 {
+						break
 					}
-					c.RunItemDelay()
+
+					ids := make([]string, len(scopes))
+					for i, scope := range scopes {
+						ids[i] = scope.Member
+					}
+
+					for _, id := range ids {
+						if c.ForceStop {
+							return
+						}
+						c.NowCount.Add(1)
+						result, err := c.FetchCall(id)
+						if err != nil && c.FetchError != nil {
+							result, err = c.FetchError(id, err)
+							if err != nil {
+								continue
+							}
+						}
+
+						if c.OnSingleSuccess != nil {
+							err = c.OnSingleSuccess(c, result, id)
+							if err != nil {
+								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, id)
+							}
+						}
+						c.RunItemDelay()
+					}
 				}
-			}
-		}()
-	}
+			}()
+		}
+	}()
 
 	wg.Wait()
 

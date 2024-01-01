@@ -624,10 +624,13 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 		}
 	}
 
+	defer c.clear()
+
 	// 创建一个WaitGroup，用于等待所有goroutine完成
 	var wg sync.WaitGroup
 
 	go func() {
+
 		// 为每个goroutine生成任务并开始执行
 		for i := 0; i < c.getConcurrency(); i++ {
 			wg.Add(1)

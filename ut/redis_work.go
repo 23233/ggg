@@ -52,6 +52,14 @@ type RedisWork[T any] struct {
 	redisKey    string
 }
 
+func (c *RedisWork[T]) Db() rueidiscompat.Cmdable {
+	return c.db
+}
+
+func (c *RedisWork[T]) SetDb(db rueidiscompat.Cmdable) {
+	c.db = db
+}
+
 func (c *RedisWork[T]) SetRedisKey(redisKey string) {
 	c.redisKey = redisKey
 }

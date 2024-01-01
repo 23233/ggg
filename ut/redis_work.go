@@ -327,7 +327,9 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 							continue
 						}
 						bulkData.Append(result...)
-						bulkMap[bt] = result
+						if c.OnRangSuccess != nil {
+							bulkMap[bt] = result
+						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {
@@ -427,7 +429,9 @@ func (c *RedisWork[T]) runRedisRange() error {
 							continue
 						}
 						bulkData.Append(result...)
-						bulkMap[bt] = result
+						if c.OnRangSuccess != nil {
+							bulkMap[bt] = result
+						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {
@@ -550,7 +554,9 @@ func (c *RedisWork[T]) runRedisItem() error {
 							}
 						}
 						bulkData.Append(result...)
-						bulkMap[bt] = result
+						if c.OnRangSuccess != nil {
+							bulkMap[bt] = result
+						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {

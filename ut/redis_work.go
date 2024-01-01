@@ -105,6 +105,9 @@ func (c *RedisWork[T]) GetLast() string {
 	if len(c.BulkIds) >= 1 {
 		return strconv.Itoa(len(c.BulkIds))
 	}
+	if len(c.redisKey) >= 1 {
+		return strconv.FormatInt(c.DefaultEndCount, 10)
+	}
 	return "0"
 }
 

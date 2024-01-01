@@ -142,13 +142,22 @@ func (c *RedisWork[T]) Run() error {
 	return c.runRange(c.BulkStart, c.BulkEnd)
 }
 
+// RunRedisSetRange 按范围批次处理 会等待批次结束 性能若
 func (c *RedisWork[T]) RunRedisSetRange(redisKey string) error {
 	c.redisKey = redisKey
 	return c.runRedisRange()
 }
+
+// RunRedisItem 按批次处理单个 会等待批次结束 性能稍弱
 func (c *RedisWork[T]) RunRedisItem(redisKey string) error {
 	c.redisKey = redisKey
 	return c.runRedisItem()
+}
+
+// RunRedisItemParallel 多线程并行版 性能高
+func (c *RedisWork[T]) RunRedisItemParallel(redisKey string) error {
+	c.redisKey = redisKey
+	return c.runRedisItemParallel()
 }
 
 func (c *RedisWork[T]) runBulk() error {
@@ -594,6 +603,85 @@ func (c *RedisWork[T]) runRedisItem() error {
 		}
 
 	}()
+
+	return nil
+}
+
+func (c *RedisWork[T]) runRedisItemParallel() error {
+	if c.Running {
+		return errors.New("当前任务进行中")
+	}
+	c.runPreset()
+
+	if c.OnStartup != nil {
+		err := c.OnStartup(c)
+		if err != nil {
+			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			return err
+		}
+	}
+
+	// 创建一个WaitGroup，用于等待所有goroutine完成
+	var wg sync.WaitGroup
+
+	// 为每个goroutine生成任务并开始执行
+	for i := 0; i < c.getConcurrency(); i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for {
+				if c.ForceStop {
+					break
+				}
+
+				// 每个goroutine自己获取任务
+				scopes, err := c.db.ZPopMin(context.TODO(), c.redisKey, 10).Result()
+				if err != nil || len(scopes) == 0 {
+					break
+				}
+
+				ids := make([]string, len(scopes))
+				for i, scope := range scopes {
+					ids[i] = scope.Member
+				}
+
+				for _, id := range ids {
+					if c.ForceStop {
+						return
+					}
+					c.NowCount.Add(1)
+					result, err := c.FetchCall(id)
+					if err != nil && c.FetchError != nil {
+						result, err = c.FetchError(id, err)
+						if err != nil {
+							continue
+						}
+					}
+
+					if c.OnSingleSuccess != nil {
+						err = c.OnSingleSuccess(c, result, id)
+						if err != nil {
+							logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, id)
+						}
+					}
+					c.RunItemDelay()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	duration := time.Since(c.startTime)
+	logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+
+	if c.OnSuccess != nil {
+		err := c.OnSuccess(c)
+		if err != nil {
+			logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+		}
+	}
 
 	return nil
 }

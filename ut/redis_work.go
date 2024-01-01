@@ -52,6 +52,10 @@ type RedisWork[T any] struct {
 	redisKey    string
 }
 
+func (c *RedisWork[T]) SetRedisKey(redisKey string) {
+	c.redisKey = redisKey
+}
+
 func (c *RedisWork[T]) RedisKey() string {
 	return c.redisKey
 }

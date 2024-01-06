@@ -3,17 +3,14 @@ package pmb
 import (
 	"context"
 	"embed"
-	"fmt"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
-	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/apps"
 	"github.com/kataras/iris/v12/core/router"
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
 	"github.com/redis/rueidis"
-	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"path"
 	"strings"
@@ -146,81 +143,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	apiParty.Post("/action/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
-
-		// 必须为post
-		part := new(ActionPostPart[map[string]any])
-		err := ctx.ReadBody(&part)
-		if err != nil {
-			IrisRespErr("解构action参数包失败", err, ctx)
-			return
-		}
-
-		action, has := model.GetAction(part.Name)
-		if has == false {
-			IrisRespErr("未找到对应action", nil, ctx)
-			return
-		}
-
-		// 进行验证
-		if action.GetBase().Form != nil {
-			resp := pipe.SchemaValid.Run(ctx, part.FormData, &pipe.SchemaValidConfig{
-				Schema: action.GetBase().Form,
-			}, nil)
-			if resp.Err != nil {
-				IrisRespErr("", resp.Err, ctx)
-				return
-			}
-		}
-
-		// 判断在纯表选择的情况下 是否没有选中任何数据
-		if len(action.GetBase().Types) == 1 && action.GetBase().Types[0] == 0 {
-			if len(part.Rows) < 1 && action.GetBase().MustSelect {
-				IrisRespErr("请选择一条数据后重试", nil, ctx)
-				return
-			}
-		}
-
-		rows := make([]map[string]any, 0, len(part.Rows))
-		if len(part.Rows) >= 1 {
-			// 去获取出最新的这一批数据
-			err = model.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
-			if err != nil {
-				IrisRespErr("获取对应行列表失败", err, ctx)
-				return
-			}
-		}
-
-		// 对验证器进行验证
-		if action.GetBase().Conditions != nil && len(action.GetBase().Conditions) >= 1 {
-			if len(rows) < 1 {
-				IrisRespErr("有验证器但未选择任何数据", nil, ctx)
-				return
-			}
-			for _, row := range rows {
-				pass, msg := CheckConditions(row, action.GetBase().Conditions)
-				if !pass {
-					IrisRespErr(fmt.Sprintf("%s 行校验错误:%s", row[ut.DefaultUidTag].(string), msg), nil, ctx)
-					return
-				}
-			}
-		}
-		args := new(ActionPostArgs[map[string]any, map[string]any])
-		args.Rows = rows
-		args.FormData = part.FormData
-		args.User = user
-		args.Model = model
-		result, err := action.Execute(ctx, args)
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
-		}
-
-		if result != nil {
-			_ = ctx.JSON(result)
-		} else {
-			_, _ = ctx.WriteString("ok")
-		}
-
+		ActionRun(ctx, model, user)
 	})
 
 	// crud

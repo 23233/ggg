@@ -1,6 +1,8 @@
 package pmb
 
 import (
+	"fmt"
+	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/23233/jsonschema"
 	"github.com/kataras/iris/v12"
@@ -50,39 +52,69 @@ type ISchemaAction interface {
 	SetCall(func(ctx iris.Context, args any) (responseInfo any, err error))
 }
 
-func ActionParseArgs[T any, F any](ctx iris.Context, model IModelItem) (*ActionPostPart[F], []T, ISchemaAction, error) {
+func ActionRun(ctx iris.Context, model IModelItem, user *SimpleUserModel) {
 	// 必须为post
-	part := new(ActionPostPart[F])
+	part := new(ActionPostPart[map[string]any])
 	err := ctx.ReadBody(&part)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "解构action参数包失败")
+		IrisRespErr("解构action参数包失败", err, ctx)
+		return
 	}
 
 	action, has := model.GetAction(part.Name)
-	if !has {
-		return nil, nil, nil, errors.Wrap(err, "未找到对应action")
-
+	if has == false {
+		IrisRespErr("未找到对应action", nil, ctx)
+		return
 	}
 
-	rows := make([]T, 0, len(part.Rows))
+	// 进行验证
+	if action.GetBase().Form != nil {
+		resp := pipe.SchemaValid.Run(ctx, part.FormData, &pipe.SchemaValidConfig{
+			Schema: action.GetBase().Form,
+		}, nil)
+		if resp.Err != nil {
+			IrisRespErr("", resp.Err, ctx)
+			return
+		}
+	}
+
+	// 判断在纯表选择的情况下 是否没有选中任何数据
+	if len(action.GetBase().Types) == 1 && action.GetBase().Types[0] == 0 {
+		if len(part.Rows) < 1 && action.GetBase().MustSelect {
+			IrisRespErr("请选择一条数据后重试", nil, ctx)
+			return
+		}
+	}
+
+	rows := make([]map[string]any, 0, len(part.Rows))
 	if len(part.Rows) >= 1 {
 		// 去获取出最新的这一批数据
 		err = model.GetCollection().Find(ctx, bson.M{ut.DefaultUidTag: bson.M{"$in": part.Rows}}).All(&rows)
 		if err != nil {
-			return nil, nil, nil, errors.Wrap(err, "获取对应行列表失败")
+			IrisRespErr("获取对应行列表失败", err, ctx)
+			return
 		}
 	}
-	return part, rows, action, nil
-}
 
-func ActionRun[T any, F any](ctx iris.Context, model IModelItem, user *SimpleUserModel) {
-	part, rows, action, err := ActionParseArgs[T, F](ctx, model)
-	args := new(ActionPostArgs[T, F])
+	// 对验证器进行验证
+	if action.GetBase().Conditions != nil && len(action.GetBase().Conditions) >= 1 {
+		if len(rows) < 1 {
+			IrisRespErr("有验证器但未选择任何数据", nil, ctx)
+			return
+		}
+		for _, row := range rows {
+			pass, msg := CheckConditions(row, action.GetBase().Conditions)
+			if !pass {
+				IrisRespErr(fmt.Sprintf("%s 行校验错误:%s", row[ut.DefaultUidTag].(string), msg), nil, ctx)
+				return
+			}
+		}
+	}
+	args := new(ActionPostArgs[map[string]any, map[string]any])
 	args.Rows = rows
 	args.FormData = part.FormData
 	args.User = user
 	args.Model = model
-
 	result, err := action.Execute(ctx, args)
 	if err != nil {
 		IrisRespErr("", err, ctx)
@@ -91,9 +123,9 @@ func ActionRun[T any, F any](ctx iris.Context, model IModelItem, user *SimpleUse
 
 	if result != nil {
 		_ = ctx.JSON(result)
-		return
+	} else {
+		_, _ = ctx.WriteString("ok")
 	}
-	_, _ = ctx.WriteString("ok")
 
 }
 

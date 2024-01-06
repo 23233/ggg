@@ -634,7 +634,11 @@ func (s *SchemaModel[T]) getUid(ctx iris.Context) (string, error) {
 }
 
 func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
-	ActionRun[T, map[string]any](ctx, s, nil)
+	var user *SimpleUserModel
+	if ctx.Values().Exists(UserContextKey) {
+		user = ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+	}
+	ActionRun(ctx, s, user)
 	return
 }
 
@@ -647,11 +651,7 @@ func (s *SchemaModel[T]) Registry(part iris.Party) {
 func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	// 获取配置文件
 	p.Get("/config", func(ctx iris.Context) {
-		_ = ctx.JSON(iris.Map{
-			"info":    s.SchemaBase,
-			"schemas": s.Schemas,
-			"actions": s.Actions,
-		})
+		_ = ctx.JSON(s)
 		return
 	})
 	// action

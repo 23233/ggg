@@ -64,7 +64,6 @@ func main() {
 	bk.AddRdb(getRdb())
 	bk.AddRbacUseUri(getRdbInfo())
 	bk.RegistryRoute(party)
-	bk.RegistryLoginRegRoute(party, true)
 
 	bk.InsertLogModel()
 	bk.InsertUserModel()

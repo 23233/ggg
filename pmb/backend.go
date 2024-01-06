@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"path"
+	"strings"
 )
 
 var (
@@ -30,6 +31,7 @@ type Backend struct {
 	models          []IModelItem
 	modelContextKey string
 	msg             *MessageQueue
+	Prefix          string
 }
 
 func (b *Backend) GetModel(name string) (IModelItem, bool) {
@@ -82,38 +84,37 @@ func recordBodyMiddleware(ctx iris.Context) {
 func (b *Backend) RegistryRoute(party iris.Party) {
 	apps.Get().Configure(iris.WithoutBodyConsumptionOnUnmarshal)
 
-	fsys := iris.PrefixDir("template", http.FS(embedWeb))
-	party.RegisterView(iris.Blocks(fsys, ".html"))
+	frontParty := party.Party("/" + b.Prefix)
+	apiParty := party.Party("/" + b.Prefix + "/apis")
 
-	party.HandleDir("/manager", fsys, iris.DirOptions{
+	fsys := iris.PrefixDir("template", http.FS(embedWeb))
+	frontParty.RegisterView(iris.Blocks(fsys, ".html"))
+	frontParty.HandleDir("/front", fsys, iris.DirOptions{
 		Cache:    router.DirCacheOptions{},
 		Compress: true,
-	}) // ./manager/assets/index-3fa15531.js
+	}) // ./prefix/front/assets/index-3fa15531.js
 
-	party.Get("/", func(ctx iris.Context) {
-		loginPath := path.Join(party.GetRelPath(), "login")
+	// 注册role视图
+	apiParty.RegisterView(iris.Blocks(fsys, ".html"))
 
-		ctx.ViewData("token_key", "ttb_token")
-		ctx.ViewData("info_key", "ttb_info")
-		ctx.ViewData("login_url", loginPath)
-		ctx.ViewData("req_prefix", party.GetRelPath())
-
-		prefix := party.GetRelPath()
-		if prefix == "/" {
-			prefix = ""
-		}
-		ctx.ViewData("prefix", prefix)
+	frontHandler := func(ctx iris.Context) {
+		assertPrefix := party.GetRelPath() + b.Prefix
+		ctx.ViewData("prefix", strings.ReplaceAll(assertPrefix, "//", "/"))
+		ctx.ViewData("req_prefix", strings.ReplaceAll(apiParty.GetRelPath(), "//", "/"))
 		_ = ctx.View("index")
-	})
+	}
+
+	frontParty.Get("/", frontHandler)
+	frontParty.Get("/{tail:path}", frontHandler)
 
 	mustLoginMiddleware := UserInstance.MustLoginMiddleware()
 
-	party.Get("/self", mustLoginMiddleware, func(ctx iris.Context) {
+	apiParty.Get("/self", mustLoginMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		ctx.JSON(iris.Map{"info": user.Masking(0)})
 	})
 
-	party.Get("/models", mustLoginMiddleware, func(ctx iris.Context) {
+	apiParty.Get("/models", mustLoginMiddleware, func(ctx iris.Context) {
 		var models = make([]IModelItem, 0)
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		isRoot := b.rbac.HasRoles(user.Uid, []string{"root"})
@@ -131,9 +132,9 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			"models": models,
 		})
 	})
-	party.Get("/message", mustLoginMiddleware, b.GetMsgHandler)
+	apiParty.Get("/message", mustLoginMiddleware, b.GetMsgHandler)
 
-	party.Get("/config/{unique:string}",
+	apiParty.Get("/config/{unique:string}",
 		mustLoginMiddleware,
 		b.uniqueGetModelMiddleware,
 		b.canRoleMiddleware,
@@ -142,7 +143,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			_ = ctx.JSON(model)
 			return
 		})
-	party.Post("/action/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
+	apiParty.Post("/action/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
 		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
 		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 
@@ -223,7 +224,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	})
 
 	// crud
-	curd := party.Party("/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware)
+	curd := apiParty.Party("/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware)
 	curd.Get("/{uid:string}", func(ctx iris.Context) {
 		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		err := model.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
@@ -287,39 +288,15 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
-}
 
-func (b *Backend) RegistryLoginRegRoute(party iris.Party, allowReg bool) {
-
-	party.Get("/login", func(ctx iris.Context) {
-		loginPath := path.Join(party.GetRelPath(), "login")
-
-		ctx.ViewData("post_address", loginPath)
-		ctx.ViewData("allow_reg", allowReg)
-		ctx.ViewData("reg_path", path.Join(party.GetRelPath(), "reg"))
-		ctx.ViewData("rel_path", party.GetRelPath())
-		_ = ctx.View("login")
-	})
-	party.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler())
-	party.Get("/set_role", func(ctx iris.Context) {
-		p := path.Join(party.GetRelPath(), "set_role")
+	apiParty.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler())
+	apiParty.Get("/set_role", func(ctx iris.Context) {
+		p := path.Join(apiParty.GetRelPath(), "set_role")
 		ctx.ViewData("post_address", p)
 		_ = ctx.View("role")
 	})
-	party.Post("/set_role", UserInstance.RoleSetHandler())
-
-	if allowReg {
-		party.Get("/reg", func(ctx iris.Context) {
-			regPath := path.Join(party.GetRelPath(), "reg")
-
-			ctx.ViewData("login_path", path.Join(party.GetRelPath(), "login"))
-			ctx.ViewData("post_address", regPath)
-			ctx.ViewData("rel_path", party.GetRelPath())
-			_ = ctx.View("reg")
-		})
-		party.Post("/reg", UserInstance.RegistryUseUserNameHandler())
-
-	}
+	apiParty.Post("/set_role", UserInstance.RoleSetHandler())
+	apiParty.Post("/reg", UserInstance.RegistryUseUserNameHandler())
 
 }
 
@@ -398,7 +375,7 @@ func NewBackend() *Backend {
 	b.modelContextKey = "now_model"
 	b.msg = NewMessageQueue()
 	BkInst = b
-
+	b.Prefix = "/manager"
 	return b
 }
 
@@ -425,7 +402,6 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 	bk.AddDb(mongodb)
 	bk.AddRdb(rdb)
 	bk.AddRbacUseUri(redisAddress, redisPassword)
-	bk.RegistryLoginRegRoute(party, true)
 	bk.RegistryRoute(party)
 	UserInstance.SetConn(bk.CloneConn())
 	err = UserInstance.SyncIndex(context.TODO())

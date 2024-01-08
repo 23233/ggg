@@ -321,7 +321,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 			close(bulkTask)
 
 			bulkData := new(ThreadSafeArray[T])
-			bulkMap := make(map[string][]T)
+			bulkMap := NewConcurrentMap[string, []T]()
 
 			// 创建一个WaitGroup，用于等待所有goroutine完成
 			var wg sync.WaitGroup
@@ -340,7 +340,8 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 						}
 						bulkData.Append(result...)
 						if c.OnRangSuccess != nil {
-							bulkMap[bt] = result
+
+							bulkMap.Set(bt, result)
 						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
@@ -359,7 +360,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
-				err := c.OnRangSuccess(c, bulkData.GetAll(), bulkMap)
+				err := c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
 					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
@@ -423,7 +424,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 			close(bulkTask)
 
 			bulkData := new(ThreadSafeArray[T])
-			bulkMap := make(map[string][]T)
+			bulkMap := NewConcurrentMap[string, []T]()
 
 			// 创建一个WaitGroup，用于等待所有goroutine完成
 			var wg sync.WaitGroup
@@ -442,7 +443,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 						}
 						bulkData.Append(result...)
 						if c.OnRangSuccess != nil {
-							bulkMap[bt] = result
+							bulkMap.Set(bt, result)
 						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
@@ -461,7 +462,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
-				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap)
+				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
 					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
@@ -541,7 +542,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 			close(bulkTask)
 
 			bulkData := new(ThreadSafeArray[T])
-			bulkMap := make(map[string][]T)
+			bulkMap := NewConcurrentMap[string, []T]()
 
 			// 创建一个WaitGroup，用于等待所有goroutine完成
 			var wg sync.WaitGroup
@@ -567,7 +568,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 						}
 						bulkData.Append(result...)
 						if c.OnRangSuccess != nil {
-							bulkMap[bt] = result
+							bulkMap.Set(bt, result)
 						}
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
@@ -586,7 +587,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 			logger.J.Infof("%s %d条结果 耗时%s", c.Name, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
-				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap)
+				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
 					logger.J.ErrorE(err, "%s 任务返回错误", c.Name)
 				}

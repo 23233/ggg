@@ -355,6 +355,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 				}()
 
 			}
+			time.Sleep(1 * time.Second)
 
 			wg.Wait()
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
@@ -457,7 +458,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 				}()
 
 			}
-
+			time.Sleep(1 * time.Second)
 			wg.Wait()
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
@@ -631,7 +632,6 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 	var wg sync.WaitGroup
 
 	go func() {
-
 		// 为每个goroutine生成任务并开始执行
 		for i := 0; i < c.getConcurrency(); i++ {
 			wg.Add(1)
@@ -679,7 +679,7 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 			}()
 		}
 	}()
-
+	time.Sleep(1 * time.Second)
 	wg.Wait()
 
 	duration := time.Since(c.startTime)

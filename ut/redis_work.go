@@ -355,8 +355,6 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 				}()
 
 			}
-			time.Sleep(1 * time.Second)
-
 			wg.Wait()
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
@@ -458,7 +456,6 @@ func (c *RedisWork[T]) runRedisRange() error {
 				}()
 
 			}
-			time.Sleep(1 * time.Second)
 			wg.Wait()
 			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
@@ -626,12 +623,12 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 		}
 	}
 
-	defer c.clear()
-
 	// 创建一个WaitGroup，用于等待所有goroutine完成
 	var wg sync.WaitGroup
 
 	go func() {
+		defer c.clear()
+
 		// 为每个goroutine生成任务并开始执行
 		for i := 0; i < c.getConcurrency(); i++ {
 			wg.Add(1)
@@ -678,19 +675,19 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 				}
 			}()
 		}
-	}()
-	time.Sleep(1 * time.Second)
-	wg.Wait()
+		wg.Wait()
 
-	duration := time.Since(c.startTime)
-	logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		duration := time.Since(c.startTime)
+		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
-	if c.OnSuccess != nil {
-		err := c.OnSuccess(c)
-		if err != nil {
-			logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+		if c.OnSuccess != nil {
+			err := c.OnSuccess(c)
+			if err != nil {
+				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+			}
 		}
-	}
+
+	}()
 
 	return nil
 }

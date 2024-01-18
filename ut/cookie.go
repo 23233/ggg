@@ -12,8 +12,14 @@ func ParseCookieStrToCookies(rawStr, sep string) []*http.Cookie {
 	cookies := make([]*http.Cookie, 0)
 	for _, part := range parts {
 		item := strings.Split(part, "=")
+		if len(item) < 1 {
+			continue
+		}
 		key := strings.TrimSpace(item[0])
-		value := strings.TrimSpace(item[1])
+		var value = ""
+		if len(item) >= 2 {
+			value = strings.TrimSpace(item[1])
+		}
 		cookie := &http.Cookie{
 			Name:  key,
 			Value: value,

@@ -108,12 +108,21 @@ func (c *RedisWork[T]) GetLast() string {
 	if len(c.redisKey) >= 1 {
 		return strconv.FormatInt(c.DefaultEndCount, 10)
 	}
+	if c.BulkEnd >= 1 {
+		return strconv.FormatInt(c.BulkEnd, 10)
+	}
 	return "0"
 }
 
 func (c *RedisWork[T]) GetFirst() string {
 	if len(c.BulkIds) >= 1 {
 		return c.BulkIds[0]
+	}
+	if len(c.redisKey) >= 1 {
+		return strconv.FormatInt(c.DefaultStartCount, 10)
+	}
+	if c.BulkStart >= 1 {
+		return strconv.FormatInt(c.BulkStart, 10)
 	}
 	return "0"
 }

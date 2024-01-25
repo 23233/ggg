@@ -21,6 +21,7 @@ type RedisWork[T any] struct {
 	PlatformName      string                                  // 平台名
 	PlatformEng       string                                  // 平台英文名
 	Name              string                                  // 任务名称
+	Description       string                                  // 更多描述
 	BulkIds           []string                                // id列表
 	BulkStart         int64                                   // id起始值
 	BulkEnd           int64                                   // id截止值

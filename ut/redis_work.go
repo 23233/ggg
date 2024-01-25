@@ -702,6 +702,71 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 	return nil
 }
 
+func (c *RedisWork[T]) RunSemaphore() error {
+	if c.Running {
+		return errors.New("当前任务进行中")
+	}
+	c.runPreset()
+	if c.OnStartup != nil {
+		err := c.OnStartup(c)
+		if err != nil {
+			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			return err
+		}
+	}
+
+	var wg sync.WaitGroup
+
+	go func() {
+		defer c.clear()
+
+		// 为每个goroutine生成任务并开始执行
+		for i := 0; i < c.getConcurrency(); i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				for {
+					if c.ForceStop {
+						break
+					}
+
+					result, err := c.FetchCall("")
+					if err != nil && c.FetchError != nil {
+						result, err = c.FetchError("", err)
+						if err != nil {
+							continue
+						}
+					}
+					if c.OnSingleSuccess != nil {
+						err = c.OnSingleSuccess(c, result, "")
+						if err != nil {
+							logger.J.ErrorE(err, "%s 单个任务成功回调返回错误", c.Name)
+						}
+					}
+					c.RunItemDelay()
+
+				}
+			}()
+		}
+		wg.Wait()
+
+		duration := time.Since(c.startTime)
+		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+
+		if c.OnSuccess != nil {
+			err := c.OnSuccess(c)
+			if err != nil {
+				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+			}
+		}
+
+	}()
+
+	return nil
+
+}
+
 func (c *RedisWork[T]) SetCall(call func(id string) ([]T, error)) {
 	c.FetchCall = call
 }

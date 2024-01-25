@@ -516,7 +516,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 			}
 			// 从redis key最顶层获取一个区间
 			bulkSize := c.getConcurrency() * 5
-			scopes, err := c.db.ZPopMin(context.TODO(), c.redisKey, int64(bulkSize)).Result()
+			scopes, err := c.db.ZPopMax(context.TODO(), c.redisKey, int64(bulkSize)).Result()
 			if err != nil {
 				break
 			}
@@ -650,7 +650,7 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 					}
 
 					// 每个goroutine自己获取任务
-					scopes, err := c.db.ZPopMin(context.TODO(), c.redisKey, 10).Result()
+					scopes, err := c.db.ZPopMax(context.TODO(), c.redisKey, 10).Result()
 					if err != nil || len(scopes) == 0 {
 						break
 					}

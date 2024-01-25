@@ -43,7 +43,7 @@ func ParseMapToCookies(inputMap map[string]string) []*http.Cookie {
 }
 
 // OverrideTemplateWithCookies 多字段覆盖模板cookie中的字段返回 http.Cookie
-func OverrideTemplateWithCookies(templateStr string, templateMap map[string]string) []*http.Cookie {
+func OverrideTemplateWithCookies(templateStr string, templateMap map[string]string, notInTemplateInsert bool) []*http.Cookie {
 	// 将cookie字符串分割为单独的键值对
 	cookiePairs := strings.Split(templateStr, "; ")
 	cookieMap := make(map[string]string)
@@ -54,7 +54,7 @@ func OverrideTemplateWithCookies(templateStr string, templateMap map[string]stri
 		// 分割每个键值对
 		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) == 2 {
-			cookieMap[kv[0]] = kv[1]
+			cookieMap[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 		}
 	}
 
@@ -62,6 +62,10 @@ func OverrideTemplateWithCookies(templateStr string, templateMap map[string]stri
 	for key, value := range cookieMap {
 		if _, ok := templateMap[key]; ok {
 			templateMap[key] = value
+		} else {
+			if notInTemplateInsert {
+				templateMap[key] = value
+			}
 		}
 	}
 

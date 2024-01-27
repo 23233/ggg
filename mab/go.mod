@@ -1,6 +1,6 @@
 module github.com/23233/ggg/mab
 
-go 1.18
+go 1.21
 
 replace github.com/23233/ggg/ut => ../ut
 

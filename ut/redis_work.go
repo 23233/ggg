@@ -252,6 +252,9 @@ func (c *RedisWork[T]) runPreset() {
 	c.Running = true
 	c.ForceStop = false
 	c.startTime = time.Now()
+	c.Stat.AllCount = 0
+	c.Stat.RangerCount = 0
+	c.Stat.BulkCount = 0
 }
 
 func (c *RedisWork[T]) clear() {

@@ -46,6 +46,11 @@ type RedisWork[T any] struct {
 	ItemDelayEnd      time.Duration // 每获取一个的间隔时间终止点
 	RangeDelayStart   time.Duration
 	RangeDelayEnd     time.Duration
+	Stat              struct {
+		AllCount    int64
+		RangerCount int64
+		BulkCount   int64
+	}
 
 	// 内部态
 	startTime   time.Time // 开始时间

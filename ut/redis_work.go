@@ -16,6 +16,14 @@ import (
 
 // 使用redis进行一些分布式任务 支持[]string{id}(数组切分) id起点_id终点(范围切分) redisKey zset消耗切分
 
+type RedisWorkStat struct {
+	AllCount     int64
+	RangerCount  int64
+	BulkCount    int64
+	SuccessCount int64
+	FailCount    int64
+}
+
 type RedisWork[T any] struct {
 	db                rueidiscompat.Cmdable
 	PlatformName      string                                  // 平台名
@@ -46,11 +54,7 @@ type RedisWork[T any] struct {
 	ItemDelayEnd      time.Duration // 每获取一个的间隔时间终止点
 	RangeDelayStart   time.Duration
 	RangeDelayEnd     time.Duration
-	Stat              struct {
-		AllCount    int64
-		RangerCount int64
-		BulkCount   int64
-	}
+	Stat              RedisWorkStat
 
 	// 内部态
 	startTime   time.Time // 开始时间
@@ -206,6 +210,8 @@ func (c *RedisWork[T]) runBulk() error {
 				idStr := strings.TrimSpace(id)
 				c.NowCount.Add(1)
 				result, err := c.FetchCall(idStr)
+				c.resultCountIncr(err)
+
 				if err != nil {
 					if c.FetchError != nil {
 						result, err = c.FetchError(idStr, err)
@@ -252,9 +258,15 @@ func (c *RedisWork[T]) runPreset() {
 	c.Running = true
 	c.ForceStop = false
 	c.startTime = time.Now()
-	c.Stat.AllCount = 0
-	c.Stat.RangerCount = 0
-	c.Stat.BulkCount = 0
+	c.Stat = RedisWorkStat{}
+}
+
+func (c *RedisWork[T]) resultCountIncr(err error) {
+	if err != nil {
+		atomic.AddInt64(&c.Stat.FailCount, 1)
+	} else {
+		atomic.AddInt64(&c.Stat.SuccessCount, 1)
+	}
 }
 
 func (c *RedisWork[T]) clear() {
@@ -353,6 +365,8 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 						}
 						c.NowCount.Add(1)
 						result, err := c.FetchCall(bt)
+						c.resultCountIncr(err)
+
 						if err != nil {
 							continue
 						}
@@ -455,6 +469,8 @@ func (c *RedisWork[T]) runRedisRange() error {
 						}
 						c.NowCount.Add(1)
 						result, err := c.FetchCall(bt)
+						c.resultCountIncr(err)
+
 						if err != nil {
 							continue
 						}
@@ -572,6 +588,8 @@ func (c *RedisWork[T]) runRedisItem() error {
 						}
 						c.NowCount.Add(1)
 						result, err := c.FetchCall(bt)
+						c.resultCountIncr(err)
+
 						if err != nil {
 							if c.FetchError != nil {
 								result, err = c.FetchError(bt, err)
@@ -675,6 +693,8 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 						}
 						c.NowCount.Add(1)
 						result, err := c.FetchCall(id)
+						c.resultCountIncr(err)
+
 						if err != nil && c.FetchError != nil {
 							result, err = c.FetchError(id, err)
 							if err != nil {
@@ -740,6 +760,8 @@ func (c *RedisWork[T]) RunSemaphore() error {
 					}
 
 					result, err := c.FetchCall("")
+					c.resultCountIncr(err)
+
 					if err != nil && c.FetchError != nil {
 						result, err = c.FetchError("", err)
 						if err != nil {

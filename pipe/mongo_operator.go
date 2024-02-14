@@ -137,3 +137,6 @@ func MongoBulkInsertCountRetry[T any](ctx context.Context, db *qmgo.Collection, 
 	return len(result.InsertedIDs), err
 
 }
+func MongoBulkInsertCountMustRetry[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) (int, error) {
+	return MongoBulkInsertCountRetry[T](ctx, db, 5, 1*time.Second, accounts...)
+}

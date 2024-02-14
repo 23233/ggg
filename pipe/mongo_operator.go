@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 // 封装在mongodb中常见操作方法
@@ -119,4 +120,20 @@ func MongoBulkInsertCount[T any](ctx context.Context, db *qmgo.Collection, accou
 		}
 	}
 	return len(result.InsertedIDs), err
+}
+func MongoBulkInsertCountRetry[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) (int, error) {
+	result, err := mongoBulkInsert(ctx, db, accounts...)
+	if err != nil {
+		if err != PipeBulkEmptySuccessError {
+			retryErr := ut.RetryFunc(func() error {
+				result, err = mongoBulkInsert(ctx, db, accounts...)
+				return err
+			}, 5, 1*time.Second)
+			if retryErr != nil {
+				return 0, retryErr
+			}
+		}
+	}
+	return len(result.InsertedIDs), err
+
 }

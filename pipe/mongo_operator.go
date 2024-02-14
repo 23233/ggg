@@ -121,14 +121,14 @@ func MongoBulkInsertCount[T any](ctx context.Context, db *qmgo.Collection, accou
 	}
 	return len(result.InsertedIDs), err
 }
-func MongoBulkInsertCountRetry[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) (int, error) {
+func MongoBulkInsertCountRetry[T any](ctx context.Context, db *qmgo.Collection, retryCount uint, retryInterval time.Duration, accounts ...T) (int, error) {
 	result, err := mongoBulkInsert(ctx, db, accounts...)
 	if err != nil {
 		if err != PipeBulkEmptySuccessError {
 			retryErr := ut.RetryFunc(func() error {
 				result, err = mongoBulkInsert(ctx, db, accounts...)
 				return err
-			}, 5, 1*time.Second)
+			}, retryCount, retryInterval)
 			if retryErr != nil {
 				return 0, retryErr
 			}

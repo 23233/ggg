@@ -70,9 +70,27 @@ func main() {
 
 	pmb.UserInstance.SetConn(bk.CloneConn())
 
-	// 还可以测试action
 	model := pmb.NewSchemaModel[any](new(testModelStruct), bk.CloneConn().Db())
 
+	// 测试dynamicField
+	df1 := pmb.NewDynamicField("tt", "动态字段1").SetTriggerInterval()
+	df1.AddCall(func(fieldId string, model pmb.IModelItem, user *pmb.SimpleUserModel, row map[string]any) (*pmb.DynamicResult, error) {
+		var result = new(pmb.DynamicResult)
+		result.Normal("赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1 赵日天1/1")
+		return result, nil
+	})
+
+	df2 := pmb.NewDynamicField("bb", "动态字段2").SetTriggerClick()
+	df2.AddCall(func(fieldId string, model pmb.IModelItem, user *pmb.SimpleUserModel, row map[string]any) (*pmb.DynamicResult, error) {
+		var result = new(pmb.DynamicResult)
+		result.Raw([]any{123, "3456", "456"})
+		return result, nil
+	})
+
+	model.AddDynamicField(df1)
+	model.AddDynamicField(df2)
+
+	// 测试action
 	var action = pmb.NewAction[map[string]any, *testActionDesc]("设置desc为新的", new(testActionDesc))
 	action.GetBase().Prefix = "前缀测试"
 	action.GetBase().TableEmptySelectUseAllSheet = true

@@ -93,13 +93,14 @@ type ManySchema struct {
 
 type SchemaModel[T any] struct {
 	SchemaBase
-	db           *qmgo.Database
-	raw          any
-	Roles        *SchemaRole         `json:"roles,omitempty"`
-	Schemas      ManySchema          `json:"schemas"`
-	Iframe       *SchemaIframe       `json:"iframe,omitempty"`
-	TableDisable *SchemaTableDisable `json:"table_disable,omitempty"`
-	Actions      []ISchemaAction     `json:"actions,omitempty"` // 各类操作
+	db            *qmgo.Database
+	raw           any
+	Roles         *SchemaRole         `json:"roles,omitempty"`
+	Schemas       ManySchema          `json:"schemas"`
+	Iframe        *SchemaIframe       `json:"iframe,omitempty"`
+	TableDisable  *SchemaTableDisable `json:"table_disable,omitempty"`
+	Actions       []ISchemaAction     `json:"actions,omitempty"`        // 各类操作
+	DynamicFields []*DynamicField     `json:"dynamic_fields,omitempty"` // 动态字段
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryContextInjects []ContextValueInject
 	queryFilterInject   []*ut.Kov // 过滤参数注入
@@ -240,6 +241,25 @@ func (s *SchemaModel[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, q
 	s.filterCanPass = filterCanPass
 }
 
+func (s *SchemaModel[T]) AddDynamicField(f *DynamicField) {
+	s.DynamicFields = append(s.DynamicFields, f)
+}
+func (s *SchemaModel[T]) AddDF(id, name string, call DynamicCall) {
+	s.DynamicFields = append(s.DynamicFields, &DynamicField{
+		Id:   id,
+		Name: name,
+		call: call,
+	})
+}
+func (s *SchemaModel[T]) DfIdFind(id string) *DynamicField {
+	for _, field := range s.DynamicFields {
+		if field.Id == id {
+			return field
+		}
+	}
+	return nil
+}
+
 func (s *SchemaModel[T]) AddQueryFilterInject(fl *ut.Kov) {
 	if s.queryFilterInject == nil {
 		s.queryFilterInject = make([]*ut.Kov, 0)
@@ -283,17 +303,19 @@ func (s *SchemaModel[T]) GetAction(name string) (ISchemaAction, bool) {
 
 func (s *SchemaModel[T]) MarshalJSON() ([]byte, error) {
 	inline := struct {
-		Info         SchemaBase          `json:"info"`
-		Actions      []ISchemaAction     `json:"actions"`
-		Schemas      ManySchema          `json:"schemas"`
-		TableDisable *SchemaTableDisable `json:"table_disable"`
-		Iframe       *SchemaIframe       `json:"iframe"`
+		Info          SchemaBase          `json:"info"`
+		Actions       []ISchemaAction     `json:"actions"`
+		DynamicFields []*DynamicField     `json:"dynamic_fields"`
+		Schemas       ManySchema          `json:"schemas"`
+		TableDisable  *SchemaTableDisable `json:"table_disable"`
+		Iframe        *SchemaIframe       `json:"iframe"`
 	}{
-		Info:         s.SchemaBase,
-		Actions:      s.Actions,
-		Schemas:      s.Schemas,
-		TableDisable: s.TableDisable,
-		Iframe:       s.Iframe,
+		Info:          s.SchemaBase,
+		Actions:       s.Actions,
+		Schemas:       s.Schemas,
+		TableDisable:  s.TableDisable,
+		Iframe:        s.Iframe,
+		DynamicFields: s.DynamicFields,
 	}
 	inline.Schemas.Table.Title = s.SchemaBase.Alias
 	return json.Marshal(inline)
@@ -776,4 +798,7 @@ type IModelItem interface {
 	GetSchema(mode ISchemaMode) *jsonschema.Schema
 	SetSchemaRaw(mode ISchemaMode, raw any)
 	SetSchema(mode ISchemaMode, schema *jsonschema.Schema)
+	AddDynamicField(f *DynamicField)
+	AddDF(id, name string, call DynamicCall)
+	DfIdFind(id string) *DynamicField
 }

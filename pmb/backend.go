@@ -145,6 +145,11 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
 		ActionRun(ctx, model, user)
 	})
+	apiParty.Post("/dynamic/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware, recordBodyMiddleware, func(ctx iris.Context) {
+		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+		model := ctx.Values().Get(b.modelContextKey).(IModelItem)
+		DynamicRun(ctx, model, user)
+	})
 
 	// crud
 	curd := apiParty.Party("/{unique:string}", mustLoginMiddleware, b.uniqueGetModelMiddleware, b.canRoleMiddleware)

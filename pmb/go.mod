@@ -25,6 +25,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
+	go.uber.org/mock v0.3.0 // indirect
 )
 
 require (
@@ -65,7 +66,6 @@ require (
 	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -113,9 +113,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
-	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
-	github.com/quic-go/quic-go v0.35.1 // indirect
+	github.com/quic-go/quic-go v0.41.0 // indirect
 	github.com/redis/rueidis v1.0.25
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect

@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const OpRegex = "regex"
@@ -117,6 +118,27 @@ type PruneCtxQuery struct {
 	maxLength int
 }
 
+// 时间解析
+func timeStringParse(input string) (time.Time, error) {
+	var layouts = []string{
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+		time.RFC3339,
+	}
+
+	var err error
+	for _, layout := range layouts {
+		t, errParse := time.Parse(layout, input)
+		if errParse == nil {
+			return t, nil // 成功解析
+		}
+		err = errParse // 保留最后的解析错误
+	}
+
+	// 如果循环完成还未成功解析，返回错误
+	return time.Time{}, errors.New("无法解析时间字符串: " + err.Error())
+}
+
 // PruneParseUrlParams 纯解析url上的参数
 func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error) {
 	if p.maxLength < 1 {
@@ -142,10 +164,10 @@ func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error)
 		}
 		// 判断操作符_是否存在
 		opIndex := strings.LastIndex(bk, p.opSuffix)
+		opHas := opIndex >= len(k)-p.maxLength && opIndex <= len(k)-p.minLength
 		var op = ""
 		// 如果操作符存在去找到对应的操作
-		var lenK = len(k)
-		if opIndex >= lenK-p.maxLength && opIndex <= lenK-p.minLength {
+		if opHas {
 			for _, allowOp := range p.allowOps {
 				// 组合成 _op
 				suffix := p.opSuffix + allowOp
@@ -157,9 +179,19 @@ func (p *PruneCtxQuery) PruneParseUrlParams() (and []*Kov, or []*Kov, err error)
 			}
 		}
 
+		// 判断一下v是不是传递的时间格式 如果是则转换为time.Time
+
 		var value any = v
 		if op == "in" || op == "nin" {
 			value = strings.Split(v, ",")
+		} else {
+			// 操作符存在 则判断value是否为时间
+			if opHas {
+				valueTime, err := timeStringParse(v)
+				if err == nil {
+					value = valueTime
+				}
+			}
 		}
 
 		var kop = new(Kov)

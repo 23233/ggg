@@ -664,6 +664,15 @@ func (s *SchemaModel[T]) ActionEntry(ctx iris.Context) {
 	return
 }
 
+func (s *SchemaModel[T]) DynamicFieldsEntry(ctx iris.Context) {
+	var user *SimpleUserModel
+	if ctx.Values().Exists(UserContextKey) {
+		user = ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+	}
+	DynamicRun(ctx, s, user)
+	return
+}
+
 func (s *SchemaModel[T]) Registry(part iris.Party) {
 	p := part.Party("/" + s.UniqueId)
 	s.RegistryConfigAction(p)
@@ -678,6 +687,8 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	})
 	// action
 	p.Post("/action", s.ActionEntry)
+	// dynamic
+	p.Post("/dynamic", s.DynamicFieldsEntry)
 }
 
 func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
@@ -786,6 +797,7 @@ type IModelItem interface {
 	PutHandler(ctx iris.Context, params pipe.ModelPutConfig) error
 	DelHandler(ctx iris.Context, params pipe.ModelDelConfig) error
 	ActionEntry(ctx iris.Context)
+	DynamicFieldsEntry(ctx iris.Context)
 	Registry(part iris.Party)
 	RegistryConfigAction(p iris.Party)
 	RegistryCrud(p iris.Party)

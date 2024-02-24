@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81
 	github.com/23233/ggg/logger v0.0.0-20240126064458-4ef52b984a5e
-	github.com/23233/ggg/ut v0.0.0-20231125085718-c7312d0c4e06
+	github.com/23233/ggg/ut v0.0.0-20240224132505-370da4cdd908
 	github.com/23233/jsonschema v0.11.2
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2

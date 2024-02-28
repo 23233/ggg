@@ -11,7 +11,7 @@ replace (
 
 require (
 	github.com/23233/ggg/pipe v0.0.0-20231108093805-3e3053b9896c
-	github.com/23233/ggg/ut v0.0.0-20231125085718-c7312d0c4e06
+	github.com/23233/ggg/ut v0.0.0-20240224132505-370da4cdd908
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/pkg/errors v0.9.1

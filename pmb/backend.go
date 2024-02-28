@@ -20,8 +20,11 @@ var (
 	BkInst *Backend
 )
 
-//go:embed template/*
-var embedWeb embed.FS
+//go:embed template/*.html
+var htmlWeb embed.FS
+
+//go:embed template/assets/*
+var assetsWeb embed.FS
 
 type Backend struct {
 	connectInfo
@@ -84,12 +87,13 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	frontParty := party.Party("/" + b.Prefix)
 	apiParty := party.Party("/" + b.Prefix + "/apis")
 
-	fsys := iris.PrefixDir("template", http.FS(embedWeb))
+	fsys := iris.PrefixDir("template", http.FS(htmlWeb))
 	frontParty.RegisterView(iris.Blocks(fsys, ".html"))
-	frontParty.HandleDir("/front", fsys, iris.DirOptions{
+
+	frontParty.HandleDir("/", assetsWeb, iris.DirOptions{
 		Cache:    router.DirCacheOptions{},
 		Compress: true,
-	}) // ./prefix/front/assets/index-3fa15531.js
+	}) // ./prefix/assets/index-3fa15531.js
 
 	// 注册role视图
 	apiParty.RegisterView(iris.Blocks(fsys, ".html"))
@@ -102,7 +106,8 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	}
 
 	frontParty.Get("/", frontHandler)
-	frontParty.Get("/{tail:path}", frontHandler)
+	frontParty.Get("/login", frontHandler)
+	frontParty.Get("/reg", frontHandler)
 
 	mustLoginMiddleware := UserInstance.MustLoginMiddleware()
 

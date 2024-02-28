@@ -156,7 +156,7 @@ func main() {
 		}
 	}()
 
-	_ = app.Listen(":8080")
+	_ = app.Run(iris.Addr(":8080"))
 
 }
 

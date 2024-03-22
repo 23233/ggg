@@ -107,7 +107,7 @@ type SchemaModel[T any] struct {
 	WriteInsert         bool      `json:"write_insert,omitempty"`   // 是否把注入内容写入新增体
 	PostMustKeys        []string  `json:"post_must_keys,omitempty"` // 新增时候必须存在的key
 	// 过滤参数能否通过 这里能注入和修改过滤参数和判断参数是否缺失 返回错误则抛出错误
-	filterCanPass func(ctx iris.Context, query *ut.QueryFull) error
+	filterCanPass func(ctx iris.Context, self *SchemaModel[T], query *ut.QueryFull) error
 	Hooks         SchemaHooks[T]
 }
 
@@ -237,7 +237,7 @@ func (s *SchemaModel[T]) AddAction(action ISchemaAction) {
 	s.Actions = append(s.Actions, action)
 }
 
-func (s *SchemaModel[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, query *ut.QueryFull) error) {
+func (s *SchemaModel[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, self *SchemaModel[T], query *ut.QueryFull) error) {
 	s.filterCanPass = filterCanPass
 }
 
@@ -370,7 +370,7 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	}
 	// 过滤参数 外键什么的可以在这里注入
 	if s.filterCanPass != nil {
-		err = s.filterCanPass(ctx, resp.Result)
+		err = s.filterCanPass(ctx, s, resp.Result)
 		if err != nil {
 			return err
 		}

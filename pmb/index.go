@@ -588,6 +588,14 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 		return err
 	}
 
+	bodyMap := make(map[string]any)
+	err = ctx.ReadBody(&bodyMap)
+	if err != nil {
+		return err
+	}
+
+	params.BodyMap = bodyMap
+
 	resp := pipe.ModelPut.Run(ctx, newV, &params, s.db)
 	if resp.Err != nil {
 		return resp.Err

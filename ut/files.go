@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func SaveSliceToFiles(filePath string, values []interface{}, headers ...string) error {
+func SaveSliceToFiles[T any](filePath string, values []T, headers ...string) error {
 	f, err := os.Create(filePath)
 	if err != nil {
 		return err

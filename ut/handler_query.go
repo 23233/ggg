@@ -80,6 +80,19 @@ func (c *QueryParse) insertOrReplace(dataList []*Kov, now *Kov) []*Kov {
 	return result
 }
 
+func (c *QueryParse) HaveKey(target string, keyName string) bool {
+	targetSlice := c.And
+	if target != "and" {
+		targetSlice = c.Or
+	}
+	for _, kov := range targetSlice {
+		if kov.Key == keyName {
+			return true
+		}
+	}
+	return false
+}
+
 type BasePage struct {
 	Page     int64 `json:"page,omitempty"`
 	PageSize int64 `json:"page_size,omitempty"`

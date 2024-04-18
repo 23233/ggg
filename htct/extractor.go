@@ -77,7 +77,16 @@ func Extract(source string) (*Article, error) {
 		content.node.Find("img").Each(func(i int, s *goquery.Selection) {
 			if src, ok := s.Attr("src"); ok {
 				imgs = append(imgs, src)
+			} else {
+				var dataSrcs = []string{"data-src", "data-pic", "data-big"}
+				for _, dSrc := range dataSrcs {
+					if dataSrc, ok := s.Attr(dSrc); ok {
+						imgs = append(imgs, dataSrc)
+						break
+					}
+				}
 			}
+
 		})
 		result.Images = imgs
 		wg.Done()

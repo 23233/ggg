@@ -730,16 +730,16 @@ $(function(){
 `
 
 func Test_extract(t *testing.T) {
-	result, err := Extract(testSource)
+	result, err := Extract(testSource, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(result.Title)
+	t.Log(result.ContentTitle)
 	t.Log(result.AllLinks)
 }
 
 func BenchmarkExtract(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Extract(testSource)
+		_, _ = Extract(testSource, "")
 	}
 }

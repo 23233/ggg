@@ -33,7 +33,7 @@ func main(){
     // htct.Extract 接收一个html的字符串
     // 可根据需求自行选择如何获取一个html字符串
     // 例如带分页的页面,可自行获取所有分页内容,拼接后传入
-    result, _ := htct.Extract(string(source))
+    result, _ := htct.Extract(string(source),url)
     fmt.Printf("%+v", result)
 }
 ```

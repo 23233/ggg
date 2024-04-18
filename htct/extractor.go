@@ -1,6 +1,7 @@
 package htct
 
 import (
+	"net"
 	"sort"
 	"strings"
 	"sync"
@@ -20,22 +21,29 @@ var canBeRemoveIfEmpty = []string{"section", "h1", "h2", "h3", "h4", "h5", "h6",
 
 // Article 提取的文本信息
 type Article struct {
-	// Title 标题
-	Title string `json:"title,omitempty"`
-	// Images 图片
-	Images []string `json:"images,omitempty"`
+	MetaTitle       string `json:"meta_title,omitempty" bson:"meta_title,omitempty"`
+	MetaDescription string `json:"meta_description,omitempty" bson:"meta_description,omitempty"`
+	MetaKeywords    string `json:"meta_keywords,omitempty" bson:"meta_keywords,omitempty"`
+	Url             string `json:"url,omitempty" bson:"url,omitempty"` // 当前的url
+	Icp             string `json:"icp,omitempty" bson:"icp,omitempty"` // icp备案号
+	Ipv4            string `json:"ipv_4,omitempty" bson:"ipv_4,omitempty"`
+	Ipv6            string `json:"ipv_6,omitempty" bson:"ipv_6,omitempty"`
+	// ContentTitle 标题
+	ContentTitle string `json:"content_title,omitempty" bson:"content_title,omitempty"`
+	// ContentImages 图片
+	ContentImages []string `json:"content_images,omitempty" bson:"content_images,omitempty"`
 	// Author 作者
-	Author string `json:"author,omitempty"`
+	Author string `json:"author,omitempty" bson:"author,omitempty"`
 	// PublishTime 发布时间
-	PublishTime string `json:"publish_time,omitempty"`
+	PublishTime string `json:"publish_time,omitempty" bson:"publish_time,omitempty"`
 	// Content 正文
-	Content string `json:"content,omitempty"`
+	Content string `json:"content,omitempty" bson:"content,omitempty"`
 	// ContentLine 内容段落 以`\n`为切分标准
-	ContentLine []string `json:"content_line,omitempty"`
+	ContentLine []string `json:"content_line,omitempty" bson:"content_line,omitempty"`
 	// ContentHTML 正文源码
-	ContentHTML string `json:"content_html,omitempty"`
+	ContentHTML string `json:"content_html,omitempty" bson:"content_html,omitempty"`
 	// AllLinks 所有链接 内外链
-	AllLinks []KvMap `json:"all_links,omitempty"`
+	AllLinks []KvMap `json:"all_links,omitempty" bson:"all_links,omitempty"`
 }
 
 type KvMap struct {
@@ -44,7 +52,7 @@ type KvMap struct {
 }
 
 // Extract 提取信息
-func Extract(source string) (*Article, error) {
+func Extract(source string, sourceUrl string) (*Article, error) {
 	dom, err := goquery.NewDocumentFromReader(strings.NewReader(source))
 	if err != nil {
 		return nil, err
@@ -54,22 +62,23 @@ func Extract(source string) (*Article, error) {
 	result := &Article{}
 	headText := headTextExtract(dom)
 	wg := &sync.WaitGroup{}
-	wg.Add(4)
+	wg.Add(5)
 	go func() {
+		defer wg.Done()
 		result.PublishTime = timeExtract(headText, body)
-		wg.Done()
 	}()
 	go func() {
+		defer wg.Done()
 		result.AllLinks = linkExtract(body)
-		wg.Done()
 	}()
 	go func() {
+		defer wg.Done()
 		result.Author = authorExtract(headText, body)
-		wg.Done()
 	}()
 	go func() {
+		defer wg.Done()
 		content := contentExtract(body)
-		result.Title = titleExtract(headText, dom.Selection, content.node)
+		result.ContentTitle = titleExtract(headText, dom.Selection, content.node)
 		result.Content = content.density.tiText
 		result.ContentLine = strings.Split(result.Content, "\n")
 		result.ContentHTML, _ = content.node.Html()
@@ -88,10 +97,40 @@ func Extract(source string) (*Article, error) {
 			}
 
 		})
-		result.Images = imgs
-		wg.Done()
+		result.ContentImages = imgs
 	}()
-	// 抽取内链外链
+	go func() {
+		defer wg.Done()
+		// 抽取tdk
+		dom.Find("title").Each(func(i int, s *goquery.Selection) {
+			result.MetaTitle = strings.TrimSpace(s.Text())
+		})
+		dom.Find("meta[name='description']").Each(func(i int, s *goquery.Selection) {
+			description, _ := s.Attr("content")
+			result.MetaDescription = strings.TrimSpace(description)
+		})
+		dom.Find("meta[name='keywords']").Each(func(i int, s *goquery.Selection) {
+			keywords, _ := s.Attr("content")
+			result.MetaKeywords = strings.TrimSpace(keywords)
+		})
+
+		// 找寻备案号所在的a标签，并提取其文本或href作为备案号
+		dom.Find("a[href*='beian.miit.gov.cn']").Each(func(i int, s *goquery.Selection) {
+			if href, exists := s.Attr("href"); exists {
+				if strings.Contains(href, "beian.miit.gov.cn") {
+					result.Icp = strings.TrimSpace(s.Text()) // 假设备案号在文本中
+				}
+			}
+		})
+
+		result.Url = sourceUrl
+
+		// ip地址
+		ipv4, ipv6, _ := LookupIPAddresses(sourceUrl)
+		result.Ipv6 = ipv6
+		result.Ipv4 = ipv4
+
+	}()
 
 	wg.Wait()
 	return result, nil
@@ -217,4 +256,39 @@ func canBeRemove(s *goquery.Selection) bool {
 		}
 	}
 	return false
+}
+
+// LookupIPAddresses 根据给定的域名返回一个IPv4和一个IPv6地址（如果存在的话）
+// domain必须不包含协议头
+func LookupIPAddresses(domain string) (string, string, error) {
+	domain = strings.TrimPrefix(domain, "http://")
+	domain = strings.TrimPrefix(domain, "https://")
+
+	ips, err := net.LookupIP(domain)
+	if err != nil {
+		return "", "", err // 如果查询失败，返回错误
+	}
+
+	var ipv4Addr, ipv6Addr string
+	for _, ip := range ips {
+		ipv4 := ip.To4()
+		// 如果找到IPv4地址而且之前没有找到过IPv4地址，就记录下来
+		if ipv4 != nil && ipv4Addr == "" {
+			ipv4Addr = ipv4.String()
+			continue
+		}
+		// 如果找到IPv6地址而且之前没有找到过IPv6地址，就记录下来
+		if ipv4 == nil && ipv6Addr == "" { // 如果不是IPv4，即为IPv6
+			ipv6Addr = ip.String()
+		}
+
+		// 如果两种地址都已找到，提前结束循环
+		if ipv4Addr != "" && ipv6Addr != "" {
+			break
+		}
+	}
+
+	// 返回找到的IPv4和IPv6地址
+	// 注意：这二者有可能为空，表示没有找到对应类型的地址
+	return ipv4Addr, ipv6Addr, nil
 }

@@ -261,8 +261,16 @@ func canBeRemove(s *goquery.Selection) bool {
 // LookupIPAddresses 根据给定的域名返回一个IPv4和一个IPv6地址（如果存在的话）
 // domain必须不包含协议头
 func LookupIPAddresses(domain string) (string, string, error) {
+	// 移除可能的HTTP或HTTPS协议头
 	domain = strings.TrimPrefix(domain, "http://")
 	domain = strings.TrimPrefix(domain, "https://")
+
+	// 找到第一个"/"出现的位置；如果找不到，`slashIndex`将为-1
+	slashIndex := strings.Index(domain, "/")
+	if slashIndex != -1 {
+		// 只截取第一个"/"之前的部分，移除了路径和查询字符串
+		domain = domain[0:slashIndex]
+	}
 
 	ips, err := net.LookupIP(domain)
 	if err != nil {

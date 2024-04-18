@@ -743,3 +743,19 @@ func BenchmarkExtract(b *testing.B) {
 		_, _ = Extract(testSource, "")
 	}
 }
+
+func TestLookupIPAddresses(t *testing.T) {
+	got, got1, err := LookupIPAddresses("https://gouhuo.qq.com/content")
+	assert.Equal(t, nil, err)
+	t.Log(got)
+	t.Log(got1)
+	got, got1, err = LookupIPAddresses("gouhuo.qq.com/content")
+	assert.Equal(t, nil, err)
+	t.Log(got)
+	t.Log(got1)
+	got, got1, err = LookupIPAddresses("gouhuo.qq.com")
+	assert.Equal(t, nil, err)
+	t.Log(got)
+	t.Log(got1)
+
+}

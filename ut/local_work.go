@@ -15,11 +15,12 @@ type LocalWork[T any, R any] struct {
 	Name string `json:"name"` // 任务名称
 	Tid  string `json:"tid"`  // 任务id 需唯一
 
-	NowCount    atomic.Int64 // 当前已执行个数
-	FailCount   atomic.Int64 // 失败次数
-	Running     bool         // 当前执行状态
-	Concurrency uint         // 线程数量
-	ForceStop   bool         // 是否被强制停止
+	NowCount     atomic.Int64 // 当前已执行个数
+	FailCount    atomic.Int64 // 失败次数
+	Running      bool         // 当前执行状态
+	Concurrency  uint         // 线程数量
+	ForceStop    bool         // 是否被强制停止
+	PrintProcess bool         // 是否打印进度 默认开启
 
 	ChanData  []T // 待处理的数据
 	call      func(item T) (R, error)
@@ -27,6 +28,11 @@ type LocalWork[T any, R any] struct {
 	OnSuccess func(work *LocalWork[T, R], results []R) error
 
 	startTime time.Time // 开始时间
+}
+
+func (c *LocalWork[T, R]) SetPrintProcess(PrintProcess bool) *LocalWork[T, R] {
+	c.PrintProcess = PrintProcess
+	return c
 }
 
 func (c *LocalWork[T, R]) SetCall(call func(item T) (R, error)) *LocalWork[T, R] {
@@ -87,7 +93,9 @@ func (c *LocalWork[T, R]) run() {
 				r, err := c.call(data)
 
 				nowProcess := c.NowCount.Add(1)
-				logger.J.Infof("[%s]%s 进度%d/%d", c.Tid, c.Name, nowProcess, len(c.ChanData))
+				if c.PrintProcess {
+					logger.J.Infof("[%s]%s 进度%d/%d", c.Tid, c.Name, nowProcess, len(c.ChanData))
+				}
 				if err != nil {
 					c.FailCount.Add(1)
 					continue
@@ -139,8 +147,9 @@ func NewLocalWorkFull[T any, R any](name, tid string, concurrency uint, todoData
 
 func NewLocalWork[T any, R any](name, tid string) *LocalWork[T, R] {
 	inst := &LocalWork[T, R]{
-		Name: name,
-		Tid:  tid,
+		Name:         name,
+		Tid:          tid,
+		PrintProcess: true,
 	}
 	return inst
 }

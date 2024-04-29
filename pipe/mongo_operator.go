@@ -28,11 +28,11 @@ func MongoFilters[T any](ctx context.Context, db *qmgo.Collection, filters bson.
 
 // MongoGetOne 传入实例 返回new之后的指针
 func MongoGetOne[T any](ctx context.Context, db *qmgo.Collection, uid string) (*T, error) {
+	return MongoFilterGetOne[T](ctx, db, bson.M{ut.DefaultUidTag: uid})
+}
+func MongoFilterGetOne[T any](ctx context.Context, db *qmgo.Collection, filters bson.M) (*T, error) {
 	var result = new(T)
-	err := db.Find(ctx, bson.M{ut.DefaultUidTag: uid}).One(result)
-	if err != nil {
-		return result, err
-	}
+	err := db.Find(ctx, filters).One(result)
 	return result, err
 }
 func MongoRandom[T any](ctx context.Context, db *qmgo.Collection, filters bson.D, count int) ([]T, error) {

@@ -1,6 +1,7 @@
 package ut
 
 import (
+	"github.com/23233/ggg/logger"
 	"github.com/kataras/iris/v12"
 	"net/http"
 )
@@ -24,4 +25,12 @@ func IrisErrReturn(ctx iris.Context, input any, statusCode int, businessCode int
 
 func IrisErr(ctx iris.Context, input any) {
 	IrisErrReturn(ctx, input, http.StatusBadRequest, http.StatusBadRequest)
+}
+
+func IrisErrLog(ctx iris.Context, err error, msg string) {
+	if err != nil {
+		logger.J.ErrorE(err, msg)
+	}
+	IrisErr(ctx, msg)
+	return
 }

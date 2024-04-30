@@ -45,6 +45,13 @@ func TestSearch(t *testing.T) {
 	t.Log(Search("上海"))
 }
 
+func TestGroupCityByP1(t *testing.T) {
+	t.Log(GroupCityByP1())
+}
+func TestGroupCityByP1String(t *testing.T) {
+	t.Log(GroupCityByP1String(true))
+}
+
 func BenchmarkRandomGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		RandomGet(10, "自治州", "地区")

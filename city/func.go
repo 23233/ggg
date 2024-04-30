@@ -190,6 +190,30 @@ func Search(name string) []TreeNode {
 	return r
 }
 
+func GroupCityByP1() map[string][]*TreeNode {
+	pfMap := make(map[string][]*TreeNode)
+	for _, node := range FlatData {
+		if node.IsCity || node.IsNyc {
+			pfMap[node.P1] = append(pfMap[node.P1], node)
+		}
+	}
+	return pfMap
+}
+
+func GroupCityByP1String(hasSuffix bool) map[string][]string {
+	pfMap := make(map[string][]string)
+	for _, node := range FlatData {
+		if node.IsCity {
+			fullName := node.Name
+			if hasSuffix {
+				fullName = node.Name + node.Suffix
+			}
+			pfMap[node.P1] = append(pfMap[node.P1], fullName)
+		}
+	}
+	return pfMap
+}
+
 func Match(name string) (*TreeNode, bool) {
 	var r TreeNode
 	for _, node := range FlatData {

@@ -4,14 +4,10 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/jszwec/csvutil"
-	"github.com/mozillazg/go-pinyin"
-	"strings"
 )
 
 //go:embed only_city.csv
 var cityCsv []byte
-
-var py = pinyin.NewArgs()
 
 type TreeBase struct {
 	Adcode string `json:"adcode"` // 唯一id 数字的
@@ -24,6 +20,7 @@ type TreeNode struct {
 	Parent     string      `json:"parent"`      // 这个是父级的adcode
 	Py         string      `json:"py"`          // 拼音
 	Pf         string      `json:"pf"`          // 拼音首字符
+	P1         string      `json:"p1"`          // 拼音首字母
 	IsProvince bool        `json:"is_province"` // 省份
 	IsCity     bool        `json:"is_city"`     // 城市
 	IsNyc      bool        `json:"is_nyc"`      // 直辖市
@@ -40,6 +37,9 @@ type csvMap struct {
 	Lng    float64 `json:"lng" csv:"lng"`
 	Parent string  `json:"parent" csv:"parent"`
 	Level  string  `json:"level" csv:"level"` // province city district
+	Py     string  `json:"py" csv:"py"`       // 拼音全拼
+	Pyf    string  `json:"pyf" csv:"pyf"`     // 拼音首字母拼接
+	P1     string  `json:"p1" csv:"p1"`       // 拼音首字母
 }
 
 var record = make([]csvMap, 0)
@@ -103,34 +103,16 @@ func isNyc(name string) bool {
 }
 
 func mapToTree(c csvMap) *TreeNode {
-	var st strings.Builder
-	var pf strings.Builder
-	for _, s := range pinyin.Pinyin(c.Name+c.Suffix, py) {
-		st.WriteString(strings.Join(s, ""))
-		pf.WriteString(s[0][:1])
-	}
 	var zxs = isNyc(c.Name)
 
-	var province = false
-	if c.Level == "province" {
-		province = true
-	}
-
-	var city = false
-	if c.Level == "city" {
-		if !zxs {
-			city = true
-		}
-	}
-
-	if c.Level == "district" {
-		city = true
-	}
+	var province = c.Level == "province"
+	var city = c.Level == "city"
 
 	var r = &TreeNode{
 		Parent:     c.Parent,
-		Py:         st.String(),
-		Pf:         pf.String(),
+		Py:         c.Py,
+		Pf:         c.Pyf,
+		P1:         c.P1,
 		IsProvince: province,
 		IsCity:     city,
 		IsNyc:      zxs,

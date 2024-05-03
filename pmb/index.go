@@ -657,9 +657,6 @@ func (s *SchemaModel[T]) getUid(ctx iris.Context) (string, error) {
 	if len(uid) < 1 {
 		return "", errors.New("获取行id失败")
 	}
-	if len(uid) < 1 {
-		return "", errors.New("行id为空")
-	}
 	return uid, nil
 }
 
@@ -681,12 +678,15 @@ func (s *SchemaModel[T]) DynamicFieldsEntry(ctx iris.Context) {
 	return
 }
 
-func (s *SchemaModel[T]) Registry(part iris.Party) {
-	p := part.Party("/" + s.UniqueId)
+func (s *SchemaModel[T]) Registry(parentParty iris.Party) {
+	p := s.GeneratorParty(parentParty)
 	s.RegistryConfigAction(p)
 	s.RegistryCrud(p)
 }
-
+func (s *SchemaModel[T]) GeneratorParty(parentParty iris.Party) iris.Party {
+	p := parentParty.Party("/" + s.UniqueId)
+	return p
+}
 func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	// 获取配置文件
 	p.Get("/config", func(ctx iris.Context) {
@@ -698,55 +698,54 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	// dynamic
 	p.Post("/dynamic", s.DynamicFieldsEntry)
 }
-
 func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
-	p.Get("/", func(ctx iris.Context) {
-		err := s.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
-			Single:        false,
-			GetQueryCount: true,
+	p.Any("/", s.CrudHandler)
+	p.Any("/{uid:string}", s.CrudHandler)
+}
+
+func (s *SchemaModel[T]) CrudHandler(ctx iris.Context) {
+	method := strings.ToLower(ctx.Method())
+	var err error
+	uid := ctx.Params().Get(ut.DefaultUidTag)
+	uidHas := len(uid) >= 1
+	// get 但是没有uid 则是获取全部
+	switch method {
+	case "get":
+		err = s.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
+			Single:        uidHas,
+			GetQueryCount: !uidHas,
 		}, "")
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
-		}
-	})
-	p.Get("/{uid:string}", func(ctx iris.Context) {
-		err := s.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
-			Single: true,
-		}, "")
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
-		}
-	})
-	p.Post("/", func(ctx iris.Context) {
-		var err error
+		break
+	case "post":
 		if s.Hooks.CustomAddHandler != nil {
 			err = s.Hooks.CustomAddHandler(ctx, pipe.ModelCtxMapperPack{}, s)
 		} else {
 			err = s.PostHandler(ctx, pipe.ModelCtxMapperPack{})
 		}
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
+		break
+	case "put":
+		if !uidHas {
+			break
 		}
-	})
-	p.Put("/{uid:string}", func(ctx iris.Context) {
-		err := s.PutHandler(ctx, pipe.ModelPutConfig{
+		err = s.PutHandler(ctx, pipe.ModelPutConfig{
 			UpdateTime: true,
 		})
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
+		break
+	case "delete":
+		if !uidHas {
+			break
 		}
-	})
-	p.Delete("/{uid:string}", func(ctx iris.Context) {
-		err := s.DelHandler(ctx, pipe.ModelDelConfig{})
-		if err != nil {
-			IrisRespErr("", err, ctx)
-			return
-		}
-	})
+		err = s.DelHandler(ctx, pipe.ModelDelConfig{})
+		break
+	default:
+		err = errors.New("未被支持的方法")
+	}
+
+	if err != nil {
+		IrisRespErr("", err, ctx)
+		return
+	}
+
 }
 func (s *SchemaModel[T]) GetSchema(mode ISchemaMode) *jsonschema.Schema {
 	switch mode {
@@ -807,8 +806,10 @@ type IModelItem interface {
 	ActionEntry(ctx iris.Context)
 	DynamicFieldsEntry(ctx iris.Context)
 	Registry(part iris.Party)
+	GeneratorParty(part iris.Party) iris.Party
 	RegistryConfigAction(p iris.Party)
 	RegistryCrud(p iris.Party)
+	CrudHandler(ctx iris.Context)
 	AddQueryContextInject(q ContextValueInject)
 	GetContextUser(ctx iris.Context) *SimpleUserModel
 	GetAllAction() []ISchemaAction

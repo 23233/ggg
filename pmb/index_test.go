@@ -148,7 +148,7 @@ func TestNewSchemaModel(t *testing.T) {
 
 	inst.AddAction(ac2)
 
-	prefix := "/" + inst.PathId
+	prefix := "/" + inst.UniqueId
 	var uid string
 
 	e := httptest.New(t, app)
@@ -223,7 +223,7 @@ func TestNewSchemaModel(t *testing.T) {
 	t.Run("获取配置", func(t *testing.T) {
 		resp := e.GET(prefix + "/config").Expect().Status(iris.StatusOK)
 		respObj := resp.JSON().Object()
-		respObj.ContainsKey("schema")
+		respObj.ContainsKey("schemas")
 		respObj.ContainsKey("actions")
 	})
 

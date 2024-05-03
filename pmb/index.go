@@ -114,6 +114,13 @@ func (c *SchemaAllowMethods) ChangePut(status bool) {
 func (c *SchemaAllowMethods) ChangeDelete(status bool) {
 	c.Delete = status
 }
+func (c *SchemaAllowMethods) OnlyGet(status bool) {
+	c.GetAll = status
+	c.GetSingle = status
+	c.Post = !status
+	c.Put = !status
+	c.Delete = !status
+}
 
 type SchemaModel[T any] struct {
 	SchemaBase

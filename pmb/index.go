@@ -91,6 +91,30 @@ type ManySchema struct {
 	Delete *jsonschema.Schema `json:"delete"`
 }
 
+type SchemaAllowMethods struct {
+	GetAll    bool `json:"get_all"`
+	GetSingle bool `json:"get_single"`
+	Post      bool `json:"post"`
+	Put       bool `json:"put"`
+	Delete    bool `json:"delete"`
+}
+
+func (c *SchemaAllowMethods) ChangeGetAll(status bool) {
+	c.GetAll = status
+}
+func (c *SchemaAllowMethods) ChangeGetSingle(status bool) {
+	c.GetSingle = status
+}
+func (c *SchemaAllowMethods) ChangePost(status bool) {
+	c.Post = status
+}
+func (c *SchemaAllowMethods) ChangePut(status bool) {
+	c.Put = status
+}
+func (c *SchemaAllowMethods) ChangeDelete(status bool) {
+	c.Delete = status
+}
+
 type SchemaModel[T any] struct {
 	SchemaBase
 	db            *qmgo.Database
@@ -101,6 +125,7 @@ type SchemaModel[T any] struct {
 	TableDisable  *SchemaTableDisable `json:"table_disable,omitempty"`
 	Actions       []ISchemaAction     `json:"actions,omitempty"`        // 各类操作
 	DynamicFields []*DynamicField     `json:"dynamic_fields,omitempty"` // 动态字段
+	AllowMethods  *SchemaAllowMethods `json:"allow_methods"`
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryContextInjects []ContextValueInject
 	queryFilterInject   []*ut.Kov // 过滤参数注入
@@ -137,6 +162,13 @@ func NewSchemaModel[T any](raw T, db *qmgo.Database) *SchemaModel[T] {
 	var r = &SchemaModel[T]{
 		db:      db,
 		Actions: make([]ISchemaAction, 0),
+		AllowMethods: &SchemaAllowMethods{
+			GetAll:    true,
+			GetSingle: true,
+			Post:      true,
+			Put:       true,
+			Delete:    true,
+		},
 	}
 	r.SetRaw(raw)
 	return r
@@ -699,11 +731,21 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	p.Post("/dynamic", s.DynamicFieldsEntry)
 }
 func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
-	p.Get("/", s.CrudHandler)
-	p.Get("/{uid:string}", s.CrudHandler)
-	p.Post("/", s.CrudHandler)
-	p.Put("/{uid:string}", s.CrudHandler)
-	p.Delete("/{uid:string}", s.CrudHandler)
+	if s.AllowMethods.GetAll {
+		p.Get("/", s.CrudHandler)
+	}
+	if s.AllowMethods.GetSingle {
+		p.Get("/{uid:string}", s.CrudHandler)
+	}
+	if s.AllowMethods.Post {
+		p.Post("/", s.CrudHandler)
+	}
+	if s.AllowMethods.Put {
+		p.Put("/{uid:string}", s.CrudHandler)
+	}
+	if s.AllowMethods.Delete {
+		p.Delete("/{uid:string}", s.CrudHandler)
+	}
 }
 
 func (s *SchemaModel[T]) CrudHandler(ctx iris.Context) {

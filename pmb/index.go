@@ -683,8 +683,8 @@ func (s *SchemaModel[T]) Registry(parentParty iris.Party) {
 	s.RegistryConfigAction(p)
 	s.RegistryCrud(p)
 }
-func (s *SchemaModel[T]) GeneratorParty(parentParty iris.Party) iris.Party {
-	p := parentParty.Party("/" + s.UniqueId)
+func (s *SchemaModel[T]) GeneratorParty(parentParty iris.Party, contextHandlers ...iris.Handler) iris.Party {
+	p := parentParty.Party("/"+s.UniqueId, contextHandlers...)
 	return p
 }
 func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
@@ -699,8 +699,11 @@ func (s *SchemaModel[T]) RegistryConfigAction(p iris.Party) {
 	p.Post("/dynamic", s.DynamicFieldsEntry)
 }
 func (s *SchemaModel[T]) RegistryCrud(p iris.Party) {
-	p.Any("/", s.CrudHandler)
-	p.Any("/{uid:string}", s.CrudHandler)
+	p.Get("/", s.CrudHandler)
+	p.Get("/{uid:string}", s.CrudHandler)
+	p.Post("/", s.CrudHandler)
+	p.Put("/{uid:string}", s.CrudHandler)
+	p.Delete("/{uid:string}", s.CrudHandler)
 }
 
 func (s *SchemaModel[T]) CrudHandler(ctx iris.Context) {
@@ -806,7 +809,7 @@ type IModelItem interface {
 	ActionEntry(ctx iris.Context)
 	DynamicFieldsEntry(ctx iris.Context)
 	Registry(part iris.Party)
-	GeneratorParty(part iris.Party) iris.Party
+	GeneratorParty(part iris.Party, contextHandlers ...iris.Handler) iris.Party
 	RegistryConfigAction(p iris.Party)
 	RegistryCrud(p iris.Party)
 	CrudHandler(ctx iris.Context)

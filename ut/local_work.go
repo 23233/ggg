@@ -91,13 +91,14 @@ func (c *LocalWork[T, R]) run() {
 					break
 				}
 				r, err := c.call(data)
-
-				nowProcess := c.NowCount.Add(1)
-				if c.PrintProcess {
-					logger.J.Infof("[%s]%s 进度%d/%d %v", c.Tid, c.Name, nowProcess, len(c.ChanData), err == nil)
-				}
 				if err != nil {
 					c.FailCount.Add(1)
+				}
+				nowProcess := c.NowCount.Add(1)
+				if c.PrintProcess {
+					logger.J.Infof("[%s]%s 进度%d/%d fail:%d", c.Tid, c.Name, nowProcess, len(c.ChanData), c.FailCount.Load())
+				}
+				if err != nil {
 					continue
 				}
 				c.Results.Append(r)

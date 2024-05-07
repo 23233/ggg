@@ -94,7 +94,7 @@ func (c *LocalWork[T, R]) run() {
 
 				nowProcess := c.NowCount.Add(1)
 				if c.PrintProcess {
-					logger.J.Infof("[%s]%s 进度%d/%d", c.Tid, c.Name, nowProcess, len(c.ChanData))
+					logger.J.Infof("[%s]%s 进度%d/%d %v", c.Tid, c.Name, nowProcess, len(c.ChanData), err == nil)
 				}
 				if err != nil {
 					c.FailCount.Add(1)

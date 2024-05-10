@@ -22,6 +22,8 @@ type LocalWork[T any, R any] struct {
 	ForceStop    bool         // 是否被强制停止
 	PrintProcess bool         // 是否打印进度 默认开启
 
+	SuccessStopLimit uint // 成功多少条后停止
+
 	ChanData  []T // 待处理的数据
 	call      func(item T) (R, error)
 	Results   ThreadSafeArray[R]
@@ -81,39 +83,50 @@ func (c *LocalWork[T, R]) run() {
 	close(chanData)
 
 	var wg sync.WaitGroup
+	stop := make(chan bool, 1) // 创建一个缓冲区为1的停止信号通道
 
 	for i := 0; i < int(c.GetConcurrency()); i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for data := range chanData {
-				if c.ForceStop {
-					break
+				select {
+				case <-stop:
+					// 如果接收到停止信号，则退出当前 goroutine
+					return
+				default:
+					// 正常执行任务
+					r, err := c.call(data)
+					if err != nil {
+						c.FailCount.Add(1)
+					} else {
+						c.Results.Append(r)
+					}
+					c.NowCount.Add(1)
+
+					if c.PrintProcess {
+						logger.J.Infof("[%s]%s 进度%d/%d fail:%d", c.Tid, c.Name, c.NowCount.Load(), len(c.ChanData), c.FailCount.Load())
+					}
+
+					// 计算成功的数量
+					successCount := c.NowCount.Load() - c.FailCount.Load()
+					if c.SuccessStopLimit > 0 && uint(successCount) >= c.SuccessStopLimit {
+						logger.J.Infof("[%s]%s 达到成功停止限制(%d)，发送停止信号", c.Tid, c.Name, c.SuccessStopLimit)
+						stop <- true // 发送停止信号
+						break
+					}
 				}
-				r, err := c.call(data)
-				if err != nil {
-					c.FailCount.Add(1)
-				}
-				nowProcess := c.NowCount.Add(1)
-				if c.PrintProcess {
-					logger.J.Infof("[%s]%s 进度%d/%d fail:%d", c.Tid, c.Name, nowProcess, len(c.ChanData), c.FailCount.Load())
-				}
-				if err != nil {
-					continue
-				}
-				c.Results.Append(r)
 			}
 		}()
 	}
 	wg.Wait()
 
-	logger.J.Infof("[%s]%s 执行完成 需求%d条 失败%d条 耗时%s", c.Tid, c.Name, len(c.ChanData), c.FailCount.Load(), time.Since(c.startTime))
+	logger.J.Infof("[%s]%s 执行完成 需求%d/%d条 失败%d条 耗时%s", c.Tid, c.Name, c.SuccessStopLimit, len(c.ChanData), c.FailCount.Load(), time.Since(c.startTime))
 
 	if c.OnSuccess != nil {
 		err := c.OnSuccess(c, c.Results.GetAll())
 		if err != nil {
 			logger.J.ErrorE(err, "%s_%s 执行success方法失败", c.Name, c.Tid)
-
 		}
 	}
 }

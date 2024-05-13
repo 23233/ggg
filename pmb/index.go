@@ -133,6 +133,12 @@ type SchemaModel[T any] struct {
 	Actions       []ISchemaAction     `json:"actions,omitempty"`        // 各类操作
 	DynamicFields []*DynamicField     `json:"dynamic_fields,omitempty"` // 动态字段
 	AllowMethods  *SchemaAllowMethods `json:"allow_methods"`
+
+	GetHandlerConfig    pipe.QueryParseConfig
+	PostHandlerConfig   pipe.ModelCtxMapperPack
+	PutHandlerConfig    pipe.ModelPutConfig
+	DeleteHandlerConfig pipe.ModelDelConfig
+
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryContextInjects []ContextValueInject
 	queryFilterInject   []*ut.Kov // 过滤参数注入
@@ -763,31 +769,30 @@ func (s *SchemaModel[T]) CrudHandler(ctx iris.Context) {
 	// get 但是没有uid 则是获取全部
 	switch method {
 	case "get":
-		err = s.GetHandler(ctx, pipe.QueryParseConfig{}, pipe.ModelGetData{
+		err = s.GetHandler(ctx, s.GetHandlerConfig, pipe.ModelGetData{
 			Single:        uidHas,
 			GetQueryCount: !uidHas,
 		}, "")
 		break
 	case "post":
 		if s.Hooks.CustomAddHandler != nil {
-			err = s.Hooks.CustomAddHandler(ctx, pipe.ModelCtxMapperPack{}, s)
+			err = s.Hooks.CustomAddHandler(ctx, s.PostHandlerConfig, s)
 		} else {
-			err = s.PostHandler(ctx, pipe.ModelCtxMapperPack{})
+			err = s.PostHandler(ctx, s.PostHandlerConfig)
 		}
 		break
 	case "put":
 		if !uidHas {
 			break
 		}
-		err = s.PutHandler(ctx, pipe.ModelPutConfig{
-			UpdateTime: true,
-		})
+		s.PutHandlerConfig.UpdateTime = true
+		err = s.PutHandler(ctx, s.PutHandlerConfig)
 		break
 	case "delete":
 		if !uidHas {
 			break
 		}
-		err = s.DelHandler(ctx, pipe.ModelDelConfig{})
+		err = s.DelHandler(ctx, s.DeleteHandlerConfig)
 		break
 	default:
 		err = errors.New("未被支持的方法")

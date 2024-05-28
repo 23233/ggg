@@ -1,7 +1,12 @@
 package htct
 
 import (
+	"encoding/base64"
+	"fmt"
+	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -24,6 +29,7 @@ type Article struct {
 	MetaTitle       string `json:"meta_title,omitempty" bson:"meta_title,omitempty"`
 	MetaDescription string `json:"meta_description,omitempty" bson:"meta_description,omitempty"`
 	MetaKeywords    string `json:"meta_keywords,omitempty" bson:"meta_keywords,omitempty"`
+	MetaFav         string `json:"meta_fav,omitempty" bson:"meta_fav,omitempty"`
 	Url             string `json:"url,omitempty" bson:"url,omitempty"` // 当前的url
 	Icp             string `json:"icp,omitempty" bson:"icp,omitempty"` // icp备案号
 	Ipv4            string `json:"ipv_4,omitempty" bson:"ipv_4,omitempty"`
@@ -51,7 +57,7 @@ type KvMap struct {
 	Val string `json:"val"`
 }
 
-// Extract 提取信息
+// Extract 提取信息 sourceUrl 得包含协议头才能获取完整
 func Extract(source string, sourceUrl string) (*Article, error) {
 	dom, err := goquery.NewDocumentFromReader(strings.NewReader(source))
 	if err != nil {
@@ -62,7 +68,7 @@ func Extract(source string, sourceUrl string) (*Article, error) {
 	result := &Article{}
 	headText := headTextExtract(dom)
 	wg := &sync.WaitGroup{}
-	wg.Add(5)
+	wg.Add(6)
 	go func() {
 		defer wg.Done()
 		result.PublishTime = timeExtract(headText, body)
@@ -131,6 +137,19 @@ func Extract(source string, sourceUrl string) (*Article, error) {
 		result.Ipv4 = ipv4
 
 	}()
+	go func() {
+		defer wg.Done()
+		u, err := url.Parse(sourceUrl)
+		if err != nil {
+			return
+		}
+
+		favB64, err := extractFavicon(dom, u.Scheme+"://"+u.Hostname()+"/")
+		if err != nil {
+			return
+		}
+		result.MetaFav = favB64
+	}()
 
 	wg.Wait()
 	return result, nil
@@ -178,6 +197,42 @@ func headTextExtract(dom *goquery.Document) []*KvMap {
 		return len(rs[i].Key) > len(rs[j].Key)
 	})
 	return rs
+}
+
+func extractFavicon(dom *goquery.Document, domain string) (string, error) {
+	// 查找<link>标签
+	iconURL, exists := dom.Find("link[rel~='icon']").Attr("href")
+	if !exists {
+		return "", fmt.Errorf("favicon not found")
+	}
+
+	// 处理相对URL
+	if !strings.HasPrefix(iconURL, "http") {
+		// 这里需要一个完整的URL，例如通过解析当前页面的URL来构造
+		// 假设当前页面URL是 http://example.com/
+		// 完整的URL将是 http://example.com/favicon.ico
+		// 你需要根据实际情况来构造完整的URL
+		fullURL := domain + iconURL
+		iconURL = fullURL
+	}
+
+	// 下载图标
+	resp, err := http.Get(iconURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 读取文件内容
+	faviconData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// 编码为Base64
+	faviconBase64 := base64.StdEncoding.EncodeToString(faviconData)
+
+	return faviconBase64, nil
 }
 
 // normalize 初始化节点

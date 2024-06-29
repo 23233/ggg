@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
@@ -35,7 +36,7 @@ var (
 
 			switch typ.Kind() {
 			case reflect.Struct:
-				mp, err := StructToMap(origin)
+				mp, err := ut.StructToMap(origin)
 				if err != nil {
 					return NewPipeErr[map[string]any](err)
 				}
@@ -48,7 +49,7 @@ var (
 
 			// 注入_id
 			mp := DefaultModelMap()
-			mapper := &ModelCtxMapperPack{
+			mapper := &ut.ModelCtxMapperPack{
 				InjectData: mp,
 			}
 			err := mapper.Process(rawData)

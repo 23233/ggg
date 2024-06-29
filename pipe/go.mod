@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20230628084524-a5a98249dc81
 	github.com/23233/ggg/logger v0.0.0-20240126064458-4ef52b984a5e
-	github.com/23233/ggg/ut v0.0.0-20240224132505-370da4cdd908
+	github.com/23233/ggg/ut v0.0.0-20240629110723-033e77ca1293
 	github.com/23233/jsonschema v0.11.2
 	github.com/23233/user_agent v0.1.1
 	github.com/bluele/gcache v0.0.2
@@ -84,6 +84,8 @@ require (
 	github.com/iris-contrib/httpexpect/v2 v2.15.2 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/itchyny/base58-go v0.2.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
 	github.com/kataras/blocks v0.0.8 // indirect
@@ -154,5 +156,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/gorm v1.25.10 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )

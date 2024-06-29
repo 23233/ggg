@@ -58,6 +58,7 @@ func BuildGormQuery[T any](query *QueryFull, db *gorm.DB) (*gorm.DB, error) {
 		query.BaseQuery = &BaseQuery{}
 	}
 	if query.BaseQuery.BasePage == nil {
+		// 默认必须有page 和size 不然就获取全部了
 		query.BaseQuery.BasePage = &BasePage{
 			Page:     1,
 			PageSize: 10,

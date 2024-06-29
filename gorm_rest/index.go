@@ -106,6 +106,7 @@ type GormSchemaRest[T any] struct {
 	PostHandlerConfig   ut.ModelCtxMapperPack
 	PutHandlerConfig    GormModelPutConfig
 	DeleteHandlerConfig GormModelDelConfig
+	RaiseRawError       bool
 
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryContextInjects []ContextValueInject
@@ -632,7 +633,11 @@ func (s *GormSchemaRest[T]) crudHandler(ctx iris.Context) {
 	}
 
 	if err != nil {
-		ut.IrisErrLog(ctx, err, "执行请求失败")
+		if s.RaiseRawError {
+			ut.IrisErr(ctx, err)
+		} else {
+			ut.IrisErrLog(ctx, err, "执行方法出错")
+		}
 		return
 	}
 

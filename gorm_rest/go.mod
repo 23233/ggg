@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/ut v0.0.0-20240629110958-37a7c79858f3
+	github.com/23233/ggg/ut v0.0.0-20240629160151-cdfdfe817f3e
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/pkg/errors v0.9.1

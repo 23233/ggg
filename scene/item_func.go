@@ -177,7 +177,7 @@ var (
 		}
 		// 构建参数
 		// 通过模型去序列化body 可以防止一些无效的数据注入
-		injectResult := pipe.ModelMapper.Run(ctx, newInst, &pipe.ModelCtxMapperPack{
+		injectResult := pipe.ModelMapper.Run(ctx, newInst, &ut.ModelCtxMapperPack{
 			InjectData: injectData,
 		}, nil)
 		if injectResult.Err != nil {

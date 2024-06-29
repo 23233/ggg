@@ -10,8 +10,8 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/pipe v0.0.0-20231126023434-6c801150988b
-	github.com/23233/ggg/ut v0.0.0-20231125085718-c7312d0c4e06
+	github.com/23233/ggg/pipe v0.0.0-20240629110827-fd5c161b4d32
+	github.com/23233/ggg/ut v0.0.0-20240629110723-033e77ca1293
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/kataras/realip v0.0.2
@@ -72,6 +72,8 @@ require (
 	github.com/iris-contrib/middleware/jwt v0.0.0-20230531125531-980d3a09a458 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/itchyny/base58-go v0.2.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
@@ -138,4 +140,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/gorm v1.25.10 // indirect
 )

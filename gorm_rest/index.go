@@ -3,6 +3,7 @@ package gorm_rest
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/ut"
 	"github.com/23233/jsonschema"
 	"github.com/kataras/iris/v12"
@@ -634,6 +635,7 @@ func (s *GormSchemaRest[T]) crudHandler(ctx iris.Context) {
 
 	if err != nil {
 		if s.RaiseRawError {
+			logger.J.ErrorE(err, "执行出错")
 			ut.IrisErr(ctx, err)
 		} else {
 			ut.IrisErrLog(ctx, err, "执行方法出错")

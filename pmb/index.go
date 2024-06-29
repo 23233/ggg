@@ -69,7 +69,7 @@ type SchemaRole struct {
 }
 
 type SchemaHooks[T any] struct {
-	CustomAddHandler func(ctx iris.Context, params pipe.ModelCtxMapperPack, model *SchemaModel[T]) error
+	CustomAddHandler func(ctx iris.Context, params ut.ModelCtxMapperPack, model *SchemaModel[T]) error
 	OnAddBefore      func(ctx iris.Context, args *pipe.RunResp[any], model *SchemaModel[T]) error                                      // 在新增之前
 	OnAddAfter       func(ctx iris.Context, args *pipe.RunResp[map[string]any], model *SchemaModel[T]) error                           // 在新增之后
 	OnGetBefore      func(ctx iris.Context, args *pipe.RunResp[*ut.QueryFull], params *pipe.ModelGetData, model *SchemaModel[T]) error // 在获取之前
@@ -135,7 +135,7 @@ type SchemaModel[T any] struct {
 	AllowMethods  *SchemaAllowMethods `json:"allow_methods"`
 
 	GetHandlerConfig    pipe.QueryParseConfig
-	PostHandlerConfig   pipe.ModelCtxMapperPack
+	PostHandlerConfig   ut.ModelCtxMapperPack
 	PutHandlerConfig    pipe.ModelPutConfig
 	DeleteHandlerConfig pipe.ModelDelConfig
 
@@ -536,7 +536,7 @@ func (s *SchemaModel[T]) newRaw() any {
 }
 
 // PostHandler 新增数据
-func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMapperPack) error {
+func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params ut.ModelCtxMapperPack) error {
 
 	if s.Hooks.CustomAddHandler != nil {
 		return s.Hooks.CustomAddHandler(ctx, params, s)
@@ -558,29 +558,28 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params pipe.ModelCtxMappe
 		return err
 	}
 
-	// 通过模型去序列化body 可以防止一些无效的数据注入
-	resp := pipe.ModelMapper.Run(ctx, newV, &params, nil)
-	if resp.Err != nil {
-		return resp.Err
+	err = params.Process(newV)
+	if err != nil {
+		return err
 	}
 
 	// 必须出现在body中的字段名
 	if s.PostMustKeys != nil {
-		err := checkKeys(s.PostMustKeys, resp.Result)
+		err := checkKeys(s.PostMustKeys, newV)
 		if err != nil {
 			return err
 		}
 	}
 
 	if s.Hooks.OnAddBefore != nil {
-		err := s.Hooks.OnAddBefore(ctx, resp, s)
+		err := s.Hooks.OnAddBefore(ctx, pipe.NewPipeResult(newV), s)
 		if err != nil {
 			return err
 		}
 	}
 
 	// 进行新增
-	insertResult := pipe.ModelAdd.Run(ctx, resp.Result, &pipe.ModelCtxAddConfig{ModelId: s.GetTableName()}, s.db)
+	insertResult := pipe.ModelAdd.Run(ctx, newV, &pipe.ModelCtxAddConfig{ModelId: s.GetTableName()}, s.db)
 	if insertResult.Err != nil {
 		return insertResult.Err
 	}
@@ -857,7 +856,7 @@ type IModelItem interface {
 	GetDb() *qmgo.Database
 	GetTableName() string
 	GetHandler(ctx iris.Context, queryParams pipe.QueryParseConfig, getParams pipe.ModelGetData, uid string) error
-	PostHandler(ctx iris.Context, params pipe.ModelCtxMapperPack) error
+	PostHandler(ctx iris.Context, params ut.ModelCtxMapperPack) error
 	PutHandler(ctx iris.Context, params pipe.ModelPutConfig) error
 	DelHandler(ctx iris.Context, params pipe.ModelDelConfig) error
 	ActionEntry(ctx iris.Context)

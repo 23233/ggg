@@ -10,8 +10,8 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/pipe v0.0.0-20231108093805-3e3053b9896c
-	github.com/23233/ggg/ut v0.0.0-20240224132505-370da4cdd908
+	github.com/23233/ggg/pipe v0.0.0-20240629110827-fd5c161b4d32
+	github.com/23233/ggg/ut v0.0.0-20240629110723-033e77ca1293
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/pkg/errors v0.9.1
@@ -24,8 +24,11 @@ require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	go.uber.org/mock v0.3.0 // indirect
+	gorm.io/gorm v1.25.10 // indirect
 )
 
 require (

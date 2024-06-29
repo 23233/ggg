@@ -5,6 +5,7 @@ import (
 	"embed"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
+	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/apps"
 	"github.com/kataras/iris/v12/core/router"
@@ -191,7 +192,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			injectData[UserIdFieldName] = user.Uid
 		}
 
-		err := model.PostHandler(ctx, pipe.ModelCtxMapperPack{
+		err := model.PostHandler(ctx, ut.ModelCtxMapperPack{
 			InjectData: injectData,
 		})
 		if err != nil {

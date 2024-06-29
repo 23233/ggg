@@ -14,7 +14,7 @@ func getTagName(tag string) string {
 }
 
 // findFieldByJSONTag recursively searches for a struct field with the specified JSON tag.
-func findFieldByJSONTag(v reflect.Value, tag string) (reflect.Value, bool) {
+func findFieldByJSONTag(v reflect.Value, tag string, handleField func(reflect.Value, reflect.StructField)) (reflect.Value, bool) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -24,15 +24,26 @@ func findFieldByJSONTag(v reflect.Value, tag string) (reflect.Value, bool) {
 
 	typ := v.Type()
 	for i := 0; i < typ.NumField(); i++ {
-		fieldJson := getTagName(typ.Field(i).Tag.Get("json"))
+		field := typ.Field(i)
+		fieldValue := v.Field(i)
+		fieldJson := getTagName(field.Tag.Get("json"))
 		if len(fieldJson) < 1 || fieldJson == "-" {
+			// Handle embedded struct without JSON tag
+			if field.Anonymous && fieldValue.Kind() == reflect.Struct {
+				if field, found := findFieldByJSONTag(fieldValue, tag, handleField); found {
+					return field, true
+				}
+			}
 			continue
 		}
 		if fieldJson == tag {
-			return v.Field(i), true
+			if handleField != nil {
+				handleField(fieldValue, field)
+			}
+			return fieldValue, true
 		}
-		if v.Field(i).Kind() == reflect.Struct {
-			if field, found := findFieldByJSONTag(v.Field(i), tag); found {
+		if fieldValue.Kind() == reflect.Struct {
+			if field, found := findFieldByJSONTag(fieldValue, tag, handleField); found {
 				return field, true
 			}
 		}
@@ -82,7 +93,7 @@ func (m *ModelCtxMapperPack) processStruct(data any) error {
 
 	// Drop keys.
 	for _, key := range m.DropKeys {
-		field, found := findFieldByJSONTag(v, key)
+		field, found := findFieldByJSONTag(v, key, nil)
 		if !found {
 			continue
 		}
@@ -91,7 +102,7 @@ func (m *ModelCtxMapperPack) processStruct(data any) error {
 
 	// Inject data.
 	for key, value := range m.InjectData {
-		field, found := findFieldByJSONTag(v, key)
+		field, found := findFieldByJSONTag(v, key, nil)
 		if !found {
 			return fmt.Errorf("field with JSON tag %q not found", key)
 		}

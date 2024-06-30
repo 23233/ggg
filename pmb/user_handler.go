@@ -261,6 +261,7 @@ func (c *SimpleUserModel) MustLoginMiddleware() iris.Handler {
 
 		ctx.Values().Set("_jwt", resp.Result)
 		ctx.Values().Set(UserContextKey, userModel)
+		ctx.Values().Set(UserIdContextKey, userModel.Uid)
 		ctx.Next()
 	}
 }

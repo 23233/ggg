@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	UserModelName  = "users"
-	UserContextKey = "user_model"
+	UserModelName    = "users"
+	UserContextKey   = "user_model"
+	UserIdContextKey = "user_model_id"
 )
 
 var (

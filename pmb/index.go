@@ -622,6 +622,10 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 	if params.QueryFilter == nil {
 		params.QueryFilter = new(ut.QueryFull)
 	}
+	if params.QueryFilter.QueryParse == nil {
+		params.QueryFilter.QueryParse = new(ut.QueryParse)
+	}
+
 	params.QueryFilter.QueryParse.InsertOrReplaces("and", injectQuery...)
 
 	params.ModelId = s.GetTableName()

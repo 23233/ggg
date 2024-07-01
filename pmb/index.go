@@ -547,6 +547,9 @@ func (s *SchemaModel[T]) PostHandler(ctx iris.Context, params ut.ModelCtxMapperP
 		if err != nil {
 			return err
 		}
+		if params.InjectData == nil {
+			params.InjectData = make(map[string]any)
+		}
 		for _, kov := range injectQuery {
 			params.InjectData[kov.Key] = kov.Value
 		}

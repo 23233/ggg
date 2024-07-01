@@ -425,6 +425,9 @@ func (s *GormSchemaRest[T]) postHandler(ctx iris.Context, params ut.ModelCtxMapp
 		if err != nil {
 			return err
 		}
+		if params.InjectData == nil {
+			params.InjectData = make(map[string]any)
+		}
 		for _, kov := range injectQuery {
 			params.InjectData[kov.Key] = kov.Value
 		}

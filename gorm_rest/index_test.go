@@ -64,6 +64,13 @@ func TestNewGormSchemaRest(t *testing.T) {
 
 	var uid string
 
+	t.Run("测试获取配置文件", func(t *testing.T) {
+		resp := e.GET(testParty.GetRelPath() + "/config").Expect().Status(iris.StatusOK)
+		respObj := resp.JSON().Object()
+		respObj.ContainsKey("info")
+		respObj.ContainsKey("schemas")
+	})
+
 	t.Run("测试新增", func(t *testing.T) {
 		resp := e.POST(testParty.GetRelPath()).WithJSON(bodyForm).Expect().Status(iris.StatusOK)
 		respObj := resp.JSON().Object()

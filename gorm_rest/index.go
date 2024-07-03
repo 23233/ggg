@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"regexp"
 	"strings"
@@ -30,9 +31,9 @@ type ContextValueInject struct {
 type SchemaBase struct {
 	Group     string `json:"group,omitempty"`      // 组名
 	Priority  int    `json:"priority,omitempty"`   // 在组下显示的优先级 越大越优先
-	TableName string `json:"table_name,omitempty"` // 表名
+	TableName string `json:"table_name,omitempty"` // 表名 虽然没用到
 	UniqueId  string `json:"unique_id,omitempty"`  // 唯一ID 默认生成sonyflakeId
-	PathId    string `json:"path_id,omitempty"`    // 路径ID 默认取UniqueId 在加入backend时会自动修改
+	PathId    string `json:"path_id,omitempty"`    // 路径ID 默认取party的最后一个路径
 	RawName   string `json:"raw_name,omitempty"`   // 原始名称
 	Alias     string `json:"alias,omitempty"`      // 别名 中文名
 }
@@ -230,7 +231,13 @@ func (s *GormSchemaRest[T]) SetRaw(raw any) {
 	name := typ.Name()
 	s.RawName = name
 
-	s.TableName = s.cleanTypeName(name)
+	// 获取gorm的表名
+	stmt := GetSchema(new(T), s.db)
+	if stmt != nil {
+		s.TableName = stmt.Table
+	} else {
+		s.TableName = s.cleanTypeName(name)
+	}
 }
 
 func (s *GormSchemaRest[T]) SetFilterCanPass(filterCanPass func(ctx iris.Context, self *GormSchemaRest[T], query *ut.QueryFull) error) {
@@ -262,18 +269,6 @@ func (s *GormSchemaRest[T]) ParseInject(ctx iris.Context) ([]*ut.Kov, error) {
 	}
 
 	return result, nil
-}
-
-func (s *GormSchemaRest[T]) MarshalJSON() ([]byte, error) {
-	inline := struct {
-		Info    SchemaBase `json:"info"`
-		Schemas ManySchema `json:"schemas"`
-	}{
-		Info:    s.SchemaBase,
-		Schemas: s.Schemas,
-	}
-	inline.Schemas.Table.Title = s.SchemaBase.Alias
-	return json.Marshal(inline)
 }
 
 func checkKeys(keys []string, raw interface{}) error {
@@ -589,6 +584,10 @@ func (s *GormSchemaRest[T]) getUid(ctx iris.Context) (string, error) {
 }
 
 func (s *GormSchemaRest[T]) Registry(p iris.Party) {
+	matchs := strings.Split(strings.TrimRight(p.GetRelPath(), "/"), "/")
+	lastMatch := matchs[len(matchs)-1]
+	s.PathId = lastMatch
+
 	if s.AllowMethods.GetAll {
 		p.Get("/", s.crudHandler)
 	}
@@ -604,6 +603,22 @@ func (s *GormSchemaRest[T]) Registry(p iris.Party) {
 	if s.AllowMethods.Delete {
 		p.Delete("/{uid:string}", s.crudHandler)
 	}
+	p.Get("/config", func(ctx iris.Context) {
+		_ = ctx.JSON(s)
+		return
+	})
+}
+
+func (s *GormSchemaRest[T]) MarshalJSON() ([]byte, error) {
+	inline := struct {
+		Info    SchemaBase `json:"info"`
+		Schemas ManySchema `json:"schemas"`
+	}{
+		Info:    s.SchemaBase,
+		Schemas: s.Schemas,
+	}
+	inline.Schemas.Table.Title = s.SchemaBase.Alias
+	return json.Marshal(inline)
 }
 
 func (s *GormSchemaRest[T]) crudHandler(ctx iris.Context) {
@@ -674,3 +689,9 @@ const (
 	SchemaModeTable
 	SchemaModeDelete
 )
+
+func GetSchema(table any, db *gorm.DB) *schema.Schema {
+	stmt := &gorm.Statement{DB: db}
+	_ = stmt.Parse(table)
+	return stmt.Schema
+}

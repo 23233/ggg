@@ -81,6 +81,7 @@ type GormQueryParseConfig struct {
 	InjectAnd    []*ut.Kov         `json:"inject_and,omitempty"`
 	InjectOr     []*ut.Kov         `json:"inject_or,omitempty"`
 	UrlParams    map[string]string `json:"url_params,omitempty"`
+	GetCount     bool              `json:"get_count,omitempty"`
 }
 
 type GormModelPutConfig struct {
@@ -363,6 +364,7 @@ func (s *GormSchemaRest[T]) getHandler(ctx iris.Context, queryParams GormQueryPa
 	}
 
 	if !singe {
+		mapper.GetCount = queryParams.GetCount
 
 		if mapper.Page < 1 {
 			mapper.Page = 1

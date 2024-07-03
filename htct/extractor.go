@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -50,6 +51,83 @@ type Article struct {
 	ContentHTML string `json:"content_html,omitempty" bson:"content_html,omitempty"`
 	// AllLinks 所有链接 内外链
 	AllLinks []KvMap `json:"all_links,omitempty" bson:"all_links,omitempty"`
+}
+
+// GetOutLinks 获取出所有的外链
+func (a *Article) GetOutLinks() []string {
+
+	var cleanUrls = make(map[string]struct{})
+	// 发现并加入新的URL
+	for _, link := range a.AllLinks {
+		// 解析URL以获取域名
+		parsedURL, err := url.Parse(link.Val)
+		if err != nil {
+			// 处理错误
+			continue
+		}
+		if len(parsedURL.Host) < 1 {
+			continue
+		}
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			continue
+		}
+		// 包含:则有端口号 这种跳过
+		if strings.Contains(parsedURL.Host, ":") {
+			continue
+		}
+		// 重构URL以仅包含方案和主机
+		cleanURL := parsedURL.Scheme + "://" + parsedURL.Host
+		cleanUrls[cleanURL] = struct{}{}
+	}
+
+	var keys = make([]string, 0, len(cleanUrls))
+	for k, _ := range cleanUrls {
+		keys = append(keys, k)
+	}
+	return keys
+
+}
+
+// GetInnerLinks 获取内联 可传containerStr 则为包含模式
+func (a *Article) GetInnerLinks(containerStr ...string) []string {
+	var result []string
+	for _, m := range a.AllLinks {
+		if m.Val == "javascript:;" {
+			continue
+		}
+		if m.Val == "#" {
+			continue
+		}
+		if len(containerStr) == 0 || containsAny(m.Val, containerStr) {
+			result = append(result, m.Val)
+		}
+	}
+	return result
+}
+
+// RegMatchLinks 正则匹配出符合的链接
+func (a *Article) RegMatchLinks(regStr string) ([]string, error) {
+	matchRe, err := regexp.Compile(regStr)
+	if err != nil {
+		return nil, err
+	}
+	matchList := make([]string, 0, len(a.AllLinks))
+	for _, link := range a.AllLinks {
+		if matchRe.MatchString(link.Val) {
+			matchList = append(matchList, link.Val)
+		}
+	}
+	return matchList, nil
+}
+
+// 辅助函数，检查val是否包含substrs切片中的任意一个子字符串。
+func containsAny(val string, substrs []string) bool {
+	for _, substr := range substrs {
+		if strings.Contains(val, substr) {
+			return true
+		}
+	}
+	return false
 }
 
 type KvMap struct {

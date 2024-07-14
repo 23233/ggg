@@ -135,14 +135,27 @@ type KvMap struct {
 	Val string `json:"val"`
 }
 
+type Options struct {
+	NoiseNodeList []string `json:"noise_node_list"` // 噪音节点内容是使用css选择器
+	ContentSelect string   `json:"content_select"`  // 文章内容的css 如果传入了则会把内容锁定到这个类上 而不会去走分值计算那一套
+}
+
+var (
+	DefaultOptions = Options{}
+)
+
 // Extract 提取信息 sourceUrl 得包含协议头才能获取完整
-func Extract(source string, sourceUrl string) (*Article, error) {
+func Extract(source string, sourceUrl string, ops ...Options) (*Article, error) {
+	op := DefaultOptions
+	if len(ops) >= 1 {
+		op = ops[0]
+	}
 	dom, err := goquery.NewDocumentFromReader(strings.NewReader(source))
 	if err != nil {
 		return nil, err
 	}
 	body := dom.Find("body")
-	normalize(body)
+	normalize(body, op)
 	result := &Article{}
 	headText := headTextExtract(dom)
 	wg := &sync.WaitGroup{}
@@ -161,7 +174,7 @@ func Extract(source string, sourceUrl string) (*Article, error) {
 	}()
 	go func() {
 		defer wg.Done()
-		content := contentExtract(body)
+		content := contentExtract(body, op.ContentSelect)
 		result.ContentTitle = titleExtract(headText, dom.Selection, content.node)
 		result.Content = content.density.tiText
 		result.ContentLine = strings.Split(result.Content, "\n")
@@ -314,9 +327,13 @@ func extractFavicon(dom *goquery.Document, domain string) (string, error) {
 }
 
 // normalize 初始化节点
-func normalize(element *goquery.Selection) {
+func normalize(element *goquery.Selection, op Options) {
 	for _, v := range ignoreTag {
 		element.Find(v).Remove()
+	}
+	// 对于定义的噪音节点 进行删除
+	for _, noiseSelect := range op.NoiseNodeList {
+		element.Find(noiseSelect).Remove()
 	}
 	for _, v := range iterator(element) {
 		tagName := goquery.NodeName(v)
@@ -330,6 +347,7 @@ func normalize(element *goquery.Selection) {
 			v.Remove()
 			continue
 		}
+
 		// 删除标签class中含有ignoreClass的标签
 		if val, ok := v.Attr("class"); ok {
 			for _, class := range ignoreClass {

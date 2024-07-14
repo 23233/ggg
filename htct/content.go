@@ -43,29 +43,48 @@ func (in infos) Less(i, j int) bool {
 }
 
 // contentExtract 提取正文
-func contentExtract(body *goquery.Selection) *nodeInfo {
-	var info infos
+func contentExtract(body *goquery.Selection, selector ...string) *nodeInfo {
+	var infoList infos
+
+	var superSelect string
+	if len(selector) >= 1 {
+		superSelect = selector[0]
+	}
+
 	for _, v := range iterator(body) {
 		density := calcTextDensity(v)
 		textTagCount := countTextTag(v)
 		sbdi := calcSbdi(density)
-		info = append(info, &nodeInfo{
+		info := &nodeInfo{
 			density:      density,
 			node:         v,
 			sbdi:         sbdi,
 			textTagCount: textTagCount,
-		})
+		}
+
+		// 如果匹配到传入的选择器，则设置最高分 并返回
+		if len(superSelect) > 0 && v.Is(superSelect) {
+			info.score = math.MaxFloat64
+			return info
+		}
+
+		infoList = append(infoList, info)
 	}
-	std := calcDensityStd(info)
-	calcNewScore(info, std)
-	sort.Sort(info)
-	return info[0]
+
+	std := calcDensityStd(infoList)
+	calcNewScore(infoList, std)
+	sort.Sort(infoList)
+	return infoList[0]
 }
 
 // calcTextDensity 计算文本密度
-//        Ti - LTi
+//
+//	Ti - LTi
+//
 // TDi = -----------
-//       TGi - LTGi
+//
+//	TGi - LTGi
+//
 // Ti:节点 i 的字符串字数
 // LTi：节点 i 的带链接的字符串字数
 // TGi：节点 i 的标签数
@@ -133,9 +152,13 @@ func countTextTag(s *goquery.Selection) int {
 }
 
 // calcSbdi 计算符号密度
-//          Ti - LTi
+//
+//	Ti - LTi
+//
 // SbDi = --------------
-//          Sbi + 1
+//
+//	Sbi + 1
+//
 // SbDi: 符号密度
 // Sbi：符号数量
 func calcSbdi(density textDensity) float64 {
@@ -169,13 +192,26 @@ func calcDensityStd(info infos) float64 {
 }
 
 // calcNewScore 计算得分
-//score = log(std) * ndi * log10(textTagCount + 2) * log(sbdi)
-//std：每个节点文本密度的标准差
-//ndi：节点 i 的文本密度
-//textTagCount: 正文所在标签数。例如正文在<p></p>标签里面，这里就是 p 标签数。（目前把所有 p 内的 span、div 转成了 p 标签）
-//sbdi：节点 i 的符号密度
+// score = log(std) * ndi * log10(textTagCount + 2) * log(sbdi) * weight
+// std：每个节点文本密度的标准差
+// ndi：节点 i 的文本密度
+// textTagCount: 正文所在标签数。例如正文在<p></p>标签里面，这里就是 p 标签数。（目前把所有 p 内的 span、div 转成了 p 标签）
+// sbdi：节点 i 的符号密度
+// weight：节点字数占整个文档总字数的比例
 func calcNewScore(info infos, std float64) {
 	for _, v := range info {
 		v.score = math.Log(std) * v.density.density * math.Log10(float64(v.textTagCount+2)) * math.Log(v.sbdi)
 	}
+	//// 计算所有节点的总字数
+	//totalWords := 0
+	//for _, v := range info {
+	//	totalWords += v.density.ti
+	//}
+	//
+	//for _, v := range info {
+	//	// 计算节点字数占总字数的比例作为权重
+	//	weight := float64(v.density.ti) / float64(totalWords)
+	//	// 计算得分
+	//	v.score = math.Log(std) * v.density.density * math.Log10(float64(v.textTagCount+2)) * math.Log(v.sbdi) * weight
+	//}
 }

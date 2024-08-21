@@ -120,8 +120,11 @@ func (c *LocalWork[T, R]) run() {
 		}()
 	}
 	wg.Wait()
-
-	logger.J.Infof("[%s]%s 执行完成 需求%d/%d条 失败%d条 耗时%s", c.Tid, c.Name, c.SuccessStopLimit, len(c.ChanData), c.FailCount.Load(), time.Since(c.startTime))
+	if c.SuccessStopLimit > 0 {
+		logger.J.Infof("[%s]%s 执行完成 需求%d/%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, c.SuccessStopLimit, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
+	} else {
+		logger.J.Infof("[%s]%s 执行完成 总数%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
+	}
 
 	if c.OnSuccess != nil {
 		err := c.OnSuccess(c, c.Results.GetAll())

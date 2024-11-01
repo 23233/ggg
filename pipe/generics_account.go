@@ -7,6 +7,7 @@ import (
 	"github.com/23233/ggg/ut"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
+	"time"
 )
 
 type AccountPlatformPublic struct {
@@ -22,12 +23,16 @@ type AccountPlatformPublic struct {
 }
 
 type AccountPlatform struct {
-	Name       string                 `json:"name,omitempty" bson:"name,omitempty" comment:"平台名称"`         // 微信小程序
+	Appid      string                 `json:"appid,omitempty" bson:"appid,omitempty" comment:"平台appid"`    // 同样是微信小程序 可能有多个应用 这就是应用id
+	Name       string                 `json:"name,omitempty" bson:"name,omitempty" comment:"平台名称"`         // 微信小程序 抖音
 	Pid        string                 `json:"pid,omitempty" bson:"pid,omitempty" comment:"平台ID"`           // 常见于微信的openid
 	UnionId    string                 `json:"union_id,omitempty" bson:"union_id,omitempty" comment:"通用ID"` // 常见于微信的unionid
 	NickName   string                 `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"平台昵称"`
 	AvatarUrl  string                 `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"平台头像"`
 	Password   string                 `json:"password,omitempty" bson:"password,omitempty" comment:"密码"`
+	Phone      string                 `json:"phone,omitempty" bson:"phone,omitempty" comment:"手机号"`                // 平台绑定的手机号码 与用户手机号码可能不同
+	Scopes     []string               `json:"scopes,omitempty" bson:"scopes,omitempty" comment:"授权范围"`             // 平台的授权范围
+	AuthorTime time.Time              `json:"author_time,omitempty" bson:"author_time,omitempty" comment:"平台授权时间"` // 如果是第三方授权 则有一个授权时间
 	PublicData *AccountPlatformPublic `json:"public_data,omitempty" bson:"public_data,omitempty" comment:"平台公共数据"`
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 )
 
@@ -15,12 +16,20 @@ type UserPasswordLoginReq struct {
 	UserName string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
 	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
 	Force    bool   `json:"force,omitempty" comment:"强制"`
+	Strict   bool   `json:"strict,omitempty" comment:"严苛模式"`
+}
+
+type UserRegLoginReq struct {
+	UserName string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
+	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
+	Invite   string `json:"invite,omitempty" comment:"邀请人" validate:"omitempty,max=50"`
 }
 
 type EmailPasswordLoginReq struct {
 	Email    string `json:"email,omitempty" comment:"邮箱号码" validate:"required,email"`
 	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
 	Force    bool   `json:"force,omitempty" comment:"强制"`
+	Strict   bool   `json:"strict,omitempty" comment:"严苛模式"`
 }
 
 type RoleUpLoginReq struct {
@@ -79,7 +88,7 @@ func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
 			return
 		}
 
-		c.passwordLogin(ctx, "用户名", userModel, body.Password, body.Force)
+		c.passwordLogin(ctx, "用户名", userModel, body.Password, body.Force, body.Strict)
 	}
 }
 func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
@@ -119,7 +128,7 @@ func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
 			return
 		}
 
-		c.passwordLogin(ctx, "邮箱", userModel, body.Password, body.Force)
+		c.passwordLogin(ctx, "邮箱", userModel, body.Password, body.Force, body.Strict)
 
 	}
 }
@@ -158,7 +167,7 @@ func (c *SimpleUserModel) RoleSetHandler() iris.Handler {
 		return
 	}
 }
-func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *SimpleUserModel, password string, force bool) {
+func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *SimpleUserModel, password string, force bool, strict bool) {
 
 	// 验证密码是否正确
 	if !validPassword(password, user.Salt, user.Password) {
@@ -180,7 +189,7 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 		return
 	}
 
-	token, err := user.GenJwtToken(ctx, force)
+	token, err := user.GenJwtToken(ctx, force, strict)
 	if err != nil {
 		IrisRespErr("生成登录令牌失败", err, ctx)
 		return
@@ -194,7 +203,7 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 }
 func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 	return func(ctx iris.Context) {
-		var body = new(UserPasswordLoginReq)
+		var body = new(UserRegLoginReq)
 		err := ctx.ReadBody(&body)
 		if err != nil {
 			IrisRespErr("解析请求包参数错误", err, ctx)
@@ -212,11 +221,34 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 			IrisRespErr("用户已存在", err, ctx)
 			return
 		}
+
 		userModel = new(SimpleUserModel)
+
+		// 如果邀请人存在
+		if body.Invite != "" {
+			// 判断Invite是否为objectId
+			fl := bson.M{}
+			oid, _ := primitive.ObjectIDFromHex(body.Invite)
+			if !oid.IsZero() {
+				fl["_id"] = oid
+			} else {
+				fl[ut.DefaultUidTag] = body.Invite
+			}
+			// 获取这个邀请人
+			yqrUser, err := c.GetUserItem(ctx, fl)
+			if err != nil {
+				IrisRespErr("邀请人不存在", err, ctx)
+				return
+			}
+			userModel.ReferrerUid = yqrUser.Uid
+
+		}
+
 		// 进行注册
 		password, salt := passwordSalt(body.Password)
 		userModel.UserName = body.UserName
 		userModel.Password = password
+		userModel.ReferrerUid = body.Invite
 		userModel.Salt = salt
 		userModel.NickName = ut.RandomStr(12)
 		_ = userModel.BeforeInsert(ctx)
@@ -228,7 +260,7 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
 			return
 		}
 		userModel.connectInfo = c.connectInfo
-		token, err := userModel.GenJwtToken(ctx, false)
+		token, err := userModel.GenJwtToken(ctx, false, false)
 		if err != nil {
 			IrisRespErr("生成登录令牌失败", err, ctx)
 			return
@@ -284,13 +316,14 @@ func (c *SimpleUserModel) FuzzGetUser(ctx context.Context, idOrName string) (*Si
 	})
 }
 
-func (c *SimpleUserModel) GenJwtToken(ctx iris.Context, force bool) (string, error) {
+func (c *SimpleUserModel) GenJwtToken(ctx iris.Context, force bool, strict bool) (string, error) {
 	// 生成token
 	jwtResp := pipe.JwtGen.Run(ctx, &pipe.PipeJwtDep{
 		Env:    pipe.CtxGetEnv(ctx),
 		UserId: c.Uid,
 	}, &pipe.JwtGenPipe{
-		Force: force,
+		Force:  force,
+		Strict: strict,
 	}, c.rdb)
 	return jwtResp.Result, jwtResp.Err
 }

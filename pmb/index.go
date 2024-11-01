@@ -3,6 +3,7 @@ package pmb
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
 	"github.com/23233/jsonschema"
@@ -413,6 +414,7 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	if resp.Err != nil {
 		return resp.Err
 	}
+	logger.J.Infof("[%s] 请求参数解析: %+v", ctx.Request().RequestURI, resp.Result)
 	// 过滤参数 外键什么的可以在这里注入
 	if s.filterCanPass != nil {
 		err = s.filterCanPass(ctx, s, resp.Result)

@@ -9,14 +9,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+type AccountPlatformPublic struct {
+	Favorite    int    `json:"favorite,omitempty" bson:"favorite,omitempty" comment:"我的收藏数量"` // 用于我的收藏数量
+	Digg        int    `json:"digg,omitempty" bson:"digg,omitempty" comment:"被点赞数量"`          // 用于我的作品的被点赞数量
+	WorkCount   int    `json:"work_count,omitempty" bson:"work_count,omitempty" comment:"作品数量"`
+	Fans        int    `json:"fans,omitempty" bson:"fans,omitempty" comment:"粉丝数量"`
+	Follow      int    `json:"follow,omitempty" bson:"follow,omitempty" comment:"关注数量"`
+	Share       int    `json:"share,omitempty" bson:"share,omitempty" comment:"分享数量"`
+	PlayView    int    `json:"play_view,omitempty" bson:"play_view,omitempty" comment:"播放数量"` // 用于被多少人点开看了
+	Recommend   int    `json:"recommend,omitempty" bson:"recommend,omitempty" comment:"推荐数量"` // 用户被推荐给多少人看了
+	Description string `json:"description,omitempty" bson:"description,omitempty" comment:"描述简介"`
+}
+
 type AccountPlatform struct {
-	Name      string `json:"name,omitempty" bson:"name,omitempty" comment:"平台名称"`         // 微信小程序
-	Pid       string `json:"pid,omitempty" bson:"pid,omitempty" comment:"平台ID"`           // 常见于微信的openid
-	UnionId   string `json:"union_id,omitempty" bson:"union_id,omitempty" comment:"通用ID"` // 常见于微信的unionid
-	NickName  string `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"平台昵称"`
-	AvatarUrl string `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"平台头像"`
-	Password  string `json:"password,omitempty" bson:"password,omitempty" comment:"密码"`
-	Data      string `json:"data,omitempty" bson:"data,omitempty" comment:"平台额外数据"`
+	Name       string                 `json:"name,omitempty" bson:"name,omitempty" comment:"平台名称"`         // 微信小程序
+	Pid        string                 `json:"pid,omitempty" bson:"pid,omitempty" comment:"平台ID"`           // 常见于微信的openid
+	UnionId    string                 `json:"union_id,omitempty" bson:"union_id,omitempty" comment:"通用ID"` // 常见于微信的unionid
+	NickName   string                 `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"平台昵称"`
+	AvatarUrl  string                 `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"平台头像"`
+	Password   string                 `json:"password,omitempty" bson:"password,omitempty" comment:"密码"`
+	PublicData *AccountPlatformPublic `json:"public_data,omitempty" bson:"public_data,omitempty" comment:"平台公共数据"`
 }
 
 type AccountPass struct {

@@ -58,3 +58,9 @@ type IMongoBase interface {
 	GetBase() *ModelBase
 	SetBase(raw ModelBase)
 }
+
+type IMongoModel interface {
+	IMongoBase
+	GetCollName() string
+	SyncIndex() error
+}

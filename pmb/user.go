@@ -62,6 +62,9 @@ func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 		if len(c.TelPhone) > 2 {
 			user.TelPhone = user.TelPhone[0:1] + strings.Repeat("*", len(user.TelPhone)-2) + user.TelPhone[len(user.TelPhone)-1:]
 		}
+		if len(c.Email) > 1 {
+			user.Email = ""
+		}
 	}
 
 	switch level {

@@ -38,16 +38,24 @@ type RoleUpLoginReq struct {
 	Role   string `json:"role" comment:"权限" validate:"required,max=50"`
 }
 
+func (c *SimpleUserModel) GetCollName() string {
+	return UserModelName
+}
+
 func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
 	cl, err := c.db.Collection(UserModelName).CloneCollection()
 	if err != nil {
 		return err
 	}
 	err = ut.MCreateIndex(ctx, cl,
-		ut.MGenUnique("uid", false),
+		ut.MGenUnique(ut.DefaultUidTag, false),
 		ut.MGenUnique("user_name", true),
-		ut.MGenUnique("tel_phone", true),
+		ut.MGenNormal("tel_phone"),
 		ut.MGenUnique("email", true),
+		ut.MGenNormal("platforms.appid"),
+		ut.MGenNormal("platforms.name"),
+		ut.MGenNormal("platforms.pid"),
+		ut.MGenNormal("platforms.union_id"),
 	)
 	return err
 }

@@ -56,7 +56,7 @@ func MGenNormal(k string) mongo.IndexModel {
 }
 
 // MGenNormals 复合索引 左匹配原则 请把最常用的字段放前面
-func MGenNormals(keys []string) mongo.IndexModel {
+func MGenNormals(keys ...string) mongo.IndexModel {
 	var ops = bson.D{}
 	for _, k := range keys {
 		ops = append(ops, bson.E{Key: k, Value: 1})

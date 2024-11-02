@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	GKey = "sv"
+	GKey      = "sv"
+	GQueryKey = "sv_query"
 )
 
 var (
@@ -19,13 +20,30 @@ var (
 )
 
 func Run(valid interface{}) iris.Handler {
+	return RunTarget(valid, "body", GKey)
+}
+
+func RunQuery(valid interface{}) iris.Handler {
+	return RunTarget(valid, "query", GQueryKey)
+}
+
+func RunTarget(valid interface{}, target string, contextKey string) iris.Handler {
 	return func(ctx iris.Context) {
 		ctx.RecordRequestBody(true)
 		// 回复到初始状态
 		s := reflect.TypeOf(valid).Elem()
 		newS := reflect.New(s)
 		v := newS.Interface()
-		err := ctx.ReadBody(v)
+		var err error
+		switch target {
+		case "query":
+			err = ctx.ReadQuery(v)
+			break
+		case "body":
+			err = ctx.ReadBody(v)
+			break
+		}
+
 		if err != nil {
 			Warning.Printf("read valid data fail: %s", err.Error())
 			GlobalFailFunc(err, ctx)
@@ -38,7 +56,8 @@ func Run(valid interface{}) iris.Handler {
 			return
 		}
 		// this is point struct
-		ctx.Values().Set(GKey, v)
+		ctx.Values().Set(contextKey, v)
 		ctx.Next()
 	}
+
 }

@@ -55,6 +55,17 @@ func MGenNormal(k string) mongo.IndexModel {
 	}
 }
 
+// MGenNormals 复合索引 左匹配原则 请把最常用的字段放前面
+func MGenNormals(keys []string) mongo.IndexModel {
+	var ops = bson.D{}
+	for _, k := range keys {
+		ops = append(ops, bson.E{Key: k, Value: 1})
+	}
+	return mongo.IndexModel{
+		Keys: ops,
+	}
+}
+
 // MGen2dSphere mongo 生成2dSphere索引
 func MGen2dSphere(k string) mongo.IndexModel {
 	return mongo.IndexModel{

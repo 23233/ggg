@@ -74,6 +74,39 @@ func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 	return user
 }
 
+func (c *SimpleUserModel) OpenIdGetPlatform(openid string) *pipe.AccountPlatform {
+	if c.Platforms != nil {
+		for _, v := range c.Platforms {
+			if v.Pid == openid {
+				return v
+			}
+		}
+	}
+	return nil
+}
+
+func (c *SimpleUserModel) PlatformIsExist(name string) bool {
+	if c.Platforms != nil {
+		for _, v := range c.Platforms {
+			if v.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (c *SimpleUserModel) AppidGetPlatform(appid string) *pipe.AccountPlatform {
+	if c.Platforms != nil {
+		for _, v := range c.Platforms {
+			if v.Appid == appid {
+				return v
+			}
+		}
+	}
+	return nil
+}
+
 func NewUserModel(conn ...connectInfo) *SimpleUserModel {
 	um := new(SimpleUserModel)
 	if len(conn) >= 1 {

@@ -414,7 +414,8 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	if resp.Err != nil {
 		return resp.Err
 	}
-	logger.J.Infof("[%s] 请求参数解析: %+v", ctx.Request().RequestURI, resp.Result)
+	paramsByte, _ := json.Marshal(resp.Result)
+	logger.J.Infof("[%s] 请求参数解析: %s", ctx.Request().RequestURI, string(paramsByte))
 	// 过滤参数 外键什么的可以在这里注入
 	if s.filterCanPass != nil {
 		err = s.filterCanPass(ctx, s, resp.Result)

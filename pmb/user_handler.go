@@ -358,6 +358,14 @@ func (c *SimpleUserModel) SetRole(ctx context.Context, filters bson.M, roleTarge
 
 	return err
 }
+func (c *SimpleUserModel) CanRole(ctx context.Context, uid string, roles []string) bool {
+	// 判断roles中是否有root 如果没有则加上 root应该是必须的
+	if !ArrayIn("root", roles) {
+		roles = append(roles, "root")
+	}
+
+	return c.rbac.HasRoles(uid, roles)
+}
 
 func (c *SimpleUserModel) RemoveUser(ctx context.Context, uid string) error {
 	return c.db.Collection(UserModelName).Remove(ctx, bson.M{ut.DefaultUidTag: uid})

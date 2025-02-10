@@ -10,7 +10,7 @@ replace (
 )
 
 require (
-	github.com/23233/ggg/pipe v0.0.0-20240629110827-fd5c161b4d32
+	github.com/23233/ggg/pipe v0.0.0-20250210145456-e2980451e8c1
 	github.com/23233/ggg/ut v0.0.0-20240629110723-033e77ca1293
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10

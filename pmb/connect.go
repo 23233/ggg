@@ -34,6 +34,9 @@ func (c *connectInfo) AddRbacUseUri(redisAddress, password string) bool {
 func (c *connectInfo) AddRbac(rbac *pipe.RbacDomain) {
 	c.rbac = rbac
 }
+func (c *connectInfo) GetRbac() *pipe.RbacDomain {
+	return c.rbac
+}
 func (c *connectInfo) SetConn(conn *connectInfo) {
 	c.db = conn.db
 	c.rdb = conn.rdb

@@ -67,3 +67,12 @@ func CheckConditions(data map[string]interface{}, conds []ut.Kov) (bool, string)
 	}
 	return true, "所有条件都满足"
 }
+
+func ArrayIn[T comparable](value T, arr []T) bool {
+	for _, v := range arr {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}

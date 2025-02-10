@@ -202,7 +202,11 @@ func (c *RbacDomain) IsStaffOrRoot(uid string) bool {
 }
 
 func (c *RbacDomain) HasRoles(uid string, roles []string) bool {
-	domainRoles := c.E.GetRolesForUserInDomain(uid, RbacAllDomainDefault)
+	return c.HasRoleInDomain(uid, roles, RbacAllDomainDefault)
+}
+
+func (c *RbacDomain) HasRoleInDomain(uid string, roles []string, domain string) bool {
+	domainRoles := c.E.GetRolesForUserInDomain(uid, domain)
 
 	for _, role := range domainRoles {
 		for _, r := range roles {

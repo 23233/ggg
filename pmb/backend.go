@@ -3,6 +3,7 @@ package pmb
 import (
 	"context"
 	"embed"
+	"github.com/23233/gocaptcha"
 	"net/http"
 	"path"
 	"strings"
@@ -36,6 +37,7 @@ type Backend struct {
 	Prefix          string
 	LoginUseValid   bool
 	RegUseValid     bool
+	ValidHard       gocaptcha.CaptchaDifficulty
 }
 
 func (b *Backend) GetModel(name string) (IModelItem, bool) {
@@ -230,7 +232,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		imgHeight := ctx.Params().GetIntDefault("height", 44)
 		textSize := ctx.Params().GetInt8Default("size", 4)
 		// 生成图片
-		id, bt, err := ut.ImgCaptchaInst.GetNewImg(imgWidth, imgHeight, int(textSize))
+		id, bt, err := ut.ImgCaptchaInst.GetNewImg(imgWidth, imgHeight, int(textSize), b.ValidHard)
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return
@@ -328,6 +330,7 @@ func NewBackend() *Backend {
 	b.Prefix = "/manager"
 	b.LoginUseValid = true
 	b.RegUseValid = true
+	b.ValidHard = gocaptcha.CaptchaVeryEasy
 	return b
 }
 

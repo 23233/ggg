@@ -13,23 +13,29 @@ import (
 )
 
 type UserPasswordLoginReq struct {
-	UserName string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
-	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
-	Force    bool   `json:"force,omitempty" comment:"强制"`
-	Strict   bool   `json:"strict,omitempty" comment:"严苛模式"`
+	UserName   string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
+	Password   string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
+	ValidId    string `json:"valid_id,omitempty" comment:"验证码id"`
+	ValidValue string `json:"valid_value,omitempty" comment:"验证码值"`
+	Force      bool   `json:"force,omitempty" comment:"强制"`
+	Strict     bool   `json:"strict,omitempty" comment:"严苛模式"`
 }
 
 type UserRegLoginReq struct {
-	UserName string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
-	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
-	Invite   string `json:"invite,omitempty" comment:"邀请人" validate:"omitempty,max=50"`
+	UserName   string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
+	Password   string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
+	Invite     string `json:"invite,omitempty" comment:"邀请人" validate:"omitempty,max=50"`
+	ValidId    string `json:"valid_id,omitempty" comment:"验证码id"`
+	ValidValue string `json:"valid_value,omitempty" comment:"验证码值"`
 }
 
 type EmailPasswordLoginReq struct {
-	Email    string `json:"email,omitempty" comment:"邮箱号码" validate:"required,email"`
-	Password string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
-	Force    bool   `json:"force,omitempty" comment:"强制"`
-	Strict   bool   `json:"strict,omitempty" comment:"严苛模式"`
+	Email      string `json:"email,omitempty" comment:"邮箱号码" validate:"required,email"`
+	Password   string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
+	Force      bool   `json:"force,omitempty" comment:"强制"`
+	Strict     bool   `json:"strict,omitempty" comment:"严苛模式"`
+	ValidId    string `json:"valid_id,omitempty" comment:"验证码id"`
+	ValidValue string `json:"valid_value,omitempty" comment:"验证码值"`
 }
 
 type RoleUpLoginReq struct {
@@ -59,7 +65,7 @@ func (c *SimpleUserModel) SyncIndex(ctx context.Context) error {
 	)
 	return err
 }
-func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
+func (c *SimpleUserModel) LoginUseUserNameHandler(useValid bool) iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -90,6 +96,21 @@ func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
 			return
 		}
 
+		// 判断验证码
+		if useValid {
+			// 判断验证码
+			if body.ValidId == "" || body.ValidValue == "" {
+				IrisRespErr("未获取到验证码", nil, ctx)
+				return
+			}
+			// 进行验证
+			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			if err != nil {
+				IrisRespErr("", err, ctx)
+				return
+			}
+		}
+
 		userModel, err := c.GetUserItem(ctx, bson.M{"user_name": body.UserName})
 		if err != nil {
 			IrisRespErr("用户名或密码有误", err, ctx)
@@ -99,7 +120,7 @@ func (c *SimpleUserModel) LoginUseUserNameHandler() iris.Handler {
 		c.passwordLogin(ctx, "用户名", userModel, body.Password, body.Force, body.Strict)
 	}
 }
-func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
+func (c *SimpleUserModel) LoginUseEmailHandler(useValid bool) iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(EmailPasswordLoginReq)
 		err := ctx.ReadBody(&body)
@@ -128,6 +149,20 @@ func (c *SimpleUserModel) LoginUseEmailHandler() iris.Handler {
 		if rateResp.Err != nil {
 			IrisRespErr("操作过快", rateResp.Err, ctx, rateResp.ReqCode)
 			return
+		}
+		// 判断验证码
+		if useValid {
+			// 判断验证码
+			if body.ValidId == "" || body.ValidValue == "" {
+				IrisRespErr("未获取到验证码", nil, ctx)
+				return
+			}
+			// 进行验证
+			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			if err != nil {
+				IrisRespErr("", err, ctx)
+				return
+			}
 		}
 
 		userModel, err := c.GetUserItem(ctx, bson.M{"email": body.Email})
@@ -209,13 +244,27 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 	MustOpLog(ctx, c.OpLog(), "login", user, "user", event+"登录成功", "", nil)
 
 }
-func (c *SimpleUserModel) RegistryUseUserNameHandler() iris.Handler {
+func (c *SimpleUserModel) RegistryUseUserNameHandler(useValid bool) iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(UserRegLoginReq)
 		err := ctx.ReadBody(&body)
 		if err != nil {
 			IrisRespErr("解析请求包参数错误", err, ctx)
 			return
+		}
+		// 判断验证码
+		if useValid {
+			// 判断验证码
+			if body.ValidId == "" || body.ValidValue == "" {
+				IrisRespErr("未获取到验证码", nil, ctx)
+				return
+			}
+			// 进行验证
+			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			if err != nil {
+				IrisRespErr("", err, ctx)
+				return
+			}
 		}
 
 		userModel, err := c.GetUserItem(ctx, bson.M{"user_name": body.UserName})

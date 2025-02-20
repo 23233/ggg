@@ -11,7 +11,7 @@ replace (
 
 require (
 	github.com/23233/ggg/pipe v0.0.0-20250210145456-e2980451e8c1
-	github.com/23233/ggg/ut v0.0.0-20240629110723-033e77ca1293
+	github.com/23233/ggg/ut v0.0.0-20250220104248-0f84c449ee00
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/pkg/errors v0.9.1
@@ -20,14 +20,17 @@ require (
 )
 
 require (
+	github.com/23233/gocaptcha v0.0.0-20250220095527-319f2ef1fb16 // indirect
 	github.com/colduction/randomizer v1.0.2 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	go.uber.org/mock v0.3.0 // indirect
+	golang.org/x/image v0.22.0 // indirect
 	gorm.io/gorm v1.25.10 // indirect
 )
 
@@ -152,16 +155,16 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
-	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.17.0 // indirect
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect

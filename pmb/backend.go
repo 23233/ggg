@@ -3,6 +3,10 @@ package pmb
 import (
 	"context"
 	"embed"
+	"net/http"
+	"path"
+	"strings"
+
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/ut"
@@ -12,9 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qiniu/qmgo"
 	"github.com/redis/rueidis"
-	"net/http"
-	"path"
-	"strings"
 )
 
 var (
@@ -33,6 +34,8 @@ type Backend struct {
 	modelContextKey string
 	msg             *MessageQueue
 	Prefix          string
+	LoginUseValid   bool
+	RegUseValid     bool
 }
 
 func (b *Backend) GetModel(name string) (IModelItem, bool) {
@@ -222,15 +225,28 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 			return
 		}
 	})
-
-	apiParty.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler())
+	apiParty.Get("/captcha_img", func(ctx iris.Context) {
+		imgWidth := ctx.Params().GetIntDefault("width", 120)
+		imgHeight := ctx.Params().GetIntDefault("height", 44)
+		textSize := ctx.Params().GetInt8Default("size", 4)
+		// 生成图片
+		id, bt, err := ut.ImgCaptchaInst.GetNewImg(imgWidth, imgHeight, int(textSize))
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
+		ctx.Header("Content-Type", "image/png")
+		ctx.Header("X-Captcha-Id", id) // 添加验证码ID到响应头
+		_, _ = ctx.Write(bt)
+	})
+	apiParty.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler(b.LoginUseValid))
 	apiParty.Get("/set_role", func(ctx iris.Context) {
 		p := path.Join(apiParty.GetRelPath(), "set_role")
 		ctx.ViewData("post_address", p)
 		_ = ctx.View("role")
 	})
 	apiParty.Post("/set_role", UserInstance.RoleSetHandler())
-	apiParty.Post("/reg", UserInstance.RegistryUseUserNameHandler())
+	apiParty.Post("/reg", UserInstance.RegistryUseUserNameHandler(b.LoginUseValid))
 
 }
 
@@ -310,6 +326,8 @@ func NewBackend() *Backend {
 	b.msg = NewMessageQueue()
 	BkInst = b
 	b.Prefix = "/manager"
+	b.LoginUseValid = true
+	b.RegUseValid = true
 	return b
 }
 

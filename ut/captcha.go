@@ -42,8 +42,8 @@ func NewImgCaptcha() *ImgCaptcha {
 	return c
 }
 
-func (c *ImgCaptcha) GetNewImg(width, height int, textSize int) (string, []byte, error) {
-	text, bt, err := gocaptcha.GenerateCaptcha(width, height, textSize, gocaptcha.CaptchaEasy)
+func (c *ImgCaptcha) GetNewImg(width, height int, textSize int, difficulty gocaptcha.CaptchaDifficulty) (string, []byte, error) {
+	text, bt, err := gocaptcha.GenerateCaptcha(width, height, textSize, difficulty)
 	if err != nil {
 		return "", nil, err
 	}

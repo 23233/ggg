@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	github.com/23233/gocaptcha v0.0.0-20250220095527-319f2ef1fb16 // indirect
+	github.com/23233/gocaptcha v0.0.0-20250220110606-b26e3ba97afb // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.2.0 // indirect

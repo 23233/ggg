@@ -104,7 +104,7 @@ func (c *SimpleUserModel) LoginUseUserNameHandler(useValid bool) iris.Handler {
 				return
 			}
 			// 进行验证
-			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			_, err = ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
 			if err != nil {
 				IrisRespErr("", err, ctx)
 				return
@@ -158,7 +158,7 @@ func (c *SimpleUserModel) LoginUseEmailHandler(useValid bool) iris.Handler {
 				return
 			}
 			// 进行验证
-			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			_, err = ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
 			if err != nil {
 				IrisRespErr("", err, ctx)
 				return
@@ -260,7 +260,7 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler(useValid bool) iris.Handler
 				return
 			}
 			// 进行验证
-			_, err = ut.ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			_, err = ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
 			if err != nil {
 				IrisRespErr("", err, ctx)
 				return

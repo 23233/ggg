@@ -11,7 +11,7 @@ replace (
 
 require (
 	github.com/23233/ggg/pipe v0.0.0-20250210145456-e2980451e8c1
-	github.com/23233/ggg/ut v0.0.0-20250220110854-75892d48c069
+	github.com/23233/ggg/ut v0.0.0-20250220112936-c56386f49608
 	github.com/23233/jsonschema v0.11.2
 	github.com/kataras/iris/v12 v12.2.10
 	github.com/pkg/errors v0.9.1
@@ -20,7 +20,7 @@ require (
 )
 
 require (
-	github.com/23233/gocaptcha v0.0.0-20250220110606-b26e3ba97afb // indirect
+	github.com/23233/gocaptcha v0.0.0-20250220112835-76f99983361f // indirect
 	github.com/colduction/randomizer v1.0.2 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect

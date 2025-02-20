@@ -232,7 +232,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		imgHeight := ctx.Params().GetIntDefault("height", 44)
 		textSize := ctx.Params().GetInt8Default("size", 4)
 		// 生成图片
-		id, bt, err := ut.ImgCaptchaInst.GetNewImg(imgWidth, imgHeight, int(textSize), b.ValidHard)
+		id, bt, err := ImgCaptchaInst.GetNewImg(imgWidth, imgHeight, int(textSize), b.ValidHard)
 		if err != nil {
 			IrisRespErr("", err, ctx)
 			return

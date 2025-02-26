@@ -2,13 +2,21 @@ package ut
 
 import (
 	"errors"
-	"github.com/23233/ggg/logger"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/23233/ggg/logger"
 )
 
 // 本地并发封装
+
+// WeightedClient represents a client with an associated weight
+type WeightedClient struct {
+	Client any  `json:"client"` // The client instance (can be any type)
+	Weight uint `json:"weight"` // The weight of this client (higher means more work assigned)
+}
 
 // LocalWork 本地执行work T是原始数据 R是执行结果
 type LocalWork[T any, R any] struct {
@@ -24,10 +32,16 @@ type LocalWork[T any, R any] struct {
 
 	SuccessStopLimit uint // 成功多少条后停止
 
-	ChanData  []T // 待处理的数据
-	call      func(item T) (R, error)
-	Results   ThreadSafeArray[R]
-	OnSuccess func(work *LocalWork[T, R], results []R) error
+	ChanData       []T // 待处理的数据
+	call           func(item T) (R, error)
+	callWithClient func(item T, client any) (R, error) // 带client的调用函数
+	Results        ThreadSafeArray[R]
+	OnSuccess      func(work *LocalWork[T, R], results []R) error
+
+	// 权重调度相关
+	WeightedClients    []WeightedClient // 带权重的客户端列表
+	normalizedWeights  []float64        // 归一化后的权重
+	useWeightScheduler bool             // 是否使用权重调度
 
 	startTime time.Time // 开始时间
 }
@@ -39,6 +53,11 @@ func (c *LocalWork[T, R]) SetPrintProcess(PrintProcess bool) *LocalWork[T, R] {
 
 func (c *LocalWork[T, R]) SetCall(call func(item T) (R, error)) *LocalWork[T, R] {
 	c.call = call
+	return c
+}
+
+func (c *LocalWork[T, R]) SetCallWithClient(call func(item T, client any) (R, error)) *LocalWork[T, R] {
+	c.callWithClient = call
 	return c
 }
 
@@ -62,6 +81,59 @@ func (c *LocalWork[T, R]) GetConcurrency() uint {
 func (c *LocalWork[T, R]) SetConcurrency(Concurrency uint) *LocalWork[T, R] {
 	c.Concurrency = Concurrency
 	return c
+}
+
+func (c *LocalWork[T, R]) SetWeightedClients(clients []WeightedClient) *LocalWork[T, R] {
+	c.WeightedClients = clients
+	c.useWeightScheduler = len(clients) > 0
+
+	// 计算归一化权重
+	if c.useWeightScheduler {
+		c.normalizeWeights()
+	}
+
+	return c
+}
+
+// normalizeWeights 计算归一化权重
+func (c *LocalWork[T, R]) normalizeWeights() {
+	totalWeight := uint(0)
+	for _, client := range c.WeightedClients {
+		totalWeight += client.Weight
+	}
+
+	c.normalizedWeights = make([]float64, len(c.WeightedClients))
+	cumulativeWeight := float64(0)
+
+	for i, client := range c.WeightedClients {
+		normalizedWeight := float64(client.Weight) / float64(totalWeight)
+		cumulativeWeight += normalizedWeight
+		c.normalizedWeights[i] = cumulativeWeight
+	}
+}
+
+// getClientByWeight 根据权重选择客户端
+func (c *LocalWork[T, R]) getClientByWeight() any {
+	if len(c.WeightedClients) == 0 {
+		return nil
+	}
+
+	if len(c.WeightedClients) == 1 {
+		return c.WeightedClients[0].Client
+	}
+
+	// 生成0-1之间的随机数
+	randVal := rand.Float64()
+
+	// 根据随机数和归一化权重选择客户端
+	for i, threshold := range c.normalizedWeights {
+		if randVal <= threshold {
+			return c.WeightedClients[i].Client
+		}
+	}
+
+	// 默认返回最后一个客户端
+	return c.WeightedClients[len(c.WeightedClients)-1].Client
 }
 
 func (c *LocalWork[T, R]) Reset() {
@@ -96,7 +168,18 @@ func (c *LocalWork[T, R]) run() {
 					return
 				default:
 					// 正常执行任务
-					r, err := c.call(data)
+					var r R
+					var err error
+
+					if c.useWeightScheduler && c.callWithClient != nil {
+						// 使用权重调度选择客户端
+						client := c.getClientByWeight()
+						r, err = c.callWithClient(data, client)
+					} else {
+						// 使用原始调用方式
+						r, err = c.call(data)
+					}
+
 					if err != nil {
 						c.FailCount.Add(1)
 					} else {
@@ -159,6 +242,13 @@ func (c *LocalWork[T, R]) Run(runSync bool) error {
 func NewLocalWorkFull[T any, R any](name, tid string, concurrency uint, todoDatas []T, call func(item T) (R, error)) *LocalWork[T, R] {
 	inst := NewLocalWork[T, R](name, tid)
 	inst.SetConcurrency(concurrency).SetCall(call).SetChanData(todoDatas)
+	return inst
+}
+
+func NewLocalWorkWithClient[T any, R any](name, tid string, concurrency uint, todoDatas []T,
+	call func(item T, client any) (R, error), clients []WeightedClient) *LocalWork[T, R] {
+	inst := NewLocalWork[T, R](name, tid)
+	inst.SetConcurrency(concurrency).SetCallWithClient(call).SetChanData(todoDatas).SetWeightedClients(clients)
 	return inst
 }
 

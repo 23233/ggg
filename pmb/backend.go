@@ -242,6 +242,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 		_, _ = ctx.Write(bt)
 	})
 	apiParty.Post("/login", recordBodyMiddleware, UserInstance.LoginUseUserNameHandler(b.LoginUseValid))
+	apiParty.Post("/user_change_password", recordBodyMiddleware, mustLoginMiddleware, UserInstance.ChangePassword(b.LoginUseValid))
 	apiParty.Get("/set_role", func(ctx iris.Context) {
 		p := path.Join(apiParty.GetRelPath(), "set_role")
 		ctx.ViewData("post_address", p)

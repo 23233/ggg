@@ -42,6 +42,7 @@ func TestNewBackend(t *testing.T) {
 		userId = respObj.Value("info").Object().Value(ut.DefaultUidTag).String().Raw()
 		token = respObj.Value("token").String().Raw()
 	})
+
 	t.Run("用户登录", func(t *testing.T) {
 		t.Run("登录失败", func(t *testing.T) {
 			login := map[string]any{

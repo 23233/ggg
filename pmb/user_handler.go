@@ -21,6 +21,13 @@ type UserPasswordLoginReq struct {
 	Strict     bool   `json:"strict,omitempty" comment:"严苛模式"`
 }
 
+type UserChangePasswordReq struct {
+	OldPassword string `json:"old_password,omitempty" comment:"旧密码" validate:"required,min=6,max=36"`
+	Password    string `json:"password,omitempty" comment:"新密码" validate:"required,min=6,max=36"`
+	ValidId     string `json:"valid_id,omitempty" comment:"验证码id"`
+	ValidValue  string `json:"valid_value,omitempty" comment:"验证码值"`
+}
+
 type UserRegLoginReq struct {
 	UserName   string `json:"user_name,omitempty" comment:"用户名" validate:"required,min=3,max=24"`
 	Password   string `json:"password,omitempty" comment:"密码" validate:"required,min=6,max=36"`
@@ -120,6 +127,57 @@ func (c *SimpleUserModel) LoginUseUserNameHandler(useValid bool) iris.Handler {
 		c.passwordLogin(ctx, "用户名", userModel, body.Password, body.Force, body.Strict)
 	}
 }
+
+func (c *SimpleUserModel) ChangePassword(useValid bool) iris.Handler {
+	return func(ctx iris.Context) {
+		var body = new(UserChangePasswordReq)
+		err := ctx.ReadBody(&body)
+		if err != nil {
+			IrisRespErr("解析请求包参数错误", err, ctx)
+			return
+		}
+		err = sv.GlobalValidator.Check(body)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
+		// 判断验证码
+		if useValid {
+			// 判断验证码
+			if body.ValidId == "" || body.ValidValue == "" {
+				IrisRespErr("未获取到验证码", nil, ctx)
+				return
+			}
+			// 进行验证
+			_, err = ImgCaptchaInst.Verify(body.ValidId, body.ValidValue)
+			if err != nil {
+				IrisRespErr("", err, ctx)
+				return
+			}
+		}
+		user := ctx.Values().Get(UserContextKey).(*SimpleUserModel)
+		// 判断密码是否正确
+		if !validPassword(body.OldPassword, user.Salt, user.Password) {
+			IrisRespErr("密码错误", nil, ctx)
+			return
+		}
+		// 密码正确就进行密码的修改
+		saltPassword, salt := passwordSalt(body.Password)
+		err = c.db.Collection(UserModelName).UpdateId(ctx, user.Id, bson.M{
+			"$set": bson.M{
+				"password": saltPassword,
+				"salt":     salt,
+			},
+		})
+		if err != nil {
+			IrisRespErr("修改密码失败", err, ctx)
+			return
+		}
+		// 修改成功了要不要下线呢?
+		ctx.JSON(iris.Map{"detail": "修改成功"})
+	}
+}
+
 func (c *SimpleUserModel) LoginUseEmailHandler(useValid bool) iris.Handler {
 	return func(ctx iris.Context) {
 		var body = new(EmailPasswordLoginReq)

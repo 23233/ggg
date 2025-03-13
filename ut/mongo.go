@@ -73,6 +73,13 @@ func MGen2dSphere(k string) mongo.IndexModel {
 	}
 }
 
+// MGenText mongo 生成text索引
+func MGenText(k string) mongo.IndexModel {
+	return mongo.IndexModel{
+		Keys: bson.M{k: "text"},
+	}
+}
+
 // MCreateIndex 快捷创建索引
 func MCreateIndex(ctx context.Context, db *mongo.Collection, indexs ...mongo.IndexModel) error {
 	_, err := db.Indexes().CreateMany(ctx, indexs)

@@ -2,11 +2,12 @@ package ut
 
 import (
 	"context"
+	"reflect"
+
 	"github.com/iancoleman/strcase"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"reflect"
 )
 
 // 这个库主要是跟mongodb有关的操作
@@ -73,10 +74,41 @@ func MGen2dSphere(k string) mongo.IndexModel {
 	}
 }
 
+// supportedLanguages 支持的文本索引语言映射
+var supportedLanguages = map[string]bool{
+	"da": true, "danish": true,
+	"nl": true, "dutch": true,
+	"en": true, "english": true,
+	"fi": true, "finnish": true,
+	"fr": true, "french": true,
+	"de": true, "german": true,
+	"hu": true, "hungarian": true,
+	"it": true, "italian": true,
+	"nb": true, "norwegian": true,
+	"pt": true, "portuguese": true,
+	"ro": true, "romanian": true,
+	"ru": true, "russian": true,
+	"es": true, "spanish": true,
+	"sv": true, "swedish": true,
+	"tr": true, "turkish": true,
+}
+
 // MGenText mongo 生成text索引
-func MGenText(k string) mongo.IndexModel {
+// https://www.mongodb.com/zh-cn/docs/manual/reference/text-search-languages/#std-label-text-search-languages
+func MGenText(keys []string, language string) mongo.IndexModel {
+	textIndex := bson.D{}
+	for _, key := range keys {
+		textIndex = append(textIndex, bson.E{Key: key, Value: "text"})
+	}
+
+	// 验证语言是否支持，不支持则使用 "none"
+	if _, ok := supportedLanguages[language]; !ok {
+		language = "none"
+	}
+
 	return mongo.IndexModel{
-		Keys: bson.M{k: "text"},
+		Keys:    textIndex,
+		Options: options.Index().SetDefaultLanguage(language),
 	}
 }
 

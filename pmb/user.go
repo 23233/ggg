@@ -56,6 +56,10 @@ func (c *SimpleUserModel) Masking(level int) *SimpleUserModel {
 	user.UserName = ""
 	user.Password = ""
 	user.Salt = ""
+	user.LastUa = ""
+	user.RegUa = ""
+	user.RegIp = ""
+	user.LastIp = ""
 
 	if level >= 1 {
 		// 若号码长度小于2就错误了

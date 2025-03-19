@@ -140,6 +140,8 @@ type SchemaModel[T any] struct {
 	PutHandlerConfig    pipe.ModelPutConfig
 	DeleteHandlerConfig pipe.ModelDelConfig
 
+	Debug bool
+
 	// 每个查询都注入的内容 从context中去获取 可用于获取用户id等操作
 	queryContextInjects []ContextValueInject
 	queryFilterInject   []*ut.Kov // 过滤参数注入
@@ -415,7 +417,9 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 		return resp.Err
 	}
 	paramsByte, _ := json.Marshal(resp.Result)
-	logger.J.Infof("[%s] 请求参数解析: %s", ctx.Request().RequestURI, string(paramsByte))
+	if s.Debug {
+		logger.J.Infof("[%s] 请求参数解析: %s", ctx.Request().RequestURI, string(paramsByte))
+	}
 	// 过滤参数 外键什么的可以在这里注入
 	if s.filterCanPass != nil {
 		err = s.filterCanPass(ctx, s, resp.Result)

@@ -2,14 +2,17 @@ package pmb
 
 import (
 	"context"
+	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/sv"
 	"github.com/23233/ggg/ut"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/realip"
 	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
+	"time"
 )
 
 type UserPasswordLoginReq struct {
@@ -296,6 +299,19 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 		return
 	}
 
+	// 更新用户信息
+	upBody := bson.M{
+		"last_ua":         ctx.GetHeader("User-Agent"),
+		"last_ip":         realip.Get(ctx.Request()),
+		"last_login_time": time.Now(),
+	}
+	err = c.db.Collection(UserModelName).UpdateId(ctx, user.Id, bson.M{
+		"$set": upBody,
+	})
+	if err != nil {
+		logger.J.ErrorE(err, "[%s]更新用户登录信息失败", user.Uid)
+	}
+
 	ctx.JSON(iris.Map{"token": token, "info": user.Masking(0)})
 
 	// 写入日志
@@ -364,7 +380,10 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler(useValid bool) iris.Handler
 		userModel.UserName = body.UserName
 		userModel.Password = password
 		userModel.ReferrerUid = body.Invite
+		userModel.RegUa = ctx.GetHeader("User-Agent")
+		userModel.RegIp = realip.Get(ctx.Request())
 		userModel.Salt = salt
+
 		userModel.NickName = ut.RandomStr(12)
 		_ = userModel.BeforeInsert(ctx)
 

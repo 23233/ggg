@@ -119,10 +119,15 @@ func (a *AccountCoin) SetReferrerUid(referrer string) {
 }
 
 type AccountComm struct {
-	AvatarUrl string `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"头像地址"` // 头像地址
-	NickName  string `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"昵称"`     // 昵称
-	Disable   bool   `json:"disable,omitempty" bson:"disable" comment:"是否禁用"`
-	Msg       string `json:"msg,omitempty" bson:"msg,omitempty" comment:"状态说明"`
+	AvatarUrl     string    `json:"avatar_url,omitempty" bson:"avatar_url,omitempty" comment:"头像地址"` // 头像地址
+	NickName      string    `json:"nick_name,omitempty" bson:"nick_name,omitempty" comment:"昵称"`     // 昵称
+	Disable       bool      `json:"disable,omitempty" bson:"disable" comment:"是否禁用"`
+	Msg           string    `json:"msg,omitempty" bson:"msg,omitempty" comment:"状态说明"`
+	RegUa         string    `json:"reg_ua" bson:"reg_ua,omitempty" comment:"注册时的ua"`
+	RegIp         string    `json:"reg_ip" bson:"reg_ip,omitempty" comment:"注册时的ip"`
+	LastUa        string    `json:"last_ua" bson:"last_ua,omitempty" comment:"最后登录ua"`
+	LastIp        string    `json:"last_ip" bson:"last_ip,omitempty" comment:"最后登录ip"`
+	LastLoginTime time.Time `json:"last_login_time,omitempty" bson:"last_login_time,omitempty" comment:"最后登录时间"`
 }
 
 func (a *AccountComm) GetAvatarUrl() string {

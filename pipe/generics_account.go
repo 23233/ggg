@@ -138,6 +138,14 @@ func (a *AccountComm) SetAvatarUrl(uri string) {
 	a.AvatarUrl = uri
 }
 
+type AccountVip struct {
+	VipLevel     int       `json:"vip_level,omitempty" bson:"vip_level,omitempty" comment:"会员等级"`             // 1 2 3
+	VipTitle     string    `json:"vip_title,omitempty" bson:"vip_title,omitempty" comment:"会员标题"`             // 青铜 白银 黄金
+	VipStartTime time.Time `json:"vip_start_time,omitempty" bson:"vip_start_time,omitempty" comment:"会员开始时间"` // 会员开始时间
+	VipExpire    time.Time `json:"vip_expire,omitempty" bson:"vip_expire,omitempty" comment:"会员到期时间"`         //  会员到期时间
+	VipOrigin    string    `json:"vip_origin,omitempty" bson:"vip_origin,omitempty" comment:"会员来源"`           // 礼券兑换 购买 签到送的 这种
+}
+
 func (a *AccountComm) GetNickName() string {
 	return a.NickName
 }
@@ -167,6 +175,7 @@ type GenericsAccount struct {
 	AccountPass `bson:",inline"`
 	AccountCoin `bson:",inline"`
 	AccountComm `bson:",inline"`
+	AccountVip  `bson:",inline"`
 	// 在mongo中 可以直接使用.法 也就是 platforms.name 就可以传所有数组对象的name包含了的
 	Platforms []*AccountPlatform `json:"platforms,omitempty" bson:"platforms,omitempty" comment:"平台信息"`
 }

@@ -14,3 +14,8 @@ func GetModelAllCount(ctx context.Context, db *qmgo.Database, modelId string) (i
 	}
 	return cli.EstimatedDocumentCount(ctx)
 }
+
+// MMN 获取模型名
+func MMN[T *IMongoModel](input IMongoModel) string {
+	return input.GetCollName()
+}

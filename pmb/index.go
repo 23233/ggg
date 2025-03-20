@@ -75,10 +75,10 @@ type SchemaHooks[T any] struct {
 	OnAddAfter       func(ctx iris.Context, args *pipe.RunResp[map[string]any], model *SchemaModel[T]) error                           // 在新增之后
 	OnGetBefore      func(ctx iris.Context, args *pipe.RunResp[*ut.QueryFull], params *pipe.ModelGetData, model *SchemaModel[T]) error // 在获取之前
 	OnGetAfter       func(ctx iris.Context, args *pipe.RunResp[*ut.MongoFacetResult], model *SchemaModel[T]) error                     // 在获取之后
-	OnEditBefore     func(ctx iris.Context)                                                                                            // 在修改之前
-	OnEditAfter      func(ctx iris.Context)                                                                                            // 在修改之后
-	OnDelBefore      func(ctx iris.Context)                                                                                            // 在删除之前
-	OnDelAfter       func(ctx iris.Context)                                                                                            // 在删除之后
+	OnEditBefore     func(ctx iris.Context, args pipe.ModelPutConfig, model *SchemaModel[T]) error                                     // 在修改之前
+	OnEditAfter      func(ctx iris.Context, args *pipe.RunResp[map[string]any], model *SchemaModel[T]) error                           // 在修改之后
+	OnDelBefore      func(ctx iris.Context, args pipe.ModelDelConfig, model *SchemaModel[T]) error                                     // 在删除之前
+	OnDelAfter       func(ctx iris.Context, args *pipe.RunResp[any], model *SchemaModel[T]) error                                      // 在删除之后
 }
 
 type SchemaIframe struct {
@@ -616,6 +616,7 @@ func (s *SchemaModel[T]) SetPathId(newId string) {
 }
 
 func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig) error {
+
 	injectQuery, err := s.ParseInject(ctx)
 	if err != nil {
 		return err
@@ -654,10 +655,25 @@ func (s *SchemaModel[T]) PutHandler(ctx iris.Context, params pipe.ModelPutConfig
 
 	params.BodyMap = bodyMap
 
+	if s.Hooks.OnEditBefore != nil {
+		err = s.Hooks.OnEditBefore(ctx, params, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	resp := pipe.ModelPut.Run(ctx, newV, &params, s.db)
 	if resp.Err != nil {
 		return resp.Err
 	}
+
+	if s.Hooks.OnEditAfter != nil {
+		err = s.Hooks.OnEditAfter(ctx, resp, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	ctx.JSON(resp.Result)
 
 	user := s.GetContextUser(ctx)
@@ -698,10 +714,25 @@ func (s *SchemaModel[T]) DelHandler(ctx iris.Context, params pipe.ModelDelConfig
 
 	params.QueryFilter.QueryParse.InsertOrReplaces("and", injectQuery...)
 
+	if s.Hooks.OnDelBefore != nil {
+		err = s.Hooks.OnDelBefore(ctx, params, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	resp := pipe.ModelDel.Run(ctx, nil, &params, s.db)
 	if resp.Err != nil {
 		return resp.Err
 	}
+
+	if s.Hooks.OnDelAfter != nil {
+		err = s.Hooks.OnDelAfter(ctx, resp, s)
+		if err != nil {
+			return err
+		}
+	}
+
 	_, _ = ctx.WriteString(resp.Result.(string))
 
 	user := s.GetContextUser(ctx)

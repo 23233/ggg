@@ -51,7 +51,11 @@ func MongoUpdateOne(ctx context.Context, db *qmgo.Collection, uid string, pack b
 	return db.UpdateOne(ctx, bson.M{ut.DefaultUidTag: uid}, bson.M{"$set": pack})
 }
 func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection, filter bson.M, selects bson.M, batchSize int64, processFunc func([]T) error) error {
-	lastID := primitive.NilObjectID
+	return MongoIterateByBatchUseStart[T](ctx, db, filter, selects, batchSize, primitive.NilObjectID, processFunc)
+}
+
+func MongoIterateByBatchUseStart[T IMongoBase](ctx context.Context, db *qmgo.Collection, filter bson.M, selects bson.M, batchSize int64, startId primitive.ObjectID, processFunc func([]T) error) error {
+	lastID := startId
 
 	for {
 		var datas = make([]T, 0)
@@ -88,6 +92,7 @@ func MongoIterateByBatch[T IMongoBase](ctx context.Context, db *qmgo.Collection,
 
 	return nil
 }
+
 func MongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) error {
 	_, err := mongoBulkInsert(ctx, db, accounts...)
 	return err

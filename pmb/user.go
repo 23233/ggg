@@ -15,6 +15,7 @@ const (
 var (
 	UserInstance    = NewUserModel()
 	UserIdFieldName = "user_id"
+	UserCookieKey   = "tk"
 )
 
 type UserModel interface {

@@ -2,6 +2,7 @@ package pmb
 
 import (
 	"context"
+	"fmt"
 	"github.com/23233/ggg/logger"
 	"github.com/23233/ggg/pipe"
 	"github.com/23233/ggg/sv"
@@ -320,6 +321,9 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 		}
 	}
 
+	// 写入cookie
+	ctx.SetCookieKV(UserCookieKey, token, iris.CookieExpires(0))
+
 	ctx.JSON(iris.Map{"token": token, "info": user.Masking(0)})
 
 	// 写入日志
@@ -407,6 +411,8 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler(useValid bool) iris.Handler
 			IrisRespErr("生成登录令牌失败", err, ctx)
 			return
 		}
+
+		ctx.SetCookieKV(UserCookieKey, token, iris.CookieExpires(0))
 		ctx.JSON(iris.Map{"token": token, "info": userModel.Masking(0)})
 
 		MustOpLog(ctx, c.OpLog(), "reg", userModel, "user", "用户名密码注册", "", nil)
@@ -415,10 +421,25 @@ func (c *SimpleUserModel) RegistryUseUserNameHandler(useValid bool) iris.Handler
 }
 func (c *SimpleUserModel) MustLoginMiddleware() iris.Handler {
 	return func(ctx iris.Context) {
+
+		headerAuthorization := ctx.GetHeader("Authorization")
+		cookieAuthorization := ctx.GetCookie(UserCookieKey)
+		if headerAuthorization == "" && cookieAuthorization == "" {
+			IrisRespErr("未登录", nil, ctx, http.StatusUnauthorized)
+			ctx.StopExecution()
+			return
+		}
+		authorization := ""
+		if headerAuthorization != "" {
+			authorization = headerAuthorization
+		} else {
+			authorization = fmt.Sprintf("Bearer %s", cookieAuthorization)
+		}
+
 		// 进行jwt验证
 		resp := pipe.JwtVisit.Run(ctx, &pipe.JwtCheckDep{
 			Env:           pipe.CtxGetEnv(ctx),
-			Authorization: ctx.GetHeader("Authorization"),
+			Authorization: authorization,
 		}, nil, c.rdb)
 		if resp.Err != nil {
 			IrisRespErr("验证登录状态失败", resp.Err, ctx, http.StatusUnauthorized)

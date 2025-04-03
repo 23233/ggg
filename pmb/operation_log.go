@@ -14,6 +14,14 @@ import (
 // 需要组合成为 谁在什么事件对谁做了什么
 // 暂定记录 新增 修改 删除
 
+var (
+	RecordOperationLog = true
+)
+
+func ChangeRecordOperationLog(b bool) {
+	RecordOperationLog = b
+}
+
 type OperationLog struct {
 	pipe.ModelBase `bson:",inline"`
 
@@ -27,11 +35,18 @@ type OperationLog struct {
 }
 
 func MustOpLog(ctx iris.Context, db *qmgo.Collection, method string, user *SimpleUserModel, sheet string, msg string, rowId string, toFields []ut.Kov) {
+	if !RecordOperationLog {
+		return
+	}
 	var inst = new(OperationLog)
 	inst.Method = method
 	if user != nil {
 		inst.UserId = user.Uid
 		inst.UserName = user.NickName
+	}
+	if user == nil {
+		user = &SimpleUserModel{}
+		user.Uid = ""
 	}
 
 	if toFields == nil {

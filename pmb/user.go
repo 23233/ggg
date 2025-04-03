@@ -2,6 +2,7 @@ package pmb
 
 import (
 	"github.com/23233/ggg/pipe"
+	"github.com/kataras/iris/v12"
 	"strings"
 )
 
@@ -29,8 +30,13 @@ type Platform struct {
 	Data      string `json:"data,omitempty" bson:"data,omitempty" comment:"平台数据"`
 }
 
+type SimpleUserHooks struct {
+	OnLoginAfter func(ctx iris.Context, user *SimpleUserModel, token string) error
+}
+
 type SimpleUserModel struct {
 	pipe.GenericsAccount `bson:",inline"`
+	hooks                *SimpleUserHooks
 	roleSecret           string
 	connectInfo
 }
@@ -43,6 +49,10 @@ func (c *SimpleUserModel) RoleSecret() string {
 }
 func (c *SimpleUserModel) SetRoleSecret(roleSecret string) {
 	c.roleSecret = roleSecret
+}
+
+func (c *SimpleUserModel) SetHooks(hooks *SimpleUserHooks) {
+	c.hooks = hooks
 }
 
 func (c *SimpleUserModel) GetUid() string {

@@ -312,6 +312,14 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 		logger.J.ErrorE(err, "[%s]更新用户登录信息失败", user.Uid)
 	}
 
+	if c.hooks != nil && c.hooks.OnLoginAfter != nil {
+		err = c.hooks.OnLoginAfter(ctx, user, token)
+		if err != nil {
+			IrisRespErr("", err, ctx)
+			return
+		}
+	}
+
 	ctx.JSON(iris.Map{"token": token, "info": user.Masking(0)})
 
 	// 写入日志

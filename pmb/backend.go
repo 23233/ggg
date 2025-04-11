@@ -79,6 +79,12 @@ func (b *Backend) AddModelAny(raw any) IModelItem {
 	b.AddModel(m)
 	return m
 }
+func (b *Backend) AddDbModel(raw pipe.IMongoModel) IModelItem {
+	m := NewSchemaModel(raw, b.db)
+	m.TableName = raw.GetCollName()
+	b.AddModel(m)
+	return m
+}
 
 func recordBodyMiddleware(ctx iris.Context) {
 	if !ctx.IsRecordingBody() {

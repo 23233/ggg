@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"github.com/23233/gocaptcha"
+	"io/fs"
 	"net/http"
 	"path"
 	"strings"
@@ -99,8 +100,14 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	frontParty := party.Party("/" + b.Prefix)
 	apiParty := party.Party("/" + b.Prefix + "/apis")
 
-	fsys := iris.PrefixDir("template", http.FS(htmlWeb))
-	frontParty.RegisterView(iris.Blocks(fsys, ".html"))
+	// 创建相对于 "template" 目录的子文件系统
+	templateFS, err := fs.Sub(htmlWeb, "template")
+	if err != nil {
+		logger.J.ErrorE(err, "failed to create sub filesystem")
+	}
+
+	// 注册视图
+	frontParty.RegisterView(iris.Blocks(http.FS(templateFS), ".html"))
 
 	frontParty.HandleDir("/", assetsWeb, iris.DirOptions{
 		Cache:    router.DirCacheOptions{},
@@ -108,13 +115,13 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	}) // ./prefix/assets/index-3fa15531.js
 
 	// 注册role视图
-	apiParty.RegisterView(iris.Blocks(fsys, ".html"))
+	apiParty.RegisterView(iris.Blocks(http.FS(templateFS), ".html"))
 
 	frontHandler := func(ctx iris.Context) {
 		assertPrefix := party.GetRelPath() + b.Prefix
 		ctx.ViewData("prefix", strings.ReplaceAll(assertPrefix, "//", "/"))
 		ctx.ViewData("req_prefix", strings.ReplaceAll(apiParty.GetRelPath(), "//", "/"))
-		_ = ctx.View("index")
+		_ = ctx.View("index.html")
 	}
 
 	frontParty.Get("/", frontHandler)
@@ -252,7 +259,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	apiParty.Get("/set_role", func(ctx iris.Context) {
 		p := path.Join(apiParty.GetRelPath(), "set_role")
 		ctx.ViewData("post_address", p)
-		_ = ctx.View("role")
+		_ = ctx.View("role.html")
 	})
 	apiParty.Post("/set_role", UserInstance.RoleSetHandler())
 	apiParty.Post("/reg", UserInstance.RegistryUseUserNameHandler(b.LoginUseValid))
@@ -341,7 +348,7 @@ func NewBackend() *Backend {
 	return b
 }
 
-func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress string, redisPassword string, redisDb int) (*Backend, error) {
+func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress string, redisPassword string, redisDb int, loginUseValid, regUseValid bool) (*Backend, error) {
 	rdb, err := rueidis.NewClient(rueidis.ClientOption{
 		InitAddress: []string{redisAddress},
 		Password:    redisPassword,
@@ -361,6 +368,8 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 	}
 
 	bk := NewBackend()
+	bk.LoginUseValid = loginUseValid
+	bk.RegUseValid = regUseValid
 	bk.AddDb(mongodb)
 	bk.AddRdb(rdb)
 	bk.AddRbacUseUri(redisAddress, redisPassword)

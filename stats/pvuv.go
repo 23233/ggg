@@ -63,18 +63,18 @@ func (c *HyperStats) ChangePrefix(newPrefix string) {
 }
 
 // Add 已存在的重复元素不会计数
-func (c *HyperStats) Add(ctx context.Context, elements ...string) error {
+func (c *HyperStats) Add(ctx context.Context, elements ...any) error {
 	return c.AddAny(ctx, c.getNowKey(), elements...)
 }
 
 // MustAdd 必然新增
-func (c *HyperStats) MustAdd(ctx context.Context, elements ...string) {
+func (c *HyperStats) MustAdd(ctx context.Context, elements ...any) {
 	c.MustAddAny(ctx, c.getNowKey(), elements...)
 	return
 }
 
 // AddAny 任何key赋值
-func (c *HyperStats) AddAny(ctx context.Context, key string, elements ...string) error {
+func (c *HyperStats) AddAny(ctx context.Context, key string, elements ...any) error {
 	if len(key) < 1 {
 		return ParamsKeyEmptyError
 	}
@@ -82,8 +82,11 @@ func (c *HyperStats) AddAny(ctx context.Context, key string, elements ...string)
 }
 
 // MustAddAny 必然新增任何any
-func (c *HyperStats) MustAddAny(ctx context.Context, key string, elements ...string) {
-	_ = c.AddAny(ctx, key, elements...)
+func (c *HyperStats) MustAddAny(ctx context.Context, key string, elements ...any) {
+	err := c.AddAny(ctx, key, elements...)
+	if err != nil {
+		return
+	}
 	return
 }
 

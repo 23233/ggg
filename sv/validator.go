@@ -60,7 +60,8 @@ func (m *MyValidator) Check(value interface{}) error {
 	// 首先使用validator.v10进行验证
 	err := m.Validate.Struct(value)
 	if err != nil {
-		errs, ok := err.(validator.ValidationErrors)
+		var errs validator.ValidationErrors
+		ok := errors.As(err, &errs)
 		// 几乎不会出现，除非验证器本身异常无法转换，以防万一就判断一下好了
 		if !ok {
 			return errors.New("验证异常")

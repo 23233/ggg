@@ -1,6 +1,6 @@
 module github.com/23233/ggg/gorm_rest
 
-go 1.21
+go 1.23.2
 
 replace (
 	github.com/23233/ggg/logger => ../logger
@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/colduction/randomizer v1.0.2 // indirect
+	github.com/colduction/randomizer v1.4.0 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

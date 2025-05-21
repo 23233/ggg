@@ -16,7 +16,7 @@ func TestNewBackend(t *testing.T) {
 
 	mg := getMg()
 	address, password := getRdbInfo()
-	bk, err := NewFullBackend(app, mg, address, password, 6)
+	bk, err := NewFullBackend(app, mg, address, password, 6, false, false)
 	if err != nil {
 		t.Error(err)
 		return
@@ -32,10 +32,14 @@ func TestNewBackend(t *testing.T) {
 		"password":  ut.RandomStr(10),
 	}
 
+	var fetchPrefix string = bk.Prefix
+
+	var apiPrefix string = fetchPrefix + "/apis"
+
 	e := httptest.New(t, app)
 
 	t.Run("注册用户", func(t *testing.T) {
-		resp := e.POST("/reg").WithJSON(loginBody).Expect().Status(http.StatusOK)
+		resp := e.POST(apiPrefix + "/reg").WithJSON(loginBody).Expect().Status(http.StatusOK)
 		respObj := resp.JSON().Object()
 		respObj.ContainsKey("token")
 		respObj.ContainsKey("info")
@@ -49,24 +53,25 @@ func TestNewBackend(t *testing.T) {
 				"user_name": loginBody["user_name"],
 			}
 			login["password"] = ut.RandomStr(10)
-			e.POST("/login").WithJSON(login).Expect().Status(http.StatusBadRequest)
+			e.POST(apiPrefix + "/login").WithJSON(login).Expect().Status(http.StatusBadRequest)
 		})
 		t.Run("登录成功", func(t *testing.T) {
-			e.POST("/login").WithJSON(loginBody).Expect().Status(http.StatusOK)
+			e.POST(apiPrefix + "/login").WithJSON(loginBody).Expect().Status(http.StatusOK)
 		})
 	})
 
 	t.Run("设置为root", func(t *testing.T) {
-		err := UserInstance.SetRoleUseUserName(context.TODO(), loginBody["user_name"].(string), "root")
+		err = UserInstance.SetRoleUseUserName(context.TODO(), loginBody["user_name"].(string), "root")
 		assert.Equal(t, nil, err)
 	})
 
-	prefix := app.GetRelPath() + model.GetBase().PathId
 	var uid string
 
 	headers := map[string]string{
 		"Authorization": "Bearer " + token,
 	}
+
+	prefix := apiPrefix + app.GetRelPath() + model.GetBase().PathId
 
 	t.Run("未携带请求头抛出错误", func(t *testing.T) {
 		e.GET(prefix).Expect().Status(http.StatusUnauthorized)
@@ -138,12 +143,12 @@ func TestNewBackend(t *testing.T) {
 	})
 
 	t.Run("获取所有模型", func(t *testing.T) {
-		resp := e.GET("/models").WithHeaders(headers).Expect().Status(iris.StatusOK)
+		resp := e.GET(apiPrefix + "/models").WithHeaders(headers).Expect().Status(iris.StatusOK)
 		resp.JSON().Object().Value("models").Array().NotEmpty()
 	})
 
 	t.Run("获取自身信息", func(t *testing.T) {
-		resp := e.GET("/self").WithHeaders(headers).Expect().Status(iris.StatusOK)
+		resp := e.GET(apiPrefix + "/self").WithHeaders(headers).Expect().Status(iris.StatusOK)
 		resp.JSON().Object().Value("info").Object().Value(ut.DefaultUidTag).String().IsEqual(userId)
 	})
 

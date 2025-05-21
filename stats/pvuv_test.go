@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	"github.com/23233/ggg/ut"
 	"github.com/go-redis/redis/v8"
 	"os"
@@ -28,6 +29,10 @@ func initRdb() *redis.Client {
 
 func TestMain(m *testing.M) {
 	rdb = initRdb()
+	err := rdb.Ping(context.TODO()).Err()
+	if err != nil {
+		panic(fmt.Errorf("redis连接失败:%s", err))
+	}
 	m.Run()
 	_ = rdb.Close()
 }

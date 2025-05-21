@@ -58,7 +58,7 @@ var (
 				params.Act = ctx.Method()
 			}
 			// 谁(sub)在那个域名(domain)下进行了什么资源(obj)的什么操作(act)
-			pass := db.E.HasPolicy(params.Sub, params.Domain, params.Obj, params.Act)
+			pass, _ := db.E.HasPolicy(params.Sub, params.Domain, params.Obj, params.Act)
 			return NewPipeResult(pass)
 		},
 	}

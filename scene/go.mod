@@ -1,6 +1,6 @@
 module github.com/23233/ggg/scene
 
-go 1.21
+go 1.24.0
 
 replace (
 	github.com/23233/ggg/logger => ../logger
@@ -39,7 +39,7 @@ require (
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/casbin/casbin/v2 v2.71.1 // indirect
 	github.com/casbin/redis-adapter/v2 v2.4.0 // indirect
-	github.com/colduction/randomizer v1.0.2 // indirect
+	github.com/colduction/randomizer v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect

@@ -83,7 +83,7 @@ func (c *RedisWork[T]) GetItemDelay(start time.Duration, end time.Duration) time
 	if end == 0 || end < start {
 		return start
 	}
-	return time.Duration(randomizer.RandInt64(int64(start), int64(end)))
+	return time.Duration(randomizer.IntInterval(int64(start), int64(end)))
 }
 
 func (c *RedisWork[T]) RunItemDelay() {

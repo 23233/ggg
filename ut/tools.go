@@ -24,7 +24,7 @@ func RandomStr(n int) string {
 func RandomInt(start, end int) int {
 	// 使用randomizer方法保证线程安全的rand 否则在高并发下rand seed会到0 然后panic
 	// 看这里https://qqq.ninja/blog/post/fast-threadsafe-randomness-in-go/
-	return randomizer.RandInt(start, end)
+	return randomizer.IntInterval(start, end)
 }
 
 // RangeRandomIntSet 范围随机正整数但不重复

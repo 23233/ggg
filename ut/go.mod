@@ -1,11 +1,11 @@
 module github.com/23233/ggg/ut
 
-go 1.21
+go 1.23.2
 
 require (
 	github.com/23233/ggg/logger v0.0.0-20240126064458-4ef52b984a5e
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/colduction/randomizer v1.0.2
+	github.com/colduction/randomizer v1.4.0
 	github.com/google/go-cmp v0.6.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/itchyny/base58-go v0.2.1

@@ -356,9 +356,19 @@ func (c *Log) Infof(format string, args ...interface{}) {
 	c.L.Info(logMsg, c.Op.Fields...)
 }
 
+func (c *Log) InfoFw(field []zap.Field, format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	c.L.Info(logMsg, append(c.Op.Fields, field...)...)
+}
+
 func (c *Log) Errorf(format string, args ...interface{}) {
 	logMsg := fmt.Sprintf(format, args...)
 	c.L.Error(logMsg, c.Op.Fields...)
+}
+
+func (c *Log) ErrorFw(field []zap.Field, format string, args ...interface{}) {
+	logMsg := fmt.Sprintf(format, args...)
+	c.L.Error(logMsg, append(c.Op.Fields, field...)...)
 }
 
 func (c *Log) ErrorE(err error, format string, args ...interface{}) {

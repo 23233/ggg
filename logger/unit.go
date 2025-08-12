@@ -47,3 +47,20 @@ func (t TimeUnit) RotationGap() time.Duration {
 		return time.Hour * 24
 	}
 }
+
+func (t TimeUnit) goFormat() string {
+	switch t {
+	case Minute:
+		return "200601021504"
+	case Hour:
+		return "2006010215"
+	case Day:
+		return "20060102"
+	case Month:
+		return "200601"
+	case Year:
+		return "2006"
+	default:
+		return "20060102"
+	}
+}

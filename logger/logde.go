@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	TimeDivision = "time"
-	SizeDivision = "size"
+	TimeDivision        = "time"
+	SizeDivision        = "size"
+	TimeAndSizeDivision = "time_and_size"
 
 	_defaultEncoding             = "console"
 	_defaultDivision             = "size"
@@ -249,6 +250,11 @@ func (c *LogOptions) InitLogger() *Log {
 			infoHook = c.sizeDivisionWriter(c.InfoFilename)
 			if c.LevelSeparate {
 				warnHook = c.sizeDivisionWriter(c.ErrorFilename)
+			}
+		case TimeAndSizeDivision:
+			infoHook = NewTimeSizeRotator(c.InfoFilename, c.MaxSize, c.MaxBackups, c.MaxAge, c.Compress, c.TimeUnit)
+			if c.LevelSeparate {
+				warnHook = NewTimeSizeRotator(c.ErrorFilename, c.MaxSize, c.MaxBackups, c.MaxAge, c.Compress, c.TimeUnit)
 			}
 		}
 		wsInfo = append(wsInfo, zapcore.AddSync(infoHook))

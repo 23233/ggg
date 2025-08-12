@@ -143,7 +143,7 @@ func BenchmarkLogger(b *testing.B) {
 }
 
 func TestTimeAndSizeRotation(t *testing.T) {
-	l := InitJsonTimeSizeLog("test_ts", Day)
+	l := InitJsonTimeSizeLog("", Day, 50)
 	l.Info("info level test for time_and_size rotation")
 	l.Error("error level test for time_and_size rotation")
 

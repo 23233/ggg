@@ -11,6 +11,7 @@ var (
 	J           *Log
 	JH          *Log
 	Js          *Log
+	JM          *Log
 )
 
 func ChangeJtCaller(call int) {
@@ -34,10 +35,10 @@ func InitJsonTimeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
 	jt.SetEnableStats(true)
 	jt.SetEnableQueue(true) // 启动错误队列
 	jt.SetDivision("time")
-	jt.SetEncoding("json")                     // 输出格式 "json" 或者 "console"
-	jt.SetTimeUnit(t)                          // 按天归档
-	jt.SetInfoFile(infoPath)                   // 设置info级别日志
-	jt.SetErrorFile(errorPath)                 // 设置error级别日志
+	jt.SetEncoding("json")     // 输出格式 "json" 或者 "console"
+	jt.SetTimeUnit(t)          // 按天归档
+	jt.SetInfoFile(infoPath)   // 设置info级别日志
+	jt.SetErrorFile(errorPath) // 设置error级别日志
 	jt.SetCaller(true)
 	jt.SetCallerSkip(1)
 	jt.Fields = fields
@@ -68,7 +69,7 @@ func InitJsonSizeLog(prefix string, fields ...zap.Field) *Log {
 	return js.InitLogger()
 }
 
-func InitJsonTimeSizeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
+func InitJsonTimeSizeLog(prefix string, t TimeUnit, maxSize int, fields ...zap.Field) *Log {
 	instanceName := prefix
 	if instanceName == "" {
 		instanceName = time.Now().Format("20060102150405")
@@ -84,8 +85,8 @@ func InitJsonTimeSizeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
 	jts.SetTimeUnit(t)
 	jts.SetInfoFile(infoPath)
 	jts.SetErrorFile(errorPath)
-	jts.MaxSize = 500 // Default to 500MB
-	jts.MaxAge = 28    // Default to 28 days
+	jts.MaxSize = maxSize
+	jts.MaxAge = 28 // Default to 28 days
 	jts.Compress = true
 	jts.MaxBackups = 10
 	jts.SetCaller(true)
@@ -98,4 +99,5 @@ func init() {
 	J = InitJsonTimeLog("", Day)
 	Js = InitJsonSizeLog("")
 	JH = InitJsonTimeLog("", Hour)
+	JM = InitJsonTimeSizeLog("", Day, 50)
 }

@@ -8,10 +8,10 @@ import (
 
 var (
 	DefaultPath = "./logs/"
-	J           *Log
-	JH          *Log
-	Js          *Log
-	JM          *Log
+	J           *Log // json day
+	JH          *Log // json hour
+	Js          *Log // json size
+	JM          *Log // json day size mix
 )
 
 func ChangeJtCaller(call int) {

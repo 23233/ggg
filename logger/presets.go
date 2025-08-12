@@ -87,7 +87,7 @@ func InitJsonTimeSizeLog(prefix string, t TimeUnit, maxSize int, fields ...zap.F
 	jts.SetErrorFile(errorPath)
 	jts.MaxSize = maxSize
 	jts.MaxAge = 28 // Default to 28 days
-	jts.Compress = true
+	jts.Compress = false
 	jts.MaxBackups = 10
 	jts.SetCaller(true)
 	jts.SetCallerSkip(1)

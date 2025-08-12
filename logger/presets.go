@@ -1,6 +1,10 @@
 package logger
 
-import "go.uber.org/zap"
+import (
+	"fmt"
+	"go.uber.org/zap"
+	"time"
+)
 
 var (
 	DefaultPath = "./logs/"
@@ -19,18 +23,21 @@ func ChangeJsCaller(call int) {
 }
 
 func InitJsonTimeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
-	p := "j_"
-	if len(prefix) >= 1 {
-		p = prefix
+	instanceName := prefix
+	if instanceName == "" {
+		instanceName = time.Now().Format("20060102150405")
 	}
+	infoPath := fmt.Sprintf("%sj_%s_info", DefaultPath, instanceName)
+	errorPath := fmt.Sprintf("%sj_%s_error", DefaultPath, instanceName)
+
 	jt := New()
 	jt.SetEnableStats(true)
 	jt.SetEnableQueue(true) // 启动错误队列
 	jt.SetDivision("time")
 	jt.SetEncoding("json")                     // 输出格式 "json" 或者 "console"
 	jt.SetTimeUnit(t)                          // 按天归档
-	jt.SetInfoFile(DefaultPath + p + "info")   // 设置info级别日志
-	jt.SetErrorFile(DefaultPath + p + "error") // 设置error级别日志
+	jt.SetInfoFile(infoPath)                   // 设置info级别日志
+	jt.SetErrorFile(errorPath)                 // 设置error级别日志
 	jt.SetCaller(true)
 	jt.SetCallerSkip(1)
 	jt.Fields = fields
@@ -38,17 +45,19 @@ func InitJsonTimeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
 }
 
 func InitJsonSizeLog(prefix string, fields ...zap.Field) *Log {
-	p := "s_"
-	if len(prefix) >= 1 {
-		p = prefix
+	instanceName := prefix
+	if instanceName == "" {
+		instanceName = time.Now().Format("20060102150405")
 	}
+	infoPath := fmt.Sprintf("%ss_%s_info", DefaultPath, instanceName)
+	errorPath := fmt.Sprintf("%ss_%s_error", DefaultPath, instanceName)
 	js := New()
 	js.SetEnableStats(true)
 	js.SetEnableQueue(true)
 	js.SetDivision("size")
 	js.SetEncoding("json")
-	js.SetInfoFile(DefaultPath + p + "s_info")   // 设置info级别日志
-	js.SetErrorFile(DefaultPath + p + "s_error") // 设置error级别日志
+	js.SetInfoFile(infoPath)
+	js.SetErrorFile(errorPath)
 	js.MaxSize = 500
 	js.MaxAge = 28
 	js.Compress = true
@@ -57,6 +66,32 @@ func InitJsonSizeLog(prefix string, fields ...zap.Field) *Log {
 	js.SetCallerSkip(1)
 	js.Fields = fields
 	return js.InitLogger()
+}
+
+func InitJsonTimeSizeLog(prefix string, t TimeUnit, fields ...zap.Field) *Log {
+	instanceName := prefix
+	if instanceName == "" {
+		instanceName = time.Now().Format("20060102150405")
+	}
+	infoPath := fmt.Sprintf("%sts_%s_info", DefaultPath, instanceName)
+	errorPath := fmt.Sprintf("%sts_%s_error", DefaultPath, instanceName)
+
+	jts := New()
+	jts.SetEnableStats(true)
+	jts.SetEnableQueue(true)
+	jts.SetDivision(TimeAndSizeDivision)
+	jts.SetEncoding("json")
+	jts.SetTimeUnit(t)
+	jts.SetInfoFile(infoPath)
+	jts.SetErrorFile(errorPath)
+	jts.MaxSize = 500 // Default to 500MB
+	jts.MaxAge = 28    // Default to 28 days
+	jts.Compress = true
+	jts.MaxBackups = 10
+	jts.SetCaller(true)
+	jts.SetCallerSkip(1)
+	jts.Fields = fields
+	return jts.InitLogger()
 }
 
 func init() {

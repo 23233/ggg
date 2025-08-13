@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"os" // 1. 导入 "os" 包
 	"time"
 )
 
@@ -96,6 +97,18 @@ func InitJsonTimeSizeLog(prefix string, t TimeUnit, maxSize int, fields ...zap.F
 }
 
 func init() {
+	// 2. 检查DefaultPath是否存在
+	// os.Stat返回文件信息，如果路径不存在，它会返回一个错误
+	if _, err := os.Stat(DefaultPath); os.IsNotExist(err) {
+		// 3. 如果路径不存在，则创建它
+		// os.MkdirAll会创建路径中的所有父目录（如果需要的话）
+		// 0755是目录权限，表示所有者有读/写/执行权限，组和其他用户有读/执行权限
+		err = os.MkdirAll(DefaultPath, 0755)
+		if err != nil {
+			fmt.Println(fmt.Sprintf("创建日志目录失败: %v", err))
+		}
+	}
+
 	J = InitJsonTimeLog("", Day)
 	Js = InitJsonSizeLog("")
 	JH = InitJsonTimeLog("", Hour)

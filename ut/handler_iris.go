@@ -29,7 +29,7 @@ func IrisErr(ctx iris.Context, input any) {
 
 func IrisErrLog(ctx iris.Context, err error, msg string) {
 	if err != nil {
-		logger.J.ErrorE(err, msg)
+		logger.JM.ErrorE(err, msg)
 	}
 	IrisErr(ctx, msg)
 	return

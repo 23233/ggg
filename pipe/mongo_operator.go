@@ -107,14 +107,14 @@ func mongoBulkInsert[T any](ctx context.Context, db *qmgo.Collection, accounts .
 	if err != nil {
 		var bulkErr mongo.BulkWriteException
 		if ok := errors.As(err, &bulkErr); !ok {
-			logger.J.ErrorE(err, "批量插入发生非bulkWrite异常")
+			logger.JM.ErrorE(err, "批量插入发生非bulkWrite异常")
 			return result, err
 		}
 		if len(result.InsertedIDs) < 1 {
 			return result, PipeBulkEmptySuccessError
 		}
 	}
-	logger.J.Infof("批量预期传入 %d条 插入成功 %d 条", len(accounts), len(result.InsertedIDs))
+	logger.JM.Infof("批量预期传入 %d条 插入成功 %d 条", len(accounts), len(result.InsertedIDs))
 	return result, nil
 }
 func MongoBulkInsertCount[T any](ctx context.Context, db *qmgo.Collection, accounts ...T) (int, error) {

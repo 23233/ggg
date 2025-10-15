@@ -92,7 +92,7 @@ func (c *ContentSafe) AutoHitText(content string) (success bool, message string)
 		// 长文本 20%概率使用接口校验
 		pass, err, msg := c.WxTextCheckV1(content)
 		if err != nil {
-			logger.J.Error("校验文本失败", logger.J.WithError(err))
+			logger.JM.Error("校验文本失败", logger.J.WithError(err))
 		}
 		success = pass
 		message = msg
@@ -159,7 +159,7 @@ func (c *ContentSafe) WxTextCheckV1(content string) (bool, error, string) {
 		return false, nil, "文本有不良词汇,请修改"
 	}
 	if j.Errcode != 0 {
-		logger.J.Error(fmt.Sprintf("微信内容安全文字检测v1 返回码异常为 %d", j.Errcode))
+		logger.JM.Error(fmt.Sprintf("微信内容安全文字检测v1 返回码异常为 %d", j.Errcode))
 		return false, errors.New("接口响应码异常"), "校验行为异常,请稍后重试"
 	}
 

@@ -2,6 +2,7 @@ github.com/23233/ggg/logger v0.0.0-20240126064458-4ef52b984a5e h1:o22PqXzcrH34rH
 github.com/23233/ggg/logger v0.0.0-20240126064458-4ef52b984a5e/go.mod h1:NJfp6usKahQV7gZG/sYrCXS0lgFK9rHj+vkbtbSoT1I=
 github.com/23233/ggg/logger v0.0.0-20250521015733-ba3370e5e495 h1:vYd3mUQoyOQrEEeR3chxwaykeN5VuCQafxpuR5lAGuw=
 github.com/23233/ggg/logger v0.0.0-20250521015733-ba3370e5e495/go.mod h1:fhZgla+OmBjHkNYMBdUZkwsd4pqwGgKQ/RaKNL1beOQ=
+github.com/23233/ggg/logger v0.0.0-20250813035953-f54e20f9bbf9/go.mod h1:QDrmMndckNQuwWgiKfz915OwvjmMg976Zo3yLrdU0uI=
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=

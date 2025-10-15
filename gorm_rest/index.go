@@ -655,7 +655,7 @@ func (s *GormSchemaRest[T]) crudHandler(ctx iris.Context) {
 
 	if err != nil {
 		if s.RaiseRawError {
-			logger.J.ErrorE(err, "执行出错")
+			logger.JM.ErrorE(err, "执行出错")
 			ut.IrisErr(ctx, err)
 		} else {
 			ut.IrisErrLog(ctx, err, "执行方法出错")

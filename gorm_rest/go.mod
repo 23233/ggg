@@ -25,7 +25,7 @@ require (
 )
 
 require (
-	github.com/23233/ggg/logger v0.0.0-20250521015733-ba3370e5e495 // indirect
+	github.com/23233/ggg/logger v0.0.0-20250813035953-f54e20f9bbf9 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/CloudyKit/jet/v6 v6.3.1 // indirect

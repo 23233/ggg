@@ -103,7 +103,7 @@ func (b *Backend) RegistryRoute(party iris.Party) {
 	// 创建相对于 "template" 目录的子文件系统
 	templateFS, err := fs.Sub(htmlWeb, "template")
 	if err != nil {
-		logger.J.ErrorE(err, "failed to create sub filesystem")
+		logger.JM.ErrorE(err, "failed to create sub filesystem")
 	}
 
 	// 注册视图
@@ -321,7 +321,7 @@ func (b *Backend) InsertUserModel() {
 func (b *Backend) SendMsg(ctx context.Context, uid, content string) {
 	user, err := UserInstance.FuzzGetUser(ctx, uid)
 	if err != nil {
-		logger.J.ErrorE(err, "[%s]未找到用户 发送的消息是%s ", uid, content)
+		logger.JM.ErrorE(err, "[%s]未找到用户 发送的消息是%s ", uid, content)
 		return
 	}
 	b.msg.Put(user.Uid, content)
@@ -377,7 +377,7 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 	UserInstance.SetConn(bk.CloneConn())
 	err = UserInstance.SyncIndex(context.TODO())
 	if err != nil {
-		logger.J.ErrorE(err, "同步用户模型索引失败")
+		logger.JM.ErrorE(err, "同步用户模型索引失败")
 		return nil, err
 	}
 
@@ -389,7 +389,7 @@ func NewFullBackend(party iris.Party, mongodb *qmgo.Database, redisAddress strin
 	go func() {
 		err := OpLogSyncIndex(context.TODO(), bk.OpLog())
 		if err != nil {
-			logger.J.ErrorE(err, "创建操作日志索引失败")
+			logger.JM.ErrorE(err, "创建操作日志索引失败")
 		}
 	}()
 

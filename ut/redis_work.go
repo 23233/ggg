@@ -151,7 +151,7 @@ func (c *RedisWork[T]) getConcurrency() int {
 func (c *RedisWork[T]) Run() error {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.J.Errorf("work崩溃了 %v", err)
+			logger.JM.Errorf("work崩溃了 %v", err)
 		}
 	}()
 	if c.Running {
@@ -188,7 +188,7 @@ func (c *RedisWork[T]) runBulk() error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -236,7 +236,7 @@ func (c *RedisWork[T]) runBulk() error {
 
 		duration := time.Since(c.startTime)
 		c.Results = c.resultsChan.GetAll()
-		logger.J.Infof("[%s]任务执行结束 数据:%d条 预期:%d条 差额:%d 执行时间:%s", c.Name, len(c.Results), len(c.BulkIds), len(c.BulkIds)-len(c.Results), duration)
+		logger.JM.Infof("[%s]任务执行结束 数据:%d条 预期:%d条 差额:%d 执行时间:%s", c.Name, len(c.Results), len(c.BulkIds), len(c.BulkIds)-len(c.Results), duration)
 
 		//if len(c.Results) >= 1 {
 		//	c.ToDisk()
@@ -245,7 +245,7 @@ func (c *RedisWork[T]) runBulk() error {
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 
@@ -285,7 +285,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -378,7 +378,7 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {
-								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+								logger.JM.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
 							}
 						}
 						c.RunItemDelay()
@@ -388,24 +388,24 @@ func (c *RedisWork[T]) runRange(start int64, end int64) error {
 
 			}
 			wg.Wait()
-			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
+			logger.JM.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
 				err := c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
-					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
+					logger.JM.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
 			}
 			c.RunRangeDelay()
 		}
 
 		duration := time.Since(c.startTime)
-		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		logger.JM.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 
@@ -423,7 +423,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -481,7 +481,7 @@ func (c *RedisWork[T]) runRedisRange() error {
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {
-								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+								logger.JM.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
 							}
 						}
 						c.RunItemDelay()
@@ -491,12 +491,12 @@ func (c *RedisWork[T]) runRedisRange() error {
 
 			}
 			wg.Wait()
-			logger.J.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
+			logger.JM.Infof("%s %d/%d %d条结果 耗时%s", c.Name, threadStart, threadEnd, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
 				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
-					logger.J.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
+					logger.JM.ErrorE(err, "%s 区间%d/%d任务返回错误", c.Name, threadStart, threadEnd)
 				}
 			}
 			c.RunRangeDelay()
@@ -504,12 +504,12 @@ func (c *RedisWork[T]) runRedisRange() error {
 		}
 
 		duration := time.Since(c.startTime)
-		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		logger.JM.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 
@@ -527,7 +527,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -561,7 +561,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 
 			if ids == nil || len(ids) < 1 {
 				c.NowCount.Add(int64(len(scopes)))
-				logger.J.Infof("%s %d条id 已存在db %s 跳过", c.Name, len(scopes), c.InjectData["collName"].(string))
+				logger.JM.Infof("%s %d条id 已存在db %s 跳过", c.Name, len(scopes), c.InjectData["collName"].(string))
 				continue
 			}
 
@@ -607,7 +607,7 @@ func (c *RedisWork[T]) runRedisItem() error {
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, bt)
 							if err != nil {
-								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
+								logger.JM.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, bt)
 							}
 						}
 						c.RunItemDelay()
@@ -618,12 +618,12 @@ func (c *RedisWork[T]) runRedisItem() error {
 			}
 
 			wg.Wait()
-			logger.J.Infof("%s %d条结果 耗时%s", c.Name, bulkData.Count(), time.Since(startTime))
+			logger.JM.Infof("%s %d条结果 耗时%s", c.Name, bulkData.Count(), time.Since(startTime))
 
 			if c.OnRangSuccess != nil {
 				err = c.OnRangSuccess(c, bulkData.GetAll(), bulkMap.GetMap())
 				if err != nil {
-					logger.J.ErrorE(err, "%s 任务返回错误", c.Name)
+					logger.JM.ErrorE(err, "%s 任务返回错误", c.Name)
 				}
 			}
 			c.RunRangeDelay()
@@ -631,12 +631,12 @@ func (c *RedisWork[T]) runRedisItem() error {
 		}
 
 		duration := time.Since(c.startTime)
-		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		logger.JM.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 
@@ -654,7 +654,7 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -705,7 +705,7 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 						if c.OnSingleSuccess != nil {
 							err = c.OnSingleSuccess(c, result, id)
 							if err != nil {
-								logger.J.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, id)
+								logger.JM.ErrorE(err, "%s 单个%s任务成功回调返回错误", c.Name, id)
 							}
 						}
 						c.RunItemDelay()
@@ -716,12 +716,12 @@ func (c *RedisWork[T]) runRedisItemParallel() error {
 		wg.Wait()
 
 		duration := time.Since(c.startTime)
-		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		logger.JM.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 
@@ -738,7 +738,7 @@ func (c *RedisWork[T]) RunSemaphore() error {
 	if c.OnStartup != nil {
 		err := c.OnStartup(c)
 		if err != nil {
-			logger.J.ErrorE(err, "[%s] 任务启动时失败", c.Name)
+			logger.JM.ErrorE(err, "[%s] 任务启动时失败", c.Name)
 			return err
 		}
 	}
@@ -771,7 +771,7 @@ func (c *RedisWork[T]) RunSemaphore() error {
 					if c.OnSingleSuccess != nil {
 						err = c.OnSingleSuccess(c, result, "")
 						if err != nil {
-							logger.J.ErrorE(err, "%s 单个任务成功回调返回错误", c.Name)
+							logger.JM.ErrorE(err, "%s 单个任务成功回调返回错误", c.Name)
 						}
 					}
 					c.RunItemDelay()
@@ -782,12 +782,12 @@ func (c *RedisWork[T]) RunSemaphore() error {
 		wg.Wait()
 
 		duration := time.Since(c.startTime)
-		logger.J.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
+		logger.JM.Infof("[%s]任务执行结束 执行时间:%s", c.Name, duration)
 
 		if c.OnSuccess != nil {
 			err := c.OnSuccess(c)
 			if err != nil {
-				logger.J.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
+				logger.JM.ErrorE(err, "[%s]任务结束onSuccess返回错误", c.Name)
 			}
 		}
 

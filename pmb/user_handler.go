@@ -310,7 +310,7 @@ func (c *SimpleUserModel) passwordLogin(ctx iris.Context, event string, user *Si
 		"$set": upBody,
 	})
 	if err != nil {
-		logger.J.ErrorE(err, "[%s]更新用户登录信息失败", user.Uid)
+		logger.JM.ErrorE(err, "[%s]更新用户登录信息失败", user.Uid)
 	}
 
 	if c.hooks != nil && c.hooks.OnLoginAfter != nil {

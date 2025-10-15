@@ -50,7 +50,7 @@ func (c *FuncCalcTime) Print(endIndexs ...int) {
 
 		preTime = item.Now
 	}
-	logger.J.Infof("[%s][%s][%s]%s", c.Name, c.id, c.start.Format("2006-01-02 15:04:05"), st.String())
+	logger.JM.Infof("[%s][%s][%s]%s", c.Name, c.id, c.start.Format("2006-01-02 15:04:05"), st.String())
 
 }
 

@@ -188,13 +188,13 @@ func (c *LocalWork[T, R]) run() {
 					c.NowCount.Add(1)
 
 					if c.PrintProcess {
-						logger.J.Infof("[%s]%s 进度%d/%d fail:%d", c.Tid, c.Name, c.NowCount.Load(), len(c.ChanData), c.FailCount.Load())
+						logger.JM.Infof("[%s]%s 进度%d/%d fail:%d", c.Tid, c.Name, c.NowCount.Load(), len(c.ChanData), c.FailCount.Load())
 					}
 
 					// 计算成功的数量
 					successCount := c.NowCount.Load() - c.FailCount.Load()
 					if c.SuccessStopLimit > 0 && uint(successCount) >= c.SuccessStopLimit {
-						logger.J.Infof("[%s]%s 达到成功停止限制(%d)，发送停止信号", c.Tid, c.Name, c.SuccessStopLimit)
+						logger.JM.Infof("[%s]%s 达到成功停止限制(%d)，发送停止信号", c.Tid, c.Name, c.SuccessStopLimit)
 						stop <- true // 发送停止信号
 						break
 					}
@@ -204,15 +204,15 @@ func (c *LocalWork[T, R]) run() {
 	}
 	wg.Wait()
 	if c.SuccessStopLimit > 0 {
-		logger.J.Infof("[%s]%s 执行完成 需求%d/%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, c.SuccessStopLimit, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
+		logger.JM.Infof("[%s]%s 执行完成 需求%d/%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, c.SuccessStopLimit, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
 	} else {
-		logger.J.Infof("[%s]%s 执行完成 总数%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
+		logger.JM.Infof("[%s]%s 执行完成 总数%d条 失败%d条 成功%d条 耗时%s", c.Tid, c.Name, len(c.ChanData), c.FailCount.Load(), int64(len(c.ChanData))-c.FailCount.Load(), time.Since(c.startTime))
 	}
 
 	if c.OnSuccess != nil {
 		err := c.OnSuccess(c, c.Results.GetAll())
 		if err != nil {
-			logger.J.ErrorE(err, "%s_%s 执行success方法失败", c.Name, c.Tid)
+			logger.JM.ErrorE(err, "%s_%s 执行success方法失败", c.Name, c.Tid)
 		}
 	}
 }

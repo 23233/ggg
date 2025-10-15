@@ -2,12 +2,10 @@ module github.com/23233/ggg/ut
 
 go 1.24.0
 
-replace (
-	github.com/23233/ggg/logger => ../logger
-)
+replace github.com/23233/ggg/logger => ../logger
 
 require (
-	github.com/23233/ggg/logger v0.0.0-20250521015733-ba3370e5e495
+	github.com/23233/ggg/logger v0.0.0-20250813035953-f54e20f9bbf9
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/colduction/randomizer v1.4.0
 	github.com/google/go-cmp v0.7.0

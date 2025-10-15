@@ -48,7 +48,7 @@ var (
 				// 仅当新到期时间大于当前到期时间时设置到期时间
 				err := rdb.Do(context.Background(), rdb.B().Expire().Key(shortRedisKey).Seconds(expireSec).Gt().Build()).Error()
 				if err != nil {
-					logger.J.ErrorE(err, "续期short token失败 %s ", shortToken)
+					logger.JM.ErrorE(err, "续期short token失败 %s ", shortToken)
 				}
 			} else {
 				// 非short 则续期
@@ -59,7 +59,7 @@ var (
 				cmdList := rdb.B().Expire().Key(redisKey).Seconds(expireSec).Gt().Build()
 				err := rdb.Do(context.Background(), cmdList).Error()
 				if err != nil {
-					logger.J.ErrorE(err, "续期token失败 %s %s", pack.UserId, pack.Env)
+					logger.JM.ErrorE(err, "续期token失败 %s %s", pack.UserId, pack.Env)
 				}
 			}
 			return NewPipeResult(resp.Result)

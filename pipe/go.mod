@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/23233/ggg/contentSafe v0.0.0-20250521015733-ba3370e5e495
-	github.com/23233/ggg/logger v0.0.0-20250521015733-ba3370e5e495
+	github.com/23233/ggg/logger v0.0.0-20250813035953-f54e20f9bbf9
 	github.com/23233/ggg/ut v0.0.0-20250521015733-ba3370e5e495
 	github.com/23233/jsonschema v0.11.2
 	github.com/23233/user_agent v0.1.1

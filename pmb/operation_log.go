@@ -70,7 +70,7 @@ func MustOpLog(ctx iris.Context, db *qmgo.Collection, method string, user *Simpl
 
 	_, err := db.InsertOne(context.TODO(), inst)
 	if err != nil {
-		logger.J.ErrorE(err, "%s进行 %s-%s 操作记录失败", user.Uid, method, sheet)
+		logger.JM.ErrorE(err, "%s进行 %s-%s 操作记录失败", user.Uid, method, sheet)
 	}
 }
 

@@ -18,7 +18,7 @@ import (
 )
 
 func IrisRespErr(msg string, err error, ctx iris.Context, code ...int) {
-	//logger.J.ErrEf(err, msg)
+	//logger.JMErrEf(err, msg)
 	if len(code) >= 1 {
 		ctx.StatusCode(code[0])
 	} else {
@@ -418,7 +418,7 @@ func (s *SchemaModel[T]) GetHandler(ctx iris.Context, queryParams pipe.QueryPars
 	}
 	paramsByte, _ := json.Marshal(resp.Result)
 	if s.Debug {
-		logger.J.Infof("[%s] 请求参数解析: %s", ctx.Request().RequestURI, string(paramsByte))
+		logger.JM.Infof("[%s] 请求参数解析: %s", ctx.Request().RequestURI, string(paramsByte))
 	}
 	// 过滤参数 外键什么的可以在这里注入
 	if s.filterCanPass != nil {

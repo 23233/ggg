@@ -25,6 +25,7 @@ type GenerateURLRequest struct {
 // GenerateURLResponse 是获取上传链接API成功时的响应体结构
 type GenerateURLResponse struct {
 	UploadURL string `json:"uploadUrl"`
+	ObjectKey string `json:"objectKey"`
 	AccessURL string `json:"accessUrl"`
 }
 

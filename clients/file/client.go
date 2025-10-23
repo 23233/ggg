@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -29,10 +28,9 @@ type GenerateURLRequest struct {
 // GenerateURLResponse 是获取上传链接API成功时的响应体结构
 // 响应结构已完全更新以适配 Presigned POST
 type GenerateURLResponse struct {
-	PostURL   string            `json:"postUrl"`   // 上传的目标 URL
-	FormData  map[string]string `json:"formData"`  // 上传时需要携带的表单字段
-	ObjectKey string            `json:"objectKey"` // 文件在 R2 中的 Key
-	AccessURL string            `json:"accessUrl"` // 文件的公开访问 URL
+	UploadUrl string `json:"uploadUrl"`
+	ObjectKey string `json:"objectKey"` // 文件在 R2 中的 Key
+	AccessURL string `json:"accessUrl"` // 文件的公开访问 URL
 }
 
 // UploadOptions 封装了上传时的所有可配置项
@@ -107,78 +105,41 @@ func (c *Client) GetUploadURL(ctx context.Context, prefix string, fileName strin
 	return &apiResponse, nil
 }
 
-// UploadFile 是一个简化的方法，使用服务器的默认设置上传文件
+// UploadFile 是一个高级方法，封装了获取URL并上传文件的整个过程
 // ctx: 上下文，用于控制请求的取消或超时
 // fileName: 你希望在服务器上保存的文件名
 // fileContent: 文件的内容，需要是一个 io.Reader
-func (c *Client) UploadFile(ctx context.Context, fileName string, fileContent io.Reader) (string, error) {
-	options := UploadOptions{
-		FileName:    fileName,
-		FileContent: fileContent,
-		// MaxSizeMb 和 ExpiresInSeconds 均为 0, 将使用服务器的默认值
-	}
-	return c.UploadFileWithOptions(ctx, options)
-}
-
-// UploadFileWithOptions 是一个功能更全的方法，封装了获取URL并上传文件的整个过程
-// ctx: 上下文，用于控制请求的取消或超时
-// options: 包含文件名、文件内容和可选参数的结构体
-func (c *Client) UploadFileWithOptions(ctx context.Context, options UploadOptions) (string, error) {
-	// 1. 获取预签名上传链接和表单数据
-	uploadInfo, err := c.GetUploadURL(ctx, options.Prefix, options.FileName, options.ExpiresInSeconds)
+func (c *Client) UploadFile(ctx context.Context, prefix, fileName string, fileContent io.Reader) (string, error) {
+	// 1. 获取预签名上传链接
+	uploadInfo, err := c.GetUploadURL(ctx, prefix, fileName, 0)
 	if err != nil {
 		return "", fmt.Errorf("获取上传链接失败: %w", err)
 	}
 
-	// 2. 创建 multipart/form-data 请求体
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-
-	// 3. 将从 API 获取的 formData 字段写入表单
-	for key, value := range uploadInfo.FormData {
-		if err := writer.WriteField(key, value); err != nil {
-			return "", fmt.Errorf("写入表单字段 %s 失败: %w", key, err)
-		}
-	}
-
-	// 4. 创建文件字段并写入文件内容
-	// R2/S3 Presigned Post 要求 'file' 字段是最后一个字段
-	part, err := writer.CreateFormFile("file", options.FileName)
-	if err != nil {
-		return "", fmt.Errorf("创建文件表单部分失败: %w", err)
-	}
-	if _, err := io.Copy(part, options.FileContent); err != nil {
-		return "", fmt.Errorf("向表单写入文件内容失败: %w", err)
-	}
-
-	// 5. 关闭 multipart writer，这会写入结尾的 boundary
-	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("关闭 multipart writer 失败: %w", err)
-	}
-
-	// 6. 创建用于上传文件的 HTTP POST 请求
-	// 注意：URL 是 uploadInfo.PostURL
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadInfo.PostURL, &requestBody)
+	// 2. 创建用于上传文件的 HTTP PUT 请求
+	// 注意：这里使用的是获取到的 uploadInfo.UploadURL
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadInfo.UploadUrl, fileContent)
 	if err != nil {
 		return "", fmt.Errorf("创建文件上传请求失败: %w", err)
 	}
+	// 注意：上传到R2的预签名URL时，通常不需要设置额外的认证头，
+	// 因为所有认证信息都在URL的查询参数里了。
+	// 如果你的文件需要指定Content-Type，可以在这里设置。
+	// req.Header.Set("Content-Type", "image/png") // 例如
 
-	// 7. 设置正确的 Content-Type，它包含了 multipart 的 boundary
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	// 8. 执行上传
+	// 3. 执行上传
 	uploadResp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("上传文件到R2失败: %w", err)
 	}
 	defer uploadResp.Body.Close()
 
-	// 9. 检查上传是否成功 (R2/S3 成功时通常返回 204 No Content)
-	if uploadResp.StatusCode < 200 || uploadResp.StatusCode >= 300 {
+	// 4. 检查上传是否成功
+	if uploadResp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(uploadResp.Body)
 		return "", fmt.Errorf("上传文件到R2返回错误, 状态码: %d, 响应: %s", uploadResp.StatusCode, string(bodyBytes))
 	}
 
-	// 10. 返回公开访问的URL
+	// 5. 返回公开访问的URL
 	return uploadInfo.AccessURL, nil
 }

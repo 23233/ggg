@@ -23,6 +23,7 @@ type Client struct {
 type GenerateURLRequest struct {
 	FileName         string `json:"fileName"`
 	ExpiresInSeconds int    `json:"expiresInSeconds,omitempty"` // omitempty 使得当值为0时，该字段不会被序列化
+	Prefix           string `json:"prefix,omitempty"`
 }
 
 // GenerateURLResponse 是获取上传链接API成功时的响应体结构
@@ -36,6 +37,7 @@ type GenerateURLResponse struct {
 
 // UploadOptions 封装了上传时的所有可配置项
 type UploadOptions struct {
+	Prefix           string    // 可选: 上传保存的文件夹
 	FileName         string    // 必需：文件名
 	FileContent      io.Reader // 必需：文件内容
 	MaxSizeMb        int       // 可选：限制本次上传的最大文件大小 (MB)，0 表示使用服务器默认值
@@ -57,13 +59,15 @@ func New(host, authKey string) *Client {
 
 // GetUploadURL 从 Workers 服务获取一个预签名的上传表单数据
 // ctx: 上下文，用于控制请求的取消或超时
+// prefix: 保存的前缀文件夹 不能有 前后的/ 纯字符串
 // fileName: 你希望在服务器上保存的文件名
 // expiresInSeconds: 签名有效时长(秒)，传 0 表示使用服务器默认值
-func (c *Client) GetUploadURL(ctx context.Context, fileName string, expiresInSeconds int) (*GenerateURLResponse, error) {
+func (c *Client) GetUploadURL(ctx context.Context, prefix string, fileName string, expiresInSeconds int) (*GenerateURLResponse, error) {
 	// 1. 准备请求体
 	reqBody := GenerateURLRequest{
 		FileName:         fileName,
 		ExpiresInSeconds: expiresInSeconds,
+		Prefix:           prefix,
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
@@ -121,7 +125,7 @@ func (c *Client) UploadFile(ctx context.Context, fileName string, fileContent io
 // options: 包含文件名、文件内容和可选参数的结构体
 func (c *Client) UploadFileWithOptions(ctx context.Context, options UploadOptions) (string, error) {
 	// 1. 获取预签名上传链接和表单数据
-	uploadInfo, err := c.GetUploadURL(ctx, options.FileName, options.ExpiresInSeconds)
+	uploadInfo, err := c.GetUploadURL(ctx, options.Prefix, options.FileName, options.ExpiresInSeconds)
 	if err != nil {
 		return "", fmt.Errorf("获取上传链接失败: %w", err)
 	}

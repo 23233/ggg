@@ -18,7 +18,7 @@ import (
 )
 
 func IrisRespErr(msg string, err error, ctx iris.Context, code ...int) {
-	//logger.JMErrEf(err, msg)
+	//logger.JM.ErrEf(err, msg)
 	if len(code) >= 1 {
 		ctx.StatusCode(code[0])
 	} else {

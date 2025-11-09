@@ -79,7 +79,7 @@ func (s *SmsClient) send(phones []string, TemplateID string, TemplateParamSet []
 	for _, value := range response.Response.SendStatusSet {
 		b, _ := json.Marshal(value)
 		if strings.Contains(string(b), "Ok") == false {
-			logger.JMErrEf(orginErrors.New("发送短信失败"), "发送号码:%v 错误:%v", value.PhoneNumber, value.Message)
+			logger.JM.ErrEf(orginErrors.New("发送短信失败"), "发送号码:%v 错误:%v", value.PhoneNumber, value.Message)
 			return orginErrors.New("短信发送失败,请稍后重试")
 		}
 	}
